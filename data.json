@@ -1,1 +1,312 @@
-{"settings":{"showPrices":false,"currency":"تومان","paymentEnabled":false,"paymentProvider":"zarinpal","phone":"۰۹۲۲۷۱۴۰۷۲۶","eitaa":"https://eitaa.com/hilafood"},"categories":[{"id":"pre","name":"اقدام به بارداری","image":"categories/pre.svg"},{"id":"preg","name":"بارداری","image":"categories/preg.svg"},{"id":"6m","name":"کودک ۶ ماه","image":"categories/6m.svg"},{"id":"7m","name":"کودک ۷ ماه","image":"categories/7m.svg"},{"id":"8m","name":"کودک ۸ ماه","image":"categories/8m.svg"},{"id":"9m","name":"کودک ۹ ماه","image":"categories/9m.svg"},{"id":"10m","name":"کودک ۱۰ ماه","image":"categories/10m.svg"},{"id":"11m","name":"کودک ۱۱ ماه","image":"categories/11m.svg"},{"id":"12m","name":"۱۲ ماه به بالا","image":"categories/12m.svg"},{"id":"post","name":"پس از زایمان و شیردهی","image":"categories/post.svg"},{"id":"cycle","name":"قاعدگی","image":"categories/cycle.svg"},{"id":"uterus","name":"رحم و تخمدان","image":"categories/uterus.svg"},{"id":"grandma","name":"پک مامانجون و باباجون","image":"categories/grandma.svg"},{"id":"weak","name":"ضعف","image":"categories/weak.svg"},{"id":"test","name":"محصولات تست","image":"categories/test.svg"}],"products":[{"id":1,"name":"فرنی تخم خربزه","cat":"فرنی‌ها","stage":"کودک ۶ ماه","desc":"غذای فراسودمند نیمه‌آماده هیلا فود برای آماده‌سازی آسان.","img":"farni-tokhm-kharbeze.webp","price":0,"discountPrice":0,"active":true,"createdAt":"2026-10-01","video":""},{"id":2,"name":"چاشنی امگا","cat":"سویق‌ها","stage":"بارداری","desc":"چاشنی کاربردی هیلا فود در گروه غذاهای فراسودمند.","img":"chasni-omega.webp","price":0,"discountPrice":0,"active":true,"createdAt":"2026-10-02","video":""},{"id":3,"name":"کاچی بَزَرَک","cat":"کاچی‌ها","stage":"پس از زایمان و شیردهی","desc":"کاچی نیمه‌آماده برای آماده‌سازی سریع و ساده.","img":"kachi-bozorg.webp","price":0,"discountPrice":0,"active":true,"createdAt":"2026-10-03","video":""},{"id":4,"name":"فرنی به و سیب","cat":"فرنی‌ها","stage":"کودک ۷ ماه","desc":"ترکیبی خوش‌طعم از محصولات فراسودمند هیلا فود.","img":"farni-beh-sib.webp","price":0,"discountPrice":0,"active":true,"createdAt":"2026-10-04","video":""},{"id":5,"name":"محصولات تست","cat":"محصولات تست","stage":"کودک ۹ ماه","desc":"محصول آزمایشی برای مدیریت و تست فروشگاه.","img":"products-group.webp","price":0,"discountPrice":0,"active":true,"createdAt":"2026-10-05","video":""}]}
+{
+  "settings": {
+    "showPrices": true,
+    "currency": "تومان",
+    "paymentEnabled": false,
+    "paymentProvider": "zarinpal",
+    "phone": "۰۹۲۲۷۱۴۰۷۲۶",
+    "eitaa": "https://eitaa.com/hilafood"
+  },
+  "categories": [
+    {
+      "id": "pre",
+      "name": "اقدام به بارداری",
+      "image": "category/pre.svg"
+    },
+    {
+      "id": "preg",
+      "name": "بارداری",
+      "image": "category/preg.svg"
+    },
+    {
+      "id": "6m",
+      "name": "کودک ۶ ماه",
+      "image": "category/6m.svg"
+    },
+    {
+      "id": "7m",
+      "name": "کودک ۷ ماه",
+      "image": "category/7m.svg"
+    },
+    {
+      "id": "8m",
+      "name": "کودک ۸ ماه",
+      "image": "category/8m.svg"
+    },
+    {
+      "id": "9m",
+      "name": "کودک ۹ ماه",
+      "image": "category/9m.svg"
+    },
+    {
+      "id": "10m",
+      "name": "کودک ۱۰ ماه",
+      "image": "category/10m.svg"
+    },
+    {
+      "id": "11m",
+      "name": "کودک ۱۱ ماه",
+      "image": "category/11m.svg"
+    },
+    {
+      "id": "12m",
+      "name": "۱۲ ماه به بالا",
+      "image": "category/12m.svg"
+    },
+    {
+      "id": "post",
+      "name": "پس از زایمان و شیردهی",
+      "image": "category/post.svg"
+    },
+    {
+      "id": "cycle",
+      "name": "قاعدگی",
+      "image": "category/cycle.svg"
+    },
+    {
+      "id": "uterus",
+      "name": "رحم و تخمدان",
+      "image": "category/uterus.svg"
+    },
+    {
+      "id": "grandma",
+      "name": "پک مامانجون و باباجون",
+      "image": "category/grandma.svg"
+    },
+    {
+      "id": "weak",
+      "name": "ضعف",
+      "image": "category/weak.svg"
+    },
+    {
+      "id": "test",
+      "name": "محصولات تست",
+      "image": "category/test.svg"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "فرنی تخم خربزه",
+      "cat": "",
+      "stage": "",
+      "desc": "غذای فراسودمند نیمه‌آماده هیلا فود برای آماده‌سازی آسان.",
+      "img": "farni-tokhm-kharbeze.webp",
+      "price": 135000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-01",
+      "video": ""
+    },
+    {
+      "id": 2,
+      "name": "چاشنی اُمیلا",
+      "cat": "",
+      "stage": "",
+      "desc": "چاشنی کاربردی هیلا فود در گروه غذاهای فراسودمند.",
+      "img": "chasni-omega.webp",
+      "price": 189000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-02",
+      "video": ""
+    },
+    {
+      "id": 3,
+      "name": "کاچی بَزَرَک",
+      "cat": "",
+      "stage": "",
+      "desc": "کاچی نیمه‌آماده برای آماده‌سازی سریع و ساده.",
+      "img": "kachi-bozorg.webp",
+      "price": 409000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-03",
+      "video": ""
+    },
+    {
+      "id": 4,
+      "name": "فرنی به و سیب",
+      "cat": "",
+      "stage": "",
+      "desc": "ترکیبی خوش‌طعم از محصولات فراسودمند هیلا فود.",
+      "img": "farni-beh-sib.webp",
+      "price": 550000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-04",
+      "video": ""
+    },
+    {
+      "id": 5,
+      "name": "محصولات تست",
+      "cat": "",
+      "stage": "",
+      "desc": "محصول آزمایشی برای مدیریت و تست فروشگاه.",
+      "img": "products-group.webp",
+      "price": 0,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 6,
+      "name": "پودر کاچی ساده | ۳۵۰ گرم",
+      "cat": "",
+      "stage": "",
+      "desc": "پودر کاچی ساده در بسته ۳۵۰ گرمی.",
+      "img": "products-group.webp",
+      "price": 120000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 7,
+      "name": "کاچی ۴مغز ۳آرد",
+      "cat": "",
+      "stage": "",
+      "desc": "ترکیب ۳ آرد: جوانه گندم، آرد برنج و آرد گندم.",
+      "img": "products-group.webp",
+      "price": 450000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 8,
+      "name": "پودر کاچی کودک",
+      "cat": "",
+      "stage": "",
+      "desc": "پودر کاچی مخصوص کودک.",
+      "img": "products-group.webp",
+      "price": 300000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 9,
+      "name": "پودر کاچی قاعدگی",
+      "cat": "",
+      "stage": "",
+      "desc": "پودر کاچی مخصوص دوره قاعدگی.",
+      "img": "products-group.webp",
+      "price": 330000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 10,
+      "name": "پودر گداخته، کاچی مخصوص زایمان | ۲۵۰ گرم",
+      "cat": "",
+      "stage": "",
+      "desc": "پودر گداخته، کاچی مخصوص زایمان، ۲۵۰ گرم.",
+      "img": "products-group.webp",
+      "price": 340000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 11,
+      "name": "حریره بادام",
+      "cat": "",
+      "stage": "",
+      "desc": "محصول جدید هیلا فود.",
+      "img": "products-group.webp",
+      "price": 300000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 12,
+      "name": "حریره نارگیل",
+      "cat": "",
+      "stage": "",
+      "desc": "محصول جدید هیلا فود.",
+      "img": "products-group.webp",
+      "price": 400000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 13,
+      "name": "فرنی جوانه گندم",
+      "cat": "",
+      "stage": "",
+      "desc": "محصول جدید هیلا فود.",
+      "img": "products-group.webp",
+      "price": 450000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 14,
+      "name": "فرنی برنج ساده",
+      "cat": "",
+      "stage": "",
+      "desc": "محصول جدید هیلا فود.",
+      "img": "products-group.webp",
+      "price": 120000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 15,
+      "name": "فرنی کدوحلوایی",
+      "cat": "",
+      "stage": "",
+      "desc": "محصول جدید هیلا فود.",
+      "img": "products-group.webp",
+      "price": 500000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    },
+    {
+      "id": 16,
+      "name": "سویلاک",
+      "cat": "",
+      "stage": "",
+      "desc": "مناسب همه سنین، کودکان هشت ماه به بعد.",
+      "img": "products-group.webp",
+      "price": 700000,
+      "discountPrice": 0,
+      "active": true,
+      "createdAt": "2026-10-05",
+      "video": ""
+    }
+  ],
+  "productCategories": [
+    "فرنی‌ها",
+    "حریره‌ها",
+    "سوپ‌ها",
+    "کاچی‌ها",
+    "سویق‌ها",
+    "پک کودک",
+    "پک قاعدگی",
+    "پک زایمان",
+    "پک اقدام به بارداری",
+    "پک رحم و تخمدان",
+    "پک مامانجون و باباجون",
+    "پک ضعف",
+    "محصولات تست"
+  ]
+}

@@ -1,7 +1,14 @@
-# Hila Food v4
-Static RTL Persian storefront for Hila Food.
-- Main site: `/index.html`
-- Admin: `/admin.html`
-- Product images and logo are local under `/assets`.
-- Public prices are hidden.
-- Current admin stores product edits in browser localStorage only; it is not a shared database.
+# Hila Food
+
+فروشگاه فارسی RTL هیلا فود.
+
+- `index.html` صفحه اصلی
+- `category.html` صفحه نمایش محصولات یک دسته
+- `admin.html` مدیریت محصولات، دسته‌بندی و قیمت
+- `assets/` تصاویر محصولات و لوگو
+- `category/` تصاویر شماتیک دسته‌بندی‌ها
+
+محصولات در نسخه پایه بدون دسته‌بندی قرار داده شده‌اند تا مدیر سایت خودش از پنل مدیریت دسته‌بندی کند.
+
+
+قیمت‌های فعلی محصولات در data.json ثبت شده‌اند و نمایش قیمت‌ها فعال است. دسته‌بندی و دوره/نیاز محصولات عمداً خالی گذاشته شده تا مدیر سایت آن‌ها را تعیین کند.
