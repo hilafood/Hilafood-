@@ -1,7 +1,7 @@
 let STORE = {
   settings: {
     showPrices: false,
-    currency: 'تومان',
+    currency: "تومان",
     paymentEnabled: false
   },
   products: [],
@@ -9,88 +9,110 @@ let STORE = {
 };
 
 let cart = JSON.parse(
-  localStorage.getItem('hilaCart') || '[]'
+  localStorage.getItem("hilaCart") || "[]"
 );
-
-const $ = id => document.getElementById(id);
 
 
 /* --------------------------------------------------
-   تصویر
+   ابزارهای عمومی
 -------------------------------------------------- */
 
-function img(p) {
-  const v = String(p || '');
+const $ = id => document.getElementById(id);
 
-  if (!v) return '';
+function img(path) {
+  const v = String(path || "");
+
+  if (!v) return "";
 
   if (
-    v.startsWith('assets/') ||
-    v.startsWith('category/')
+    v.startsWith("assets/") ||
+    v.startsWith("category/")
   ) {
     return v;
   }
 
-  return 'assets/' + v;
+  return "assets/" + v;
 }
 
-
-/* --------------------------------------------------
-   قیمت
--------------------------------------------------- */
 
 function money(n) {
-  return Number(n || 0).toLocaleString('fa-IR') +
-    ' ' +
-    (STORE.settings.currency || 'تومان');
+  return (
+    Number(n || 0).toLocaleString("fa-IR") +
+    " " +
+    (STORE.settings.currency || "تومان")
+  );
 }
 
 
-function finalPrice(p) {
+function finalPrice(product) {
   return Number(
-    p.discountPrice > 0
-      ? p.discountPrice
-      : p.price || 0
+    product.discountPrice > 0
+      ? product.discountPrice
+      : product.price || 0
   );
 }
 
 
 /* --------------------------------------------------
-   دریافت اطلاعات از Cloudflare D1
+   دریافت اطلاعات از D1
 -------------------------------------------------- */
 
 async function load() {
 
   try {
 
-    const r = await fetch(
-      '/api/store?v=' + Date.now(),
+    const response = await fetch(
+      "/api/store?v=" + Date.now(),
       {
-        cache: 'no-store'
+        cache: "no-store"
       }
     );
 
-    if (!r.ok) {
-      throw new Error('خطا در دریافت اطلاعات فروشگاه');
+
+    if (!response.ok) {
+      throw new Error(
+        "خطا در دریافت اطلاعات فروشگاه"
+      );
     }
 
-    const data = await r.json();
+
+    const data = await response.json();
+
 
     if (data.error) {
       throw new Error(data.error);
     }
 
-    STORE = data;
 
-  } catch (e) {
+    STORE = {
+      settings: data.settings || {},
+      categories: data.categories || [],
+      products: data.products || []
+    };
 
-    console.error(e);
 
-    alert(
-      'ارتباط با اطلاعات فروشگاه برقرار نشد. لطفاً دوباره تلاش کنید.'
+  } catch (error) {
+
+    console.error(
+      "Store loading error:",
+      error
     );
 
-    return;
+
+    alert(
+      "اطلاعات فروشگاه دریافت نشد. لطفاً دوباره تلاش کنید."
+    );
+
+
+    STORE = {
+      settings: {
+        showPrices: false,
+        currency: "تومان",
+        paymentEnabled: false
+      },
+      products: [],
+      categories: []
+    };
   }
 
 
@@ -114,27 +136,42 @@ async function load() {
 
 function renderCategories() {
 
-  const el = $('categoryRail');
+  const el = $("categoryRail");
 
   if (!el) return;
 
+
   el.innerHTML =
     (STORE.categories || [])
-      .map(c => `
-        <a
-          class="category-card"
-          href="category.html?cat=${encodeURIComponent(c.name)}"
-        >
-          <img
-            src="${img(c.image)}"
-            loading="lazy"
-            alt="${c.name}"
+      .map(c => {
+
+        return `
+          <a
+            class="category-card"
+            href="category.html?cat=${encodeURIComponent(
+              c.name
+            )}"
           >
 
-          <b>${c.name}</b>
-        </a>
-      `)
-      .join('');
+            ${
+              c.image
+                ? `
+                  <img
+                    src="${img(c.image)}"
+                    loading="lazy"
+                    alt="${c.name}"
+                  >
+                `
+                : ""
+            }
+
+            <b>${c.name}</b>
+
+          </a>
+        `;
+
+      })
+      .join("");
 }
 
 
@@ -142,62 +179,91 @@ function renderCategories() {
    کارت محصول
 -------------------------------------------------- */
 
-function card(p) {
+function card(product) {
 
-  const d =
-    p.discountPrice > 0 &&
-    p.discountPrice < p.price;
+  const discount =
+    Number(product.discountPrice || 0) > 0 &&
+    Number(product.discountPrice || 0) <
+      Number(product.price || 0);
 
-  const price =
-    STORE.settings.showPrices
 
-      ? (
-          d
+  let price = "";
 
-            ? `
-              <del>${money(p.price)}</del>
-              <strong>${money(p.discountPrice)}</strong>
-            `
 
-            : money(p.price)
-        )
+  if (STORE.settings.showPrices) {
 
-      : 'قیمت فعلاً اعلام نشده';
+    price = discount
+
+      ? `
+        <del>
+          ${money(product.price)}
+        </del>
+
+        <strong>
+          ${money(product.discountPrice)}
+        </strong>
+      `
+
+      : money(product.price);
+
+  } else {
+
+    price = "قیمت فعلاً اعلام نشده";
+
+  }
+
+
+  const category =
+    product.stage ||
+    product.cat ||
+    "";
+
+
+  const imageHTML = product.img
+
+    ? `
+      <img
+        src="${img(product.img)}"
+        loading="lazy"
+        alt="${product.name}"
+      >
+    `
+
+    : `
+      <div class="no-image-text">
+        تصویر محصول
+        <br>
+        <small>
+          هنوز اضافه نشده
+        </small>
+      </div>
+    `;
 
 
   return `
+
     <article class="product">
 
       <a
         href="category.html?cat=${encodeURIComponent(
-          p.stage || p.cat || ''
+          category
         )}"
       >
 
-        <div class="photo ${p.img ? '' : 'no-image'}">
+        <div
+          class="photo ${
+            product.img ? "" : "no-image"
+          }"
+        >
 
-          ${
-            p.img
-
-              ? `
-                <img
-                  src="${img(p.img)}"
-                  loading="lazy"
-                  alt="${p.name}"
-                >
-              `
-
-              : `
-                <div class="no-image-text">
-                  تصویر محصول
-                  <br>
-                  <small>هنوز اضافه نشده</small>
-                </div>
-              `
-          }
+          ${imageHTML}
 
           <span class="badge">
-            ${d ? 'تخفیف' : 'فراسودمند'}
+            ${
+              discount
+                ? "تخفیف"
+                : "فراسودمند"
+            }
           </span>
 
         </div>
@@ -208,22 +274,35 @@ function card(p) {
       <div class="product-body">
 
         <small>
-          ${p.cat || ''} |
-          ${p.stage || ''}
+          ${product.cat || ""}
+          ${
+            product.stage
+              ? " | " + product.stage
+              : ""
+          }
         </small>
 
-        <h3>${p.name}</h3>
 
-        <p>${p.desc || ''}</p>
+        <h3>
+          ${product.name}
+        </h3>
+
+
+        <p>
+          ${product.desc || ""}
+        </p>
 
 
         <div class="product-foot">
 
-          <span>${price}</span>
+          <span>
+            ${price}
+          </span>
+
 
           <button
             class="details"
-            onclick="addToCart('${String(p.id)}')"
+            onclick="addToCart('${product.id}')"
           >
             افزودن
           </button>
@@ -233,6 +312,7 @@ function card(p) {
       </div>
 
     </article>
+
   `;
 }
 
@@ -243,108 +323,149 @@ function card(p) {
 
 function renderProducts(list) {
 
-  const productRail = $('productRail');
+  const productRail =
+    $("productRail");
+
 
   if (productRail) {
 
     productRail.innerHTML =
-      list.map(card).join('');
+      list
+        .map(card)
+        .join("");
 
   }
 
 
-  const d =
+  const discountRail =
+    $("discountRail");
+
+
+  if (!discountRail) return;
+
+
+  const discounted =
     list.filter(
-      p =>
-        p.discountPrice > 0 &&
-        p.discountPrice < p.price
+      product =>
+        Number(product.discountPrice || 0) > 0 &&
+        Number(product.discountPrice || 0) <
+          Number(product.price || 0)
     );
 
 
-  const discountRail = $('discountRail');
+  discountRail.innerHTML =
+    discounted.length
 
-  if (discountRail) {
+      ? discounted
+          .map(card)
+          .join("")
 
-    discountRail.innerHTML =
-      d.length
-
-        ? d.map(card).join('')
-
-        : `
-          <div class="empty">
-            فعلاً محصولی با تخفیف ثبت نشده است.
-          </div>
-        `;
-  }
+      : `
+        <div class="empty">
+          فعلاً محصولی با تخفیف ثبت نشده است.
+        </div>
+      `;
 }
 
 
 /* --------------------------------------------------
-   جستجو
+   جستجوی محصولات
 -------------------------------------------------- */
 
 function filterProducts(q) {
 
-  q = (q || '').trim();
-
-  const list =
-    STORE.products.filter(
-      p =>
-        p.active !== false &&
-        (
-          !q ||
-          String(p.name || '').includes(q) ||
-          String(p.cat || '').includes(q) ||
-          String(p.desc || '').includes(q) ||
-          String(p.stage || '').includes(q)
-        )
-    );
+  q = (q || "").trim();
 
 
-  renderProducts(list);
+  const result =
+    STORE.products.filter(product => {
+
+      if (product.active === false) {
+        return false;
+      }
+
+
+      if (!q) {
+        return true;
+      }
+
+
+      return (
+
+        String(product.name || "")
+          .includes(q)
+
+        ||
+
+        String(product.cat || "")
+          .includes(q)
+
+        ||
+
+        String(product.desc || "")
+          .includes(q)
+
+        ||
+
+        String(product.stage || "")
+          .includes(q)
+
+      );
+
+    });
+
+
+  renderProducts(result);
 }
 
 
 /* --------------------------------------------------
-   ویدئو
+   ویدئوی محصول
 -------------------------------------------------- */
 
 function renderVideo() {
 
-  const box = $('videoBox');
+  const videoBox =
+    $("videoBox");
 
-  if (!box) return;
 
-  const p =
+  if (!videoBox) return;
+
+
+  const product =
     STORE.products.find(
       x => x.video
     );
 
 
-  if (p) {
+  if (!product) return;
 
-    box.innerHTML = `
-      <div>
 
-        <h3>${p.name}</h3>
+  videoBox.innerHTML = `
 
-        <p>
-          برای مشاهده طرز آماده‌سازی،
-          ویدئوی محصول را ببینید.
-        </p>
+    <div>
 
-        <a
-          class="btn purple"
-          href="${p.video}"
-          target="_blank"
-          rel="noopener"
-        >
-          ▶ مشاهده ویدئو
-        </a>
+      <h3>
+        ${product.name}
+      </h3>
 
-      </div>
-    `;
-  }
+      <p>
+        برای مشاهده طرز آماده‌سازی،
+        ویدئوی محصول را ببینید.
+      </p>
+
+      <a
+        class="btn purple"
+        href="${product.video}"
+        target="_blank"
+        rel="noopener"
+      >
+        ▶ مشاهده ویدئو
+      </a>
+
+    </div>
+
+  `;
 }
 
 
@@ -354,45 +475,52 @@ function renderVideo() {
 
 function addToCart(id) {
 
-  const p =
+  const product =
     STORE.products.find(
-      x => String(x.id) === String(id)
+      x =>
+        String(x.id) ===
+        String(id)
     );
 
 
   if (
-    !p ||
+    !product ||
     !STORE.settings.showPrices ||
-    !finalPrice(p)
+    !finalPrice(product)
   ) {
 
-    return alert(
-      'قیمت این محصول هنوز ثبت یا فعال نشده است.'
+    alert(
+      "قیمت این محصول هنوز ثبت یا فعال نشده است."
     );
+
+    return;
   }
 
 
-  const x =
+  const existing =
     cart.find(
-      i => String(i.id) === String(id)
+      item =>
+        String(item.id) ===
+        String(id)
     );
 
 
-  if (x) {
+  if (existing) {
 
-    x.qty++;
+    existing.qty++;
 
   } else {
 
     cart.push({
-      id: String(id),
+      id: product.id,
       qty: 1
     });
+
   }
 
 
   localStorage.setItem(
-    'hilaCart',
+    "hilaCart",
     JSON.stringify(cart)
   );
 
@@ -404,80 +532,94 @@ function addToCart(id) {
 
 
 /* --------------------------------------------------
-   سبد خرید
+   بروزرسانی سبد خرید
 -------------------------------------------------- */
 
 function updateCart() {
 
   document
-    .querySelectorAll('.cart-count')
-    .forEach(e => {
+    .querySelectorAll(".cart-count")
+    .forEach(element => {
 
-      e.textContent =
+      element.textContent =
         cart
           .reduce(
-            (a, x) => a + x.qty,
+            (sum, item) =>
+              sum + item.qty,
             0
           )
-          .toLocaleString('fa-IR');
+          .toLocaleString("fa-IR");
+
     });
 
 
-  if (!$('cartItems')) return;
+  const cartItems =
+    $("cartItems");
 
 
-  $('cartItems').innerHTML =
+  if (!cartItems) return;
 
+
+  cartItems.innerHTML =
     cart.length
 
-      ? cart.map(x => {
+      ? cart
+          .map(item => {
 
-          const p =
-            STORE.products.find(
-              y =>
-                String(y.id) === String(x.id)
-            );
-
-
-          if (!p) return '';
-
-
-          return `
-            <div class="cart-row">
-
-              <b>
-
-                ${p.name}
-
-                <small>
-                  ${money(finalPrice(p))}
-                </small>
-
-              </b>
+            const product =
+              STORE.products.find(
+                p =>
+                  String(p.id) ===
+                  String(item.id)
+              );
 
 
-              <div class="qty">
+            if (!product) {
+              return "";
+            }
 
-                <button
-                  onclick="qty('${String(x.id)}',-1)"
-                >
-                  −
-                </button>
 
-                ${x.qty}
+            return `
 
-                <button
-                  onclick="qty('${String(x.id)}',1)"
-                >
-                  +
-                </button>
+              <div class="cart-row">
+
+                <b>
+
+                  ${product.name}
+
+                  <small>
+                    ${money(
+                      finalPrice(product)
+                    )}
+                  </small>
+
+                </b>
+
+
+                <div class="qty">
+
+                  <button
+                    onclick="qty('${product.id}',-1)"
+                  >
+                    −
+                  </button>
+
+                  ${item.qty}
+
+                  <button
+                    onclick="qty('${product.id}',1)"
+                  >
+                    +
+                  </button>
+
+                </div>
 
               </div>
 
-            </div>
-          `;
+            `;
 
-        }).join('')
+          })
+          .join("")
 
       : `
         <div class="empty">
@@ -488,29 +630,38 @@ function updateCart() {
 
   const total =
     cart.reduce(
-      (a, x) => {
+      (sum, item) => {
 
-        const p =
+        const product =
           STORE.products.find(
-            y =>
-              String(y.id) === String(x.id)
+            p =>
+              String(p.id) ===
+              String(item.id)
           );
 
-        return a +
+
+        return (
+          sum +
           (
-            p
-              ? finalPrice(p) * x.qty
+            product
+              ? finalPrice(product) *
+                item.qty
               : 0
-          );
+          )
+        );
 
       },
       0
     );
 
 
-  if ($('cartTotal')) {
+  const cartTotal =
+    $("cartTotal");
 
-    $('cartTotal').textContent =
+
+  if (cartTotal) {
+
+    cartTotal.textContent =
       money(total);
 
   }
@@ -518,36 +669,39 @@ function updateCart() {
 
 
 /* --------------------------------------------------
-   تعداد محصول
+   تغییر تعداد
 -------------------------------------------------- */
 
-function qty(id, d) {
+function qty(id, change) {
 
-  const x =
+  const item =
     cart.find(
-      i =>
-        String(i.id) === String(id)
+      x =>
+        String(x.id) ===
+        String(id)
     );
 
 
-  if (!x) return;
+  if (!item) return;
 
 
-  x.qty += d;
+  item.qty += change;
 
 
-  if (x.qty < 1) {
+  if (item.qty < 1) {
 
     cart =
       cart.filter(
-        i =>
-          String(i.id) !== String(id)
+        x =>
+          String(x.id) !==
+          String(id)
       );
+
   }
 
 
   localStorage.setItem(
-    'hilaCart',
+    "hilaCart",
     JSON.stringify(cart)
   );
 
@@ -562,17 +716,20 @@ function qty(id, d) {
 
 function openCart() {
 
-  if ($('cartDrawer')) {
-    $('cartDrawer')
-      .classList
-      .add('open');
+  const drawer =
+    $("cartDrawer");
+
+  const shade =
+    $("cartShade");
+
+
+  if (drawer) {
+    drawer.classList.add("open");
   }
 
 
-  if ($('cartShade')) {
-    $('cartShade')
-      .classList
-      .add('show');
+  if (shade) {
+    shade.classList.add("show");
   }
 }
 
@@ -583,38 +740,44 @@ function openCart() {
 
 function closeCart() {
 
-  if ($('cartDrawer')) {
-    $('cartDrawer')
-      .classList
-      .remove('open');
+  const drawer =
+    $("cartDrawer");
+
+  const shade =
+    $("cartShade");
+
+
+  if (drawer) {
+    drawer.classList.remove("open");
   }
 
 
-  if ($('cartShade')) {
-    $('cartShade')
-      .classList
-      .remove('show');
+  if (shade) {
+    shade.classList.remove("show");
   }
 }
 
 
 /* --------------------------------------------------
-   منو
+   منوی موبایل
 -------------------------------------------------- */
 
 function toggleMenu() {
 
-  if ($('drawer')) {
-    $('drawer')
-      .classList
-      .toggle('open');
+  const drawer =
+    $("drawer");
+
+  const shade =
+    $("shade");
+
+
+  if (drawer) {
+    drawer.classList.toggle("open");
   }
 
 
-  if ($('shade')) {
-    $('shade')
-      .classList
-      .toggle('show');
+  if (shade) {
+    shade.classList.toggle("show");
   }
 }
 
@@ -627,36 +790,47 @@ async function checkout() {
 
   if (!cart.length) {
 
-    return alert(
-      'سبد خرید خالی است.'
+    alert(
+      "سبد خرید خالی است."
     );
+
+    return;
   }
 
 
-  if (!STORE.settings.paymentEnabled) {
+  if (
+    !STORE.settings.paymentEnabled
+  ) {
 
-    return alert(
-      'درگاه زرین‌پال هنوز توسط مدیر فعال نشده است.'
+    alert(
+      "درگاه زرین‌پال هنوز توسط مدیر فعال نشده است."
     );
+
+    return;
   }
 
 
   const amount =
     cart.reduce(
-      (a, x) => {
+      (sum, item) => {
 
-        const p =
+        const product =
           STORE.products.find(
-            y =>
-              String(y.id) === String(x.id)
+            p =>
+              String(p.id) ===
+              String(item.id)
           );
 
-        return a +
+
+        return (
+          sum +
           (
-            p
-              ? finalPrice(p) * x.qty
+            product
+              ? finalPrice(product) *
+                item.qty
               : 0
-          );
+          )
+        );
 
       },
       0
@@ -665,15 +839,15 @@ async function checkout() {
 
   try {
 
-    const r =
+    const response =
       await fetch(
-        '/api/payment',
+        "/api/payment",
         {
-          method: 'POST',
+          method: "POST",
 
           headers: {
-            'content-type':
-              'application/json'
+            "content-type":
+              "application/json"
           },
 
           body: JSON.stringify({
@@ -684,29 +858,33 @@ async function checkout() {
       );
 
 
-    const d =
-      await r.json()
+    const data =
+      await response
+        .json()
         .catch(() => ({}));
 
 
-    if (d.url) {
+    if (data.url) {
 
-      location.href = d.url;
+      location.href =
+        data.url;
 
     } else {
 
       alert(
-        d.error ||
-        'شروع پرداخت ناموفق بود.'
+        data.error ||
+        "شروع پرداخت ناموفق بود."
       );
+
     }
 
-  } catch (e) {
+  } catch (error) {
 
-    console.error(e);
+    console.error(error);
+
 
     alert(
-      'ارتباط با درگاه پرداخت برقرار نشد.'
+      "ارتباط با درگاه پرداخت برقرار نشد."
     );
   }
 }
@@ -717,6 +895,6 @@ async function checkout() {
 -------------------------------------------------- */
 
 document.addEventListener(
-  'DOMContentLoaded',
+  "DOMContentLoaded",
   load
 );
