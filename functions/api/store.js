@@ -441,7 +441,7 @@ export async function onRequestGet({ env }) {
 
 /* ==================================================
    POST
-   افزودن محصول / تنظیمات
+   افزودن محصول / تنظیمات / بررسی مدیر
 ================================================== */
 
 export async function onRequestPost({ request, env }) {
@@ -469,6 +469,18 @@ export async function onRequestPost({ request, env }) {
 
     const action =
       body.action || "";
+
+
+    /* ----------------------------------------------
+       بررسی کلید مدیریت
+    ---------------------------------------------- */
+
+    if (action === "check-admin") {
+
+      return json({
+        success: true
+      });
+    }
 
 
     /* ----------------------------------------------
