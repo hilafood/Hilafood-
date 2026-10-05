@@ -11,81 +11,29 @@ const DATA = {
   },
 
   categories: [
-    {
-      id: "pre",
-      name: "اقدام به بارداری",
-      image: "category/pre.webp"
-    },
-    {
-      id: "preg",
-      name: "بارداری",
-      image: "category/pregnancy.webp"
-    },
-    {
-      id: "6m",
-      name: "کودک ۶ ماه",
-      image: "category/6m.webp"
-    },
-    {
-      id: "7m",
-      name: "کودک ۷ ماه",
-      image: "category/7m.webp"
-    },
-    {
-      id: "8m",
-      name: "کودک ۸ ماه",
-      image: "category/8m.webp"
-    },
-    {
-      id: "9m",
-      name: "کودک ۹ ماه",
-      image: "category/9m.webp"
-    },
-    {
-      id: "10m",
-      name: "کودک ۱۰ ماه",
-      image: "category/10m.webp"
-    },
-    {
-      id: "11m",
-      name: "کودک ۱۱ ماه",
-      image: "category/11m.webp"
-    },
-    {
-      id: "12m",
-      name: "کودک ۱۲ ماه",
-      image: "category/12m.webp"
-    },
+    { id: "pre", name: "اقدام به بارداری", image: "category/pre.webp" },
+    { id: "preg", name: "بارداری", image: "category/pregnancy.webp" },
+    { id: "6m", name: "کودک ۶ ماه", image: "category/6m.webp" },
+    { id: "7m", name: "کودک ۷ ماه", image: "category/7m.webp" },
+    { id: "8m", name: "کودک ۸ ماه", image: "category/8m.webp" },
+    { id: "9m", name: "کودک ۹ ماه", image: "category/9m.webp" },
+    { id: "10m", name: "کودک ۱۰ ماه", image: "category/10m.webp" },
+    { id: "11m", name: "کودک ۱۱ ماه", image: "category/11m.webp" },
+    { id: "12m", name: "کودک ۱۲ ماه", image: "category/12m.webp" },
     {
       id: "post",
       name: "پس از زایمان و شیردهی",
       image: "category/postpartum.webp"
     },
-    {
-      id: "cycle",
-      name: "قاعدگی",
-      image: "category/cycle.webp"
-    },
-    {
-      id: "uterus",
-      name: "رحم و تخمدان",
-      image: "category/uterus.webp"
-    },
+    { id: "cycle", name: "قاعدگی", image: "category/cycle.webp" },
+    { id: "uterus", name: "رحم و تخمدان", image: "category/uterus.webp" },
     {
       id: "elder",
       name: "پک مامانجون و باباجون",
       image: "category/elder.webp"
     },
-    {
-      id: "weak",
-      name: "ضعف",
-      image: "category/weak.webp"
-    },
-    {
-      id: "test",
-      name: "محصولات تست",
-      image: "category/test.webp"
-    }
+    { id: "weak", name: "ضعف", image: "category/weak.webp" },
+    { id: "test", name: "محصولات تست", image: "category/test.webp" }
   ],
 
   products: [
@@ -183,163 +131,173 @@ const DATA = {
 };
 
 
-/* --------------------------------------------------
-   ساخت جدول‌ها
--------------------------------------------------- */
+/* ==================================================
+   ساخت جدول‌های D1
+================================================== */
 
 async function createTables(db) {
-  await db.batch([
-    db.prepare(`
-      CREATE TABLE IF NOT EXISTS settings (
-        key TEXT PRIMARY KEY,
-        value TEXT
-      )
-    `),
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    )
+  `).run();
 
-    db.prepare(`
-      CREATE TABLE IF NOT EXISTS categories (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        image TEXT
-      )
-    `),
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      image TEXT
+    )
+  `).run();
 
-    db.prepare(`
-      CREATE TABLE IF NOT EXISTS products (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        cat TEXT,
-        desc TEXT,
-        price REAL DEFAULT 0,
-        discount_price REAL,
-        stage TEXT,
-        video TEXT,
-        img TEXT,
-        active INTEGER DEFAULT 1,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-      )
-    `)
-  ]);
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS products (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      cat TEXT,
+      "desc" TEXT,
+      price REAL DEFAULT 0,
+      discount_price REAL,
+      stage TEXT,
+      video TEXT,
+      img TEXT,
+      active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
 }
 
 
-/* --------------------------------------------------
-   وارد کردن اطلاعات اولیه
--------------------------------------------------- */
+/* ==================================================
+   وارد کردن تنظیمات اولیه
+================================================== */
 
-async function seedDatabase(db) {
+async function seedSettings(db) {
+  for (const [key, value] of Object.entries(DATA.settings)) {
+    await db.prepare(`
+      INSERT OR IGNORE INTO settings (key, value)
+      VALUES (?, ?)
+    `)
+    .bind(key, JSON.stringify(value))
+    .run();
+  }
+}
 
-  const countResult = await db
-    .prepare(`SELECT COUNT(*) AS total FROM products`)
-    .first();
 
-  const totalProducts = Number(
-    countResult?.total || 0
-  );
+/* ==================================================
+   وارد کردن دسته‌بندی‌ها
+================================================== */
 
-  /*
-    اگر اطلاعات قبلاً وارد شده باشد،
-    دوباره وارد نمی‌کنیم.
-  */
+async function seedCategories(db) {
+  for (const category of DATA.categories) {
+    await db.prepare(`
+      INSERT OR IGNORE INTO categories
+      (id, name, image)
+      VALUES (?, ?, ?)
+    `)
+    .bind(
+      category.id,
+      category.name,
+      category.image
+    )
+    .run();
+  }
+}
 
+
+/* ==================================================
+   وارد کردن محصولات اولیه
+================================================== */
+
+async function seedProducts(db) {
+
+  const countResult = await db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM products
+  `).first();
+
+  const totalProducts =
+    Number(countResult?.total || 0);
+
+  /* اگر محصولات قبلاً وارد شده‌اند،
+     دوباره محصولات اولیه را وارد نکن */
   if (totalProducts > 0) {
     return;
   }
 
-
-  /* تنظیمات */
-
-  for (const [key, value] of Object.entries(DATA.settings)) {
-
-    await db
-      .prepare(`
-        INSERT OR REPLACE INTO settings
-        (key, value)
-        VALUES (?, ?)
-      `)
-      .bind(
-        key,
-        JSON.stringify(value)
-      )
-      .run();
-  }
-
-
-  /* دسته‌بندی‌ها */
-
-  for (const category of DATA.categories) {
-
-    await db
-      .prepare(`
-        INSERT OR REPLACE INTO categories
-        (id, name, image)
-        VALUES (?, ?, ?)
-      `)
-      .bind(
-        category.id,
-        category.name,
-        category.image
-      )
-      .run();
-  }
-
-
-  /* محصولات */
-
   for (const product of DATA.products) {
 
-    await db
-      .prepare(`
-        INSERT OR REPLACE INTO products
-        (
-          id,
-          name,
-          cat,
-          desc,
-          price,
-          discount_price,
-          stage,
-          video,
-          img,
-          active
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `)
-      .bind(
-        String(product.id),
-        product.name || "",
-        product.cat || "",
-        product.desc || "",
-        Number(product.price || 0),
-        product.discountPrice == null
-          ? null
-          : Number(product.discountPrice),
-        product.stage || "",
-        product.video || "",
-        product.img || "",
-        product.active === false ? 0 : 1
+    await db.prepare(`
+      INSERT OR IGNORE INTO products
+      (
+        id,
+        name,
+        cat,
+        "desc",
+        price,
+        discount_price,
+        stage,
+        video,
+        img,
+        active
       )
-      .run();
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    .bind(
+      String(product.id),
+      product.name || "",
+      product.cat || "",
+      product.desc || "",
+      Number(product.price || 0),
+      product.discountPrice == null
+        ? null
+        : Number(product.discountPrice),
+      product.stage || "",
+      product.video || "",
+      product.img || "",
+      product.active === false ? 0 : 1
+    )
+    .run();
   }
 }
 
 
-/* --------------------------------------------------
-   API اصلی
+/* ==================================================
+   آماده‌سازی کامل دیتابیس
+================================================== */
+
+async function setupDatabase(db) {
+
+  await createTables(db);
+
+  await seedSettings(db);
+
+  await seedCategories(db);
+
+  await seedProducts(db);
+}
+
+
+/* ==================================================
+   API
    /api/store
--------------------------------------------------- */
+================================================== */
 
 export async function onRequestGet({ env }) {
 
   if (!env.DB) {
-
-    return Response.json(
-      {
+    return new Response(
+      JSON.stringify({
         error: "D1 database is not configured"
-      },
+      }),
       {
-        status: 500
+        status: 500,
+        headers: {
+          "content-type":
+            "application/json; charset=utf-8"
+        }
       }
     );
   }
@@ -350,50 +308,46 @@ export async function onRequestGet({ env }) {
     const db = env.DB;
 
 
-    /* ساخت جدول‌ها */
+    /* ساخت و آماده‌سازی دیتابیس */
 
-    await createTables(db);
-
-
-    /* وارد کردن اطلاعات اولیه */
-
-    await seedDatabase(db);
+    await setupDatabase(db);
 
 
-    /* دریافت تنظیمات */
+    /* ----------------------------------------------
+       تنظیمات
+    ---------------------------------------------- */
 
-    const settingsResult = await db
-      .prepare(`
+    const settingsResult =
+      await db.prepare(`
         SELECT key, value
         FROM settings
         ORDER BY key
-      `)
-      .all();
+      `).all();
 
 
-    /* دریافت دسته‌بندی‌ها */
+    /* ----------------------------------------------
+       دسته‌بندی‌ها
+    ---------------------------------------------- */
 
-    const categoriesResult = await db
-      .prepare(`
-        SELECT
-          id,
-          name,
-          image
+    const categoriesResult =
+      await db.prepare(`
+        SELECT id, name, image
         FROM categories
         ORDER BY rowid
-      `)
-      .all();
+      `).all();
 
 
-    /* دریافت محصولات */
+    /* ----------------------------------------------
+       محصولات
+    ---------------------------------------------- */
 
-    const productsResult = await db
-      .prepare(`
+    const productsResult =
+      await db.prepare(`
         SELECT
           id,
           name,
           cat,
-          desc,
+          "desc",
           price,
           discount_price,
           stage,
@@ -404,15 +358,18 @@ export async function onRequestGet({ env }) {
           updated_at
         FROM products
         ORDER BY rowid
-      `)
-      .all();
+      `).all();
 
 
-    /* تبدیل تنظیمات */
+    /* ----------------------------------------------
+       تبدیل تنظیمات
+    ---------------------------------------------- */
 
     const settings = {};
 
-    for (const row of settingsResult.results || []) {
+    for (
+      const row of settingsResult.results || []
+    ) {
 
       try {
 
@@ -427,48 +384,75 @@ export async function onRequestGet({ env }) {
     }
 
 
-    /* تبدیل محصولات به فرمت سایت */
+    /* ----------------------------------------------
+       تبدیل محصولات
+    ---------------------------------------------- */
 
     const products =
       (productsResult.results || []).map(
         product => ({
+
           id: product.id,
+
           name: product.name,
+
           cat: product.cat || "",
+
           desc: product.desc || "",
-          price: Number(product.price || 0),
+
+          price:
+            Number(product.price || 0),
+
           discountPrice:
             product.discount_price == null
               ? 0
               : Number(product.discount_price),
-          stage: product.stage || "",
-          video: product.video || "",
-          img: product.img || "",
-          active: Number(product.active) === 1,
-          createdAt: product.created_at || ""
+
+          stage:
+            product.stage || "",
+
+          video:
+            product.video || "",
+
+          img:
+            product.img || "",
+
+          active:
+            Number(product.active) === 1,
+
+          createdAt:
+            product.created_at || ""
+
         })
       );
 
 
-    /* پاسخ نهایی */
+    /* ----------------------------------------------
+       پاسخ نهایی
+    ---------------------------------------------- */
 
     return new Response(
       JSON.stringify({
-        settings,
+        settings: settings,
+
         categories:
           categoriesResult.results || [],
-        products
+
+        products: products
       }),
       {
         status: 200,
+
         headers: {
           "content-type":
             "application/json; charset=utf-8",
+
           "cache-control":
             "no-store"
         }
       }
     );
+
 
   } catch (error) {
 
@@ -480,9 +464,11 @@ export async function onRequestGet({ env }) {
       }),
       {
         status: 500,
+
         headers: {
           "content-type":
             "application/json; charset=utf-8",
+
           "cache-control":
             "no-store"
         }
