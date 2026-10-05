@@ -132,10 +132,29 @@ const DATA = {
 
 
 /* ==================================================
+   ابزارهای عمومی
+================================================== */
+
+function json(data, status = 200) {
+  return new Response(
+    JSON.stringify(data),
+    {
+      status,
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "no-store"
+      }
+    }
+  );
+}
+
+
+/* ==================================================
    ساخت جدول‌های D1
 ================================================== */
 
 async function createTables(db) {
+
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
@@ -171,27 +190,35 @@ async function createTables(db) {
 
 
 /* ==================================================
-   وارد کردن تنظیمات اولیه
+   تنظیمات اولیه
 ================================================== */
 
 async function seedSettings(db) {
+
   for (const [key, value] of Object.entries(DATA.settings)) {
+
     await db.prepare(`
-      INSERT OR IGNORE INTO settings (key, value)
+      INSERT OR IGNORE INTO settings
+      (key, value)
       VALUES (?, ?)
     `)
-    .bind(key, JSON.stringify(value))
+    .bind(
+      key,
+      JSON.stringify(value)
+    )
     .run();
   }
 }
 
 
 /* ==================================================
-   وارد کردن دسته‌بندی‌ها
+   دسته‌بندی‌های اولیه
 ================================================== */
 
 async function seedCategories(db) {
+
   for (const category of DATA.categories) {
+
     await db.prepare(`
       INSERT OR IGNORE INTO categories
       (id, name, image)
@@ -208,7 +235,7 @@ async function seedCategories(db) {
 
 
 /* ==================================================
-   وارد کردن محصولات اولیه
+   محصولات اولیه
 ================================================== */
 
 async function seedProducts(db) {
@@ -221,8 +248,6 @@ async function seedProducts(db) {
   const totalProducts =
     Number(countResult?.total || 0);
 
-  /* اگر محصولات قبلاً وارد شده‌اند،
-     دوباره محصولات اولیه را وارد نکن */
   if (totalProducts > 0) {
     return;
   }
@@ -265,7 +290,7 @@ async function seedProducts(db) {
 
 
 /* ==================================================
-   آماده‌سازی کامل دیتابیس
+   آماده‌سازی دیتابیس
 ================================================== */
 
 async function setupDatabase(db) {
@@ -281,69 +306,195 @@ async function setupDatabase(db) {
 
 
 /* ==================================================
-   API
-   /api/store
+   بررسی کلید مدیریت
+================================================== */
+
+function isAdmin(request, env) {
+
+  const key =
+    request.headers.get("x-admin-key") || "";
+
+  return !!env.ADMIN_KEY &&
+         key === env.ADMIN_KEY;
+}
+
+
+/* ==================================================
+   خواندن اطلاعات کامل فروشگاه
+================================================== */
+
+async function getStore(db) {
+
+  const settingsResult =
+    await db.prepare(`
+      SELECT key, value
+      FROM settings
+      ORDER BY key
+    `).all();
+
+  const categoriesResult =
+    await db.prepare(`
+      SELECT id, name, image
+      FROM categories
+      ORDER BY rowid
+    `).all();
+
+  const productsResult =
+    await db.prepare(`
+      SELECT
+        id,
+        name,
+        cat,
+        "desc",
+        price,
+        discount_price,
+        stage,
+        video,
+        img,
+        active,
+        created_at,
+        updated_at
+      FROM products
+      ORDER BY rowid
+    `).all();
+
+
+  const settings = {};
+
+  for (const row of settingsResult.results || []) {
+
+    try {
+      settings[row.key] =
+        JSON.parse(row.value);
+    } catch {
+      settings[row.key] =
+        row.value;
+    }
+  }
+
+
+  const products =
+    (productsResult.results || []).map(product => ({
+      id: product.id,
+      name: product.name,
+      cat: product.cat || "",
+      desc: product.desc || "",
+      price: Number(product.price || 0),
+      discountPrice:
+        product.discount_price == null
+          ? 0
+          : Number(product.discount_price),
+      stage: product.stage || "",
+      video: product.video || "",
+      img: product.img || "",
+      active: Number(product.active) === 1,
+      createdAt: product.created_at || "",
+      updatedAt: product.updated_at || ""
+    }));
+
+
+  return {
+    settings,
+
+    categories:
+      categoriesResult.results || [],
+
+    products
+  };
+}
+
+
+/* ==================================================
+   GET
+   دریافت اطلاعات فروشگاه
 ================================================== */
 
 export async function onRequestGet({ env }) {
 
   if (!env.DB) {
-    return new Response(
-      JSON.stringify({
-        error: "D1 database is not configured"
-      }),
-      {
-        status: 500,
-        headers: {
-          "content-type":
-            "application/json; charset=utf-8"
-        }
-      }
-    );
+    return json({
+      error: "D1 database is not configured"
+    }, 500);
   }
-
 
   try {
 
     const db = env.DB;
 
+    await setupDatabase(db);
 
-    /* ساخت و آماده‌سازی دیتابیس */
+    const store =
+      await getStore(db);
+
+    return json(store);
+
+  } catch (error) {
+
+    return json({
+      error:
+        error?.message ||
+        String(error)
+    }, 500);
+  }
+}
+
+
+/* ==================================================
+   POST
+   افزودن محصول / تنظیمات
+================================================== */
+
+export async function onRequestPost({ request, env }) {
+
+  if (!env.DB) {
+    return json({
+      error: "D1 database is not configured"
+    }, 500);
+  }
+
+  if (!isAdmin(request, env)) {
+    return json({
+      error: "Unauthorized"
+    }, 401);
+  }
+
+  try {
+
+    const db = env.DB;
 
     await setupDatabase(db);
 
+    const body =
+      await request.json();
 
-    /* ----------------------------------------------
-       تنظیمات
-    ---------------------------------------------- */
-
-    const settingsResult =
-      await db.prepare(`
-        SELECT key, value
-        FROM settings
-        ORDER BY key
-      `).all();
+    const action =
+      body.action || "";
 
 
     /* ----------------------------------------------
-       دسته‌بندی‌ها
+       افزودن محصول
     ---------------------------------------------- */
 
-    const categoriesResult =
+    if (action === "create-product") {
+
+      const p =
+        body.product || {};
+
+      if (!String(p.name || "").trim()) {
+        return json({
+          error: "نام محصول الزامی است"
+        }, 400);
+      }
+
+      const id =
+        String(
+          p.id ||
+          Date.now()
+        );
+
       await db.prepare(`
-        SELECT id, name, image
-        FROM categories
-        ORDER BY rowid
-      `).all();
-
-
-    /* ----------------------------------------------
-       محصولات
-    ---------------------------------------------- */
-
-    const productsResult =
-      await db.prepare(`
-        SELECT
+        INSERT INTO products
+        (
           id,
           name,
           cat,
@@ -353,126 +504,250 @@ export async function onRequestGet({ env }) {
           stage,
           video,
           img,
-          active,
-          created_at,
-          updated_at
-        FROM products
-        ORDER BY rowid
-      `).all();
+          active
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .bind(
+        id,
+        String(p.name || "").trim(),
+        String(p.cat || ""),
+        String(p.desc || ""),
+        Number(p.price || 0),
+        p.discountPrice == null ||
+        p.discountPrice === ""
+          ? null
+          : Number(p.discountPrice),
+        String(p.stage || ""),
+        String(p.video || ""),
+        String(p.img || ""),
+        p.active === false ? 0 : 1
+      )
+      .run();
 
-
-    /* ----------------------------------------------
-       تبدیل تنظیمات
-    ---------------------------------------------- */
-
-    const settings = {};
-
-    for (
-      const row of settingsResult.results || []
-    ) {
-
-      try {
-
-        settings[row.key] =
-          JSON.parse(row.value);
-
-      } catch {
-
-        settings[row.key] =
-          row.value;
-      }
+      return json({
+        success: true,
+        id
+      });
     }
 
 
     /* ----------------------------------------------
-       تبدیل محصولات
+       تغییر تنظیمات
     ---------------------------------------------- */
 
-    const products =
-      (productsResult.results || []).map(
-        product => ({
+    if (action === "save-settings") {
 
-          id: product.id,
+      const settings =
+        body.settings || {};
 
-          name: product.name,
+      for (
+        const [key, value]
+        of Object.entries(settings)
+      ) {
 
-          cat: product.cat || "",
-
-          desc: product.desc || "",
-
-          price:
-            Number(product.price || 0),
-
-          discountPrice:
-            product.discount_price == null
-              ? 0
-              : Number(product.discount_price),
-
-          stage:
-            product.stage || "",
-
-          video:
-            product.video || "",
-
-          img:
-            product.img || "",
-
-          active:
-            Number(product.active) === 1,
-
-          createdAt:
-            product.created_at || ""
-
-        })
-      );
-
-
-    /* ----------------------------------------------
-       پاسخ نهایی
-    ---------------------------------------------- */
-
-    return new Response(
-      JSON.stringify({
-        settings: settings,
-
-        categories:
-          categoriesResult.results || [],
-
-        products: products
-      }),
-      {
-        status: 200,
-
-        headers: {
-          "content-type":
-            "application/json; charset=utf-8",
-
-          "cache-control":
-            "no-store"
-        }
+        await db.prepare(`
+          INSERT INTO settings
+          (key, value)
+          VALUES (?, ?)
+          ON CONFLICT(key)
+          DO UPDATE SET value = excluded.value
+        `)
+        .bind(
+          key,
+          JSON.stringify(value)
+        )
+        .run();
       }
-    );
 
+      return json({
+        success: true
+      });
+    }
+
+
+    return json({
+      error: "Unknown action"
+    }, 400);
 
   } catch (error) {
 
-    return new Response(
-      JSON.stringify({
-        error:
-          error?.message ||
-          String(error)
-      }),
-      {
-        status: 500,
+    return json({
+      error:
+        error?.message ||
+        String(error)
+    }, 500);
+  }
+}
 
-        headers: {
-          "content-type":
-            "application/json; charset=utf-8",
 
-          "cache-control":
-            "no-store"
-        }
-      }
-    );
+/* ==================================================
+   PUT
+   ویرایش محصول
+================================================== */
+
+export async function onRequestPut({ request, env }) {
+
+  if (!env.DB) {
+    return json({
+      error: "D1 database is not configured"
+    }, 500);
+  }
+
+  if (!isAdmin(request, env)) {
+    return json({
+      error: "Unauthorized"
+    }, 401);
+  }
+
+  try {
+
+    const db = env.DB;
+
+    await setupDatabase(db);
+
+    const body =
+      await request.json();
+
+    const p =
+      body.product || {};
+
+    const id =
+      String(p.id || "");
+
+    if (!id) {
+      return json({
+        error: "شناسه محصول الزامی است"
+      }, 400);
+    }
+
+    if (!String(p.name || "").trim()) {
+      return json({
+        error: "نام محصول الزامی است"
+      }, 400);
+    }
+
+
+    const result =
+      await db.prepare(`
+        UPDATE products
+        SET
+          name = ?,
+          cat = ?,
+          "desc" = ?,
+          price = ?,
+          discount_price = ?,
+          stage = ?,
+          video = ?,
+          img = ?,
+          active = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `)
+      .bind(
+        String(p.name || "").trim(),
+        String(p.cat || ""),
+        String(p.desc || ""),
+        Number(p.price || 0),
+        p.discountPrice == null ||
+        p.discountPrice === ""
+          ? null
+          : Number(p.discountPrice),
+        String(p.stage || ""),
+        String(p.video || ""),
+        String(p.img || ""),
+        p.active === false ? 0 : 1,
+        id
+      )
+      .run();
+
+
+    if (!result.meta?.changes) {
+      return json({
+        error: "محصول پیدا نشد"
+      }, 404);
+    }
+
+
+    return json({
+      success: true
+    });
+
+  } catch (error) {
+
+    return json({
+      error:
+        error?.message ||
+        String(error)
+    }, 500);
+  }
+}
+
+
+/* ==================================================
+   DELETE
+   حذف محصول
+================================================== */
+
+export async function onRequestDelete({ request, env }) {
+
+  if (!env.DB) {
+    return json({
+      error: "D1 database is not configured"
+    }, 500);
+  }
+
+  if (!isAdmin(request, env)) {
+    return json({
+      error: "Unauthorized"
+    }, 401);
+  }
+
+  try {
+
+    const db = env.DB;
+
+    await setupDatabase(db);
+
+    const body =
+      await request.json();
+
+    const id =
+      String(body.id || "");
+
+    if (!id) {
+      return json({
+        error: "شناسه محصول الزامی است"
+      }, 400);
+    }
+
+
+    const result =
+      await db.prepare(`
+        DELETE FROM products
+        WHERE id = ?
+      `)
+      .bind(id)
+      .run();
+
+
+    if (!result.meta?.changes) {
+      return json({
+        error: "محصول پیدا نشد"
+      }, 404);
+    }
+
+
+    return json({
+      success: true
+    });
+
+  } catch (error) {
+
+    return json({
+      error:
+        error?.message ||
+        String(error)
+    }, 500);
   }
 }
