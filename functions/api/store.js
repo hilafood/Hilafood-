@@ -11,43 +11,183 @@ const DATA = {
   },
 
   categories: [
-    ["pre","اقدام به بارداری","category/pre.webp"],
-    ["preg","بارداری","category/pregnancy.webp"],
-    ["6m","کودک ۶ ماه","category/6m.webp"],
-    ["7m","کودک ۷ ماه","category/7m.webp"],
-    ["8m","کودک ۸ ماه","category/8m.webp"],
-    ["9m","کودک ۹ ماه","category/9m.webp"],
-    ["10m","کودک ۱۰ ماه","category/10m.webp"],
-    ["11m","کودک ۱۱ ماه","category/11m.webp"],
-    ["12m","کودک ۱۲ ماه","category/12m.webp"],
-    ["post","پس از زایمان و شیردهی","category/postpartum.webp"],
-    ["cycle","قاعدگی","category/cycle.webp"],
-    ["uterus","رحم و تخمدان","category/uterus.webp"],
-    ["elder","پک مامانجون و باباجون","category/elder.webp"],
-    ["weak","ضعف","category/weak.webp"],
-    ["test","محصولات تست","category/test.webp"]
+    {
+      id: "pre",
+      name: "اقدام به بارداری",
+      image: "category/pre.webp"
+    },
+    {
+      id: "preg",
+      name: "بارداری",
+      image: "category/pregnancy.webp"
+    },
+    {
+      id: "6m",
+      name: "کودک ۶ ماه",
+      image: "category/6m.webp"
+    },
+    {
+      id: "7m",
+      name: "کودک ۷ ماه",
+      image: "category/7m.webp"
+    },
+    {
+      id: "8m",
+      name: "کودک ۸ ماه",
+      image: "category/8m.webp"
+    },
+    {
+      id: "9m",
+      name: "کودک ۹ ماه",
+      image: "category/9m.webp"
+    },
+    {
+      id: "10m",
+      name: "کودک ۱۰ ماه",
+      image: "category/10m.webp"
+    },
+    {
+      id: "11m",
+      name: "کودک ۱۱ ماه",
+      image: "category/11m.webp"
+    },
+    {
+      id: "12m",
+      name: "کودک ۱۲ ماه",
+      image: "category/12m.webp"
+    },
+    {
+      id: "post",
+      name: "پس از زایمان و شیردهی",
+      image: "category/postpartum.webp"
+    },
+    {
+      id: "cycle",
+      name: "قاعدگی",
+      image: "category/cycle.webp"
+    },
+    {
+      id: "uterus",
+      name: "رحم و تخمدان",
+      image: "category/uterus.webp"
+    },
+    {
+      id: "elder",
+      name: "پک مامانجون و باباجون",
+      image: "category/elder.webp"
+    },
+    {
+      id: "weak",
+      name: "ضعف",
+      image: "category/weak.webp"
+    },
+    {
+      id: "test",
+      name: "محصولات تست",
+      image: "category/test.webp"
+    }
   ],
 
   products: [
-    [1,"پودر کاچی ساده | ۳۵۰ گرم",120000,""],
-    [2,"کاچی ۴مغز ۳آرد",450000,""],
-    [3,"پودر کاچی کودک",300000,""],
-    [4,"پودر کاچی بَزَرَک",409000,"kachi-bozorg.webp"],
-    [5,"پودر کاچی قاعدگی",330000,""],
-    [6,"پودر گداخته، کاچی مخصوص زایمان، ۲۵۰ گرم",340000,""],
-    [7,"چاشنی اُمیلا",189000,"chasni-omega.webp"],
-    [8,"فرنی تخم خربزه",135000,"farni-tokhm-kharbeze.webp"],
-    [9,"حریره بادام",300000,""],
-    [10,"حریره نارگیل",400000,""],
-    [11,"فرنی جوانه گندم",450000,""],
-    [12,"فرنی برنج ساده",120000,""],
-    [13,"فرنی کدوحلوایی",500000,""],
-    [14,"فرنی به، سیب",550000,"farni-beh-sib.webp"],
-    [15,"سَویلاک",700000,""]
+    {
+      id: "1",
+      name: "پودر کاچی ساده | ۳۵۰ گرم",
+      price: 120000,
+      img: ""
+    },
+    {
+      id: "2",
+      name: "کاچی ۴مغز۳ارد | ترکیب ۳ آرد",
+      price: 450000,
+      img: ""
+    },
+    {
+      id: "3",
+      name: "پودر کاچی کودک",
+      price: 300000,
+      img: ""
+    },
+    {
+      id: "4",
+      name: "پودر کاچی بَزَرَک",
+      price: 409000,
+      img: "kachi-bozorg.webp"
+    },
+    {
+      id: "5",
+      name: "پودر کاچی قاعدگی",
+      price: 330000,
+      img: ""
+    },
+    {
+      id: "6",
+      name: "پودر گداخته | کاچی مخصوص زایمان | ۲۵۰ گرم",
+      price: 340000,
+      img: ""
+    },
+    {
+      id: "7",
+      name: "چاشنی اُمیلا",
+      price: 189000,
+      img: "chasni-omega.webp"
+    },
+    {
+      id: "8",
+      name: "فرنی تخم خربزه",
+      price: 135000,
+      img: "farni-tokhm-kharbeze.webp"
+    },
+    {
+      id: "9",
+      name: "حریره بادام",
+      price: 300000,
+      img: ""
+    },
+    {
+      id: "10",
+      name: "حریره نارگیل",
+      price: 400000,
+      img: ""
+    },
+    {
+      id: "11",
+      name: "فرنی جوانه گندم",
+      price: 450000,
+      img: ""
+    },
+    {
+      id: "12",
+      name: "فرنی برنج ساده",
+      price: 120000,
+      img: ""
+    },
+    {
+      id: "13",
+      name: "فرنی کدوحلوایی",
+      price: 500000,
+      img: ""
+    },
+    {
+      id: "14",
+      name: "فرنی به، سیب",
+      price: 550000,
+      img: "farni-beh-sib.webp"
+    },
+    {
+      id: "15",
+      name: "سویلاک",
+      price: 700000,
+      img: ""
+    }
   ]
 };
 
-async function setup(db) {
+
+/* --------------------------------------------------
+   ساخت جدول‌ها
+-------------------------------------------------- */
+
+async function createTables(db) {
   await db.batch([
     db.prepare(`
       CREATE TABLE IF NOT EXISTS settings (
@@ -81,131 +221,270 @@ async function setup(db) {
       )
     `)
   ]);
+}
 
-  const count = await db
-    .prepare("SELECT COUNT(*) AS n FROM products")
+
+/* --------------------------------------------------
+   وارد کردن اطلاعات اولیه
+-------------------------------------------------- */
+
+async function seedDatabase(db) {
+
+  const countResult = await db
+    .prepare(`SELECT COUNT(*) AS total FROM products`)
     .first();
 
-  if (Number(count?.n || 0) === 0) {
+  const totalProducts = Number(
+    countResult?.total || 0
+  );
 
-    const commands = [];
+  /*
+    اگر اطلاعات قبلاً وارد شده باشد،
+    دوباره وارد نمی‌کنیم.
+  */
 
-    for (const [key,value] of Object.entries(DATA.settings)) {
-      commands.push(
-        db.prepare(
-          "INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)",
-          [key, JSON.stringify(value)]
-        )
-      );
-    }
+  if (totalProducts > 0) {
+    return;
+  }
 
-    for (const [id,name,image] of DATA.categories) {
-      commands.push(
-        db.prepare(
-          "INSERT OR REPLACE INTO categories (id,name,image) VALUES (?,?,?)",
-          [id,name,image]
-        )
-      );
-    }
 
-    for (const [id,name,price,img] of DATA.products) {
-      commands.push(
-        db.prepare(`
-          INSERT OR REPLACE INTO products
-          (id,name,cat,desc,price,discount_price,stage,video,img,active)
-          VALUES (?,?,?,?,?,?,?,?,?,?)
-        `,[
-          String(id),
+  /* تنظیمات */
+
+  for (const [key, value] of Object.entries(DATA.settings)) {
+
+    await db
+      .prepare(`
+        INSERT OR REPLACE INTO settings
+        (key, value)
+        VALUES (?, ?)
+      `)
+      .bind(
+        key,
+        JSON.stringify(value)
+      )
+      .run();
+  }
+
+
+  /* دسته‌بندی‌ها */
+
+  for (const category of DATA.categories) {
+
+    await db
+      .prepare(`
+        INSERT OR REPLACE INTO categories
+        (id, name, image)
+        VALUES (?, ?, ?)
+      `)
+      .bind(
+        category.id,
+        category.name,
+        category.image
+      )
+      .run();
+  }
+
+
+  /* محصولات */
+
+  for (const product of DATA.products) {
+
+    await db
+      .prepare(`
+        INSERT OR REPLACE INTO products
+        (
+          id,
           name,
-          "",
-          "",
+          cat,
+          desc,
           price,
-          0,
-          "",
-          "",
+          discount_price,
+          stage,
+          video,
           img,
-          1
-        ])
-      );
-    }
-
-    await db.batch(commands);
+          active
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .bind(
+        String(product.id),
+        product.name || "",
+        product.cat || "",
+        product.desc || "",
+        Number(product.price || 0),
+        product.discountPrice == null
+          ? null
+          : Number(product.discountPrice),
+        product.stage || "",
+        product.video || "",
+        product.img || "",
+        product.active === false ? 0 : 1
+      )
+      .run();
   }
 }
+
+
+/* --------------------------------------------------
+   API اصلی
+   /api/store
+-------------------------------------------------- */
 
 export async function onRequestGet({ env }) {
 
   if (!env.DB) {
+
     return Response.json(
-      {error:"D1 binding DB is not configured"},
-      {status:500}
+      {
+        error: "D1 database is not configured"
+      },
+      {
+        status: 500
+      }
     );
   }
 
+
   try {
 
-    await setup(env.DB);
+    const db = env.DB;
 
-    const s = await env.DB
-      .prepare("SELECT key,value FROM settings")
+
+    /* ساخت جدول‌ها */
+
+    await createTables(db);
+
+
+    /* وارد کردن اطلاعات اولیه */
+
+    await seedDatabase(db);
+
+
+    /* دریافت تنظیمات */
+
+    const settingsResult = await db
+      .prepare(`
+        SELECT key, value
+        FROM settings
+        ORDER BY key
+      `)
       .all();
 
-    const c = await env.DB
-      .prepare("SELECT * FROM categories ORDER BY rowid")
+
+    /* دریافت دسته‌بندی‌ها */
+
+    const categoriesResult = await db
+      .prepare(`
+        SELECT
+          id,
+          name,
+          image
+        FROM categories
+        ORDER BY rowid
+      `)
       .all();
 
-    const p = await env.DB
-      .prepare("SELECT * FROM products ORDER BY rowid")
+
+    /* دریافت محصولات */
+
+    const productsResult = await db
+      .prepare(`
+        SELECT
+          id,
+          name,
+          cat,
+          desc,
+          price,
+          discount_price,
+          stage,
+          video,
+          img,
+          active,
+          created_at,
+          updated_at
+        FROM products
+        ORDER BY rowid
+      `)
       .all();
+
+
+    /* تبدیل تنظیمات */
 
     const settings = {};
 
-    for (const row of s.results || []) {
+    for (const row of settingsResult.results || []) {
+
       try {
-        settings[row.key] = JSON.parse(row.value);
+
+        settings[row.key] =
+          JSON.parse(row.value);
+
       } catch {
-        settings[row.key] = row.value;
+
+        settings[row.key] =
+          row.value;
       }
     }
 
-    const products = (p.results || []).map(x => ({
-      id: x.id,
-      name: x.name,
-      cat: x.cat || "",
-      desc: x.desc || "",
-      price: Number(x.price || 0),
-      discountPrice: Number(x.discount_price || 0),
-      stage: x.stage || "",
-      video: x.video || "",
-      img: x.img || "",
-      active: !!x.active,
-      createdAt: x.created_at || ""
-    }));
+
+    /* تبدیل محصولات به فرمت سایت */
+
+    const products =
+      (productsResult.results || []).map(
+        product => ({
+          id: product.id,
+          name: product.name,
+          cat: product.cat || "",
+          desc: product.desc || "",
+          price: Number(product.price || 0),
+          discountPrice:
+            product.discount_price == null
+              ? 0
+              : Number(product.discount_price),
+          stage: product.stage || "",
+          video: product.video || "",
+          img: product.img || "",
+          active: Number(product.active) === 1,
+          createdAt: product.created_at || ""
+        })
+      );
+
+
+    /* پاسخ نهایی */
 
     return new Response(
       JSON.stringify({
         settings,
-        categories: c.results || [],
+        categories:
+          categoriesResult.results || [],
         products
       }),
       {
+        status: 200,
         headers: {
-          "content-type":"application/json; charset=utf-8",
-          "cache-control":"no-store"
+          "content-type":
+            "application/json; charset=utf-8",
+          "cache-control":
+            "no-store"
         }
       }
     );
 
-  } catch (e) {
+  } catch (error) {
 
     return new Response(
       JSON.stringify({
-        error: String(e?.message || e)
+        error:
+          error?.message ||
+          String(error)
       }),
       {
-        status:500,
-        headers:{
-          "content-type":"application/json; charset=utf-8"
+        status: 500,
+        headers: {
+          "content-type":
+            "application/json; charset=utf-8",
+          "cache-control":
+            "no-store"
         }
       }
     );
