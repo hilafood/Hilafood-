@@ -13,77 +13,77 @@
     {
       "id": "pre",
       "name": "اقدام به بارداری",
-      "image": "assets/categories/pre.webp"
+      "image": "category/pre.webp"
     },
     {
       "id": "preg",
       "name": "بارداری",
-      "image": "assets/categories/pregnancy.webp"
+      "image": "category/pregnancy.webp"
     },
     {
       "id": "6m",
       "name": "کودک ۶ ماه",
-      "image": "assets/categories/6m.webp"
+      "image": "category/6m.webp"
     },
     {
       "id": "7m",
       "name": "کودک ۷ ماه",
-      "image": "assets/categories/7m.webp"
+      "image": "category/7m.webp"
     },
     {
       "id": "8m",
       "name": "کودک ۸ ماه",
-      "image": "assets/categories/8m.webp"
+      "image": "category/8m.webp"
     },
     {
       "id": "9m",
       "name": "کودک ۹ ماه",
-      "image": "assets/categories/9m.webp"
+      "image": "category/9m.webp"
     },
     {
       "id": "10m",
       "name": "کودک ۱۰ ماه",
-      "image": "assets/categories/10m.webp"
+      "image": "category/10m.webp"
     },
     {
       "id": "11m",
       "name": "کودک ۱۱ ماه",
-      "image": "assets/categories/11m.webp"
+      "image": "category/11m.webp"
     },
     {
       "id": "12m",
       "name": "کودک ۱۲ ماه",
-      "image": "assets/categories/12m.webp"
+      "image": "category/12m.webp"
     },
     {
       "id": "post",
       "name": "پس از زایمان و شیردهی",
-      "image": "assets/categories/postpartum.webp"
+      "image": "category/postpartum.webp"
     },
     {
       "id": "cycle",
       "name": "قاعدگی",
-      "image": "assets/categories/cycle.webp"
+      "image": "category/cycle.webp"
     },
     {
       "id": "uterus",
       "name": "رحم و تخمدان",
-      "image": "assets/categories/uterus.webp"
+      "image": "category/uterus.webp"
     },
     {
       "id": "elder",
-      "name": "سالمندان",
-      "image": "assets/categories/elder.webp"
+      "name": "پک مامانجون و باباجون",
+      "image": "category/elder.webp"
     },
     {
       "id": "weak",
       "name": "ضعف",
-      "image": "assets/categories/weak.webp"
+      "image": "category/weak.webp"
     },
     {
       "id": "test",
       "name": "محصولات تست",
-      "image": "assets/categories/test.webp"
+      "image": "category/test.webp"
     }
   ],
   "products": [
@@ -93,8 +93,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "kachi-bozorg.webp",
-      "price": 120,
+      "img": "",
+      "price": 120000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-01",
@@ -106,8 +106,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "kachi-bozorg.webp",
-      "price": 450,
+      "img": "",
+      "price": 450000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-02",
@@ -119,8 +119,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "kachi-bozorg.webp",
-      "price": 300,
+      "img": "",
+      "price": 300000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-03",
@@ -133,7 +133,7 @@
       "stage": "",
       "desc": "",
       "img": "kachi-bozorg.webp",
-      "price": 409,
+      "price": 409000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-04",
@@ -145,8 +145,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "kachi-bozorg.webp",
-      "price": 330,
+      "img": "",
+      "price": 330000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-05",
@@ -158,8 +158,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "kachi-bozorg.webp",
-      "price": 340,
+      "img": "",
+      "price": 340000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-06",
@@ -172,7 +172,7 @@
       "stage": "",
       "desc": "",
       "img": "chasni-omega.webp",
-      "price": 189,
+      "price": 189000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-07",
@@ -185,7 +185,7 @@
       "stage": "",
       "desc": "",
       "img": "farni-tokhm-kharbeze.webp",
-      "price": 135,
+      "price": 135000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-08",
@@ -197,8 +197,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "products-group.webp",
-      "price": 300,
+      "img": "",
+      "price": 300000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-09",
@@ -210,8 +210,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "products-group.webp",
-      "price": 400,
+      "img": "",
+      "price": 400000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-05",
@@ -223,8 +223,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "products-group.webp",
-      "price": 450,
+      "img": "",
+      "price": 450000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-05",
@@ -236,8 +236,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "products-group.webp",
-      "price": 120,
+      "img": "",
+      "price": 120000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-05",
@@ -249,8 +249,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "products-group.webp",
-      "price": 500,
+      "img": "",
+      "price": 500000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-05",
@@ -263,7 +263,7 @@
       "stage": "",
       "desc": "",
       "img": "farni-beh-sib.webp",
-      "price": 550,
+      "price": 550000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-05",
@@ -275,8 +275,8 @@
       "cat": "",
       "stage": "",
       "desc": "",
-      "img": "products-group.webp",
-      "price": 700,
+      "img": "",
+      "price": 700000,
       "discountPrice": 0,
       "active": true,
       "createdAt": "2026-10-05",

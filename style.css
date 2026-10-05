@@ -4,3 +4,18 @@
 .brand img,.drawer-head img,.simple-head img,.footer-inner img{object-fit:contain;background:transparent}
 .head-side a{white-space:nowrap}
 @media(max-width:900px){.head-side{display:none}.nav{flex-direction:row}.drawer .drawer-cart{margin-top:8px;background:var(--purple);color:#fff;border-radius:12px;text-align:center}.drawer .social-link{border-bottom:0;color:var(--pink)}}
+
+/* رنگ و لعاب و افکت‌های هیلا فود */
+body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(circle at 10% 15%,#f7c6dc33 0 10%,transparent 28%),radial-gradient(circle at 90% 70%,#9de8e433 0 9%,transparent 28%),radial-gradient(circle at 75% 10%,#ead4ff33 0 8%,transparent 24%)}
+.announcement{background:linear-gradient(90deg,var(--purple),var(--pink),var(--turq));background-size:200% 100%;animation:shine 8s ease infinite}
+@keyframes shine{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}
+.site-header{box-shadow:0 8px 30px #7b4d7b18}
+.brand img{filter:drop-shadow(0 8px 14px #8e4f8e18);transition:transform .25s ease}.brand:hover img{transform:scale(1.04)}
+.hero{position:relative;border:1px solid #fff;box-shadow:0 20px 55px #8b47751c}.hero:before{content:"";position:absolute;width:150px;height:150px;border-radius:50%;background:#f4c1d944;left:-50px;top:-55px;filter:blur(2px)}
+.btn{transition:transform .2s ease,box-shadow .2s ease}.btn:hover{transform:translateY(-3px);box-shadow:0 10px 22px #68406022}
+.category-card,.product{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}.category-card:hover,.product:hover{transform:translateY(-6px);box-shadow:0 16px 32px #744b7118;border-color:#e8b5ce}
+.category-card:nth-child(4n+1){border-top:3px solid var(--pink)}.category-card:nth-child(4n+2){border-top:3px solid var(--gold)}.category-card:nth-child(4n+3){border-top:3px solid var(--turq)}.category-card:nth-child(4n){border-top:3px solid var(--purple)}
+.category-card img{transition:transform .3s ease}.category-card:hover img{transform:scale(1.04)}
+.photo.no-image,.vertical-no-image{display:flex;align-items:center;justify-content:center;text-align:center;background:linear-gradient(135deg,#fff0f6,#f2edff 50%,#e9fbfa);color:#9a7c8d;font-weight:800}.no-image-text{padding:20px;line-height:1.7}.no-image-text small,.vertical-no-image small{font-weight:400;color:#b19ca8}
+.product-foot .details{transition:transform .2s ease,background .2s ease}.product-foot .details:hover{transform:scale(1.04);background:var(--purple)}
+.bego{position:relative;overflow:hidden;background:linear-gradient(135deg,#fff0f6,#f8efff,#edfafa);border-radius:28px}.bego:before{content:"✦";position:absolute;left:7%;top:15%;font-size:70px;color:#d94a8320}.course{box-shadow:0 14px 38px #6c4c7110;border:1px solid #f0e4eb}.filters{box-shadow:0 10px 30px #6c4c7110}.vertical-product{transition:transform .2s ease,box-shadow .2s ease}.vertical-product:hover{transform:translateY(-3px);box-shadow:0 14px 34px #6c4c7115}.vertical-no-image{width:220px;height:180px;border-radius:16px}@media(max-width:900px){.vertical-no-image{width:100%;height:210px}}
