@@ -2,59 +2,37 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>هیلا فود | محصولات غذایی نیمه‌آماده</title>
-<meta name="description" content="فروشگاه هیلا فود؛ محصولات نیمه‌آماده با طراحی زیبا و تجربه خرید آسان در موبایل.">
+<title>هیلا فود | فروشگاه محصولات نیمه‌آماده</title>
+<meta name="description" content="فروشگاه هیلا فود؛ محصولات نیمه‌آماده، پک‌های کاربردی و آموزش‌های منتخب">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="topbar"><div>فروشگاه هیلا فود • کیفیت، سادگی و طعم خوب</div><div class="toplinks"><a href="#contact">ارتباط با ما</a><a href="#knowledge">دانستنی‌ها</a></div></div>
-<header class="header">
-  <button class="icon-btn menu-btn" aria-label="باز کردن منو" onclick="openDrawer()">☰</button>
-  <a class="brand" href="#top"><img src="assets/logo.png" alt="هیلا فود"></a>
-  <nav class="desktop-nav" aria-label="منوی اصلی">
-    <a class="active" href="#products">محصولات</a><a href="#education">اولین خوشمزه‌های من</a><a href="#knowledge">دانستنی‌های علمی، طب ایرانی</a><a href="#about">درباره ما</a><a href="#contact">ارتباط با ما</a><a href="#faq">سوالات متداول</a>
+<div class="announcement">ارسال سفارش‌ها به سراسر کشور <span>•</span> کیفیت، سادگی و طعم خوب هیلا فود</div>
+<header class="site-header">
+  <div class="header-top container">
+    <div class="contact-mini"><span>☎</span> پشتیبانی و سفارش</div>
+    <a class="logo-wrap" href="#home"><img src="assets/logo.png" alt="هیلا فود"><span>محصولات نیمه‌آماده و خوشمزه‌های هیلا فود</span></a>
+    <div class="header-actions"><a href="https://eitaa.com/hilafood" target="_blank" rel="noopener">ایتای هیلا</a><a href="https://instagram.com/hila_mamaa" target="_blank" rel="noopener">اینستاگرام</a></div>
+  </div>
+  <nav class="nav container">
+    <button class="hamb" onclick="toggleMenu()" aria-label="منو">☰</button>
+    <div class="nav-links">
+      <a href="#products">محصولات</a><a href="#categories">دسته‌بندی‌ها</a><a href="#course">دوره آموزشی</a><a href="#articles">دانستنی‌های علمی، طب ایرانی</a><a href="#about">درباره هیلا فود</a><a href="#contact">تماس با ما</a>
+    </div>
+    <div class="search"><span>⌕</span><input id="searchInput" placeholder="جستجوی محصول..." oninput="filterProducts(this.value)"></div>
   </nav>
-  <div class="header-actions"><button class="icon-btn" aria-label="جستجو" onclick="focusSearch()">⌕</button><button class="icon-btn cart-btn" aria-label="سبد خرید" onclick="openCart()">🛒<b id="cartCount">0</b></button></div>
 </header>
-<div class="search-row"><div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="جست‌وجوی محصول..." oninput="renderProducts()"></div></div>
-<main id="top">
-<section class="hero"><div class="hero-copy"><span class="eyebrow">فروشگاه رسمی هیلا فود</span><h1>طعم خوب،<br><strong>آماده‌سازی آسان</strong></h1><p>محصولات نیمه‌آماده‌ای برای انتخابی راحت‌تر و تجربه‌ای دلنشین‌تر در خانه.</p><div class="hero-actions"><a class="btn primary" href="#products">مشاهده محصولات</a><a class="btn ghost" href="#education">اولین خوشمزه‌های من</a></div></div><div class="hero-image"><img src="assets/collection.jpg" alt="محصولات هیلا فود"><div class="floating-note"><span>محصولات غذایی</span><strong>هیلا فود</strong></div></div></section>
-<section class="trust"><div><i>✦</i><span>بسته‌بندی اختصاصی</span></div><div><i>✓</i><span>انتخاب دقیق محصولات</span></div><div><i>♡</i><span>آماده‌سازی آسان</span></div><div><i>⌁</i><span>تجربه خرید ساده</span></div></section>
-<section class="categories"><div class="section-head"><div><span class="eyebrow">انتخاب سریع</span><h2>دسته‌بندی محصولات</h2></div></div><div class="cat-grid" id="categoryGrid"></div></section>
-<section id="products" class="products-section"><div class="section-head"><div><span class="eyebrow">محصولات هیلا فود</span><h2>محصولات</h2><p>قیمت‌ها در این نسخه نمایش داده نمی‌شوند.</p></div></div><div class="products-grid" id="productGrid"></div></section>
-<section id="education" class="education"><div class="education-card"><div><span class="eyebrow">تنها دوره آموزشی فعلی</span><h2 id="courseTitle">اولین خوشمزه‌های من</h2><p id="courseDesc">یک دوره آموزشی کاربردی و دوست‌داشتنی از هیلا فود.</p><a class="btn primary" href="#contact">اطلاعات بیشتر</a></div><div class="course-art">آموزشی</div></div></section>
-<section id="knowledge" class="knowledge"><div class="section-head"><div><span class="eyebrow">دانش و آگاهی</span><h2>دانستنی‌های علمی، طب ایرانی</h2><p>مطالب آموزشی با رویکرد آگاهی‌بخشی؛ برای مطالعه و شناخت بیشتر.</p></div></div><div class="knowledge-grid" id="knowledgeGrid"></div></section>
-<section id="about" class="about"><div><span class="eyebrow">هیلا فود</span><h2>سادگی، کیفیت و حس خوب در یک انتخاب</h2><p>هیلا فود با تمرکز بر محصولات نیمه‌آماده خوراکی، تجربه‌ای ساده و دلنشین برای انتخاب و آماده‌سازی فراهم می‌کند.</p></div><img src="assets/farnibe-sib.jpg" alt="فرنی به و سیب هیلا فود"></section>
-<section id="faq" class="faq"><div class="section-head"><div><span class="eyebrow">پاسخ به سوالات شما</span><h2>سوالات متداول</h2></div></div><details><summary>چطور سفارش خود را ثبت کنم؟</summary><p>محصول را به سبد خرید اضافه کنید؛ در نسخه فعلی قیمت‌ها نمایش داده نمی‌شوند و ثبت نهایی سفارش پس از هماهنگی انجام می‌شود.</p></details><details><summary>آیا قیمت‌ها در سایت نمایش داده می‌شوند؟</summary><p>خیر. طبق تنظیم فعلی هیلا فود، قیمت‌ها در سایت عمومی نمایش داده نمی‌شوند.</p></details><details><summary>دوره آموزشی هیلا فود چیست؟</summary><p>در حال حاضر فقط دوره «اولین خوشمزه‌های من» در سایت معرفی شده است.</p></details></section>
+<div id="drawer" class="drawer"><div class="drawer-head"><img src="assets/logo.png" alt="هیلا فود"><button onclick="toggleMenu()">×</button></div><a href="#products" onclick="toggleMenu()">محصولات</a><a href="#categories" onclick="toggleMenu()">دسته‌بندی‌ها</a><a href="#course" onclick="toggleMenu()">دوره آموزشی</a><a href="#articles" onclick="toggleMenu()">دانستنی‌های علمی، طب ایرانی</a><a href="#about" onclick="toggleMenu()">درباره ما</a><a href="#contact" onclick="toggleMenu()">تماس با ما</a><div class="drawer-social"><a href="https://eitaa.com/hilafood" target="_blank">ایتا هیلا فود</a><a href="https://eitaa.com/hila_mama" target="_blank">ایتا ماماهیلا</a><a href="https://instagram.com/hila_mamaa" target="_blank">اینستاگرام</a></div></div>
+<div id="shade" class="shade" onclick="toggleMenu()"></div>
+<main id="home">
+<section class="hero container"><div class="hero-copy"><div class="eyebrow">هیلا فود | انتخاب‌های خوشمزه و کاربردی</div><h1>غذاهای نیمه‌آماده،<br><strong>ساده‌تر برای زندگی</strong></h1><p>محصولات هیلا فود برای آماده‌سازی آسان‌تر، با حال‌وهوای خانه و طعم دوست‌داشتنی.</p><a class="btn gold" href="#products">مشاهده محصولات</a></div><div class="hero-art"><img src="assets/products-group.png" alt="محصولات هیلا فود"></div></section>
+<section id="categories" class="container categories"><div class="section-title"><div><span>دسته‌بندی‌ها</span><h2>برای هر نیاز، یک انتخاب</h2></div><a href="#products">مشاهده همه ←</a></div><div class="category-grid" id="categoryGrid"></div></section>
+<section id="products" class="container products-section"><div class="section-title"><div><span>محصولات هیلا فود</span><h2>پیشنهادهای ویژه</h2></div><div class="result-note" id="resultNote"></div></div><div id="productGrid" class="product-grid"></div></section>
+<section id="course" class="container course"><div class="course-image"><img src="assets/farni-beh-sib.png" alt="اولین خوشمزه‌های من"></div><div class="course-copy"><span>آموزش هیلا فود</span><h2>اولین خوشمزه‌های من</h2><p>یک دوره آموزشی کاربردی برای آشنایی با اولین خوشمزه‌های کودک و آماده‌سازی ساده و اصولی در خانه.</p><a class="btn purple" href="#contact">اطلاعات دوره</a></div></section>
+<section id="articles" class="container articles"><div class="section-title"><div><span>مجله هیلا فود</span><h2>دانستنی‌های علمی، طب ایرانی</h2></div></div><div class="article-grid"><article><b>دانستنی‌های تغذیه‌ای</b><h3>چطور انتخاب‌های غذایی روزانه را ساده‌تر کنیم؟</h3><p>نکته‌های کوتاه و کاربردی برای خانواده‌ها و سبک زندگی روزمره.</p></article><article><b>طب ایرانی</b><h3>آشنایی با نگاه طب ایرانی به خوراک</h3><p>مطالب آموزشی عمومی با زبان ساده و بدون جایگزین‌کردن توصیه تخصصی پزشکی.</p></article><article><b>هیلا فود</b><h3>راهنمای استفاده از محصولات نیمه‌آماده</h3><p>ایده‌هایی برای آماده‌سازی سریع‌تر و استفاده بهتر از محصولات.</p></article></div></section>
+<section id="about" class="about container"><div><span>درباره هیلا فود</span><h2>خوشمزه، کاربردی، نزدیک به نیاز خانواده</h2></div><p>هیلا فود با تمرکز بر محصولات نیمه‌آماده و آموزش‌های کاربردی، تلاش می‌کند آماده‌سازی بعضی خوراک‌ها را ساده‌تر و لذت‌بخش‌تر کند.</p></section>
+<section id="contact" class="contact container"><div><span>لینک‌های مرتبط</span><h2>با هیلا فود در ارتباط باشید</h2></div><div class="links"><a href="https://eitaa.com/hilafood" target="_blank">ایتا هیلا فود</a><a href="https://eitaa.com/hila_mama" target="_blank">ایتا ماماهیلا</a><a href="https://instagram.com/hila_mamaa" target="_blank">Instagram: hila_mamaa</a></div></section>
 </main>
-<footer id="contact"><div class="footer-brand"><img src="assets/logo.png" alt="هیلا فود"><p>فروشگاه رسمی محصولات نیمه‌آماده هیلا فود</p></div><div><h4>دسترسی سریع</h4><a href="#products">محصولات</a><a href="#education">اولین خوشمزه‌های من</a><a href="#knowledge">دانستنی‌ها</a><a href="#about">درباره ما</a></div><div><h4>لینک‌های مرتبط</h4><a class="external-link" href="https://eitaa.com/hilafood" target="_blank" rel="noopener noreferrer">📱 کانال هیلا فود در ایتا</a><a class="external-link" href="https://eitaa.com/hila_mama" target="_blank" rel="noopener noreferrer">👩‍🍼 کانال ماماهیلا در ایتا</a><a class="external-link" href="https://instagram.com/hila_mamaa" target="_blank" rel="noopener noreferrer">📸 اینستاگرام هیلا فود</a></div><div><h4>ارتباط سریع</h4><p>برای ارتباط، از لینک‌های رسمی زیر استفاده کنید.</p><div class="contact-buttons"><a href="https://eitaa.com/hilafood" target="_blank" rel="noopener noreferrer">ایتا هیلا فود</a><a href="https://eitaa.com/hila_mama" target="_blank" rel="noopener noreferrer">ایتا ماماهیلا</a><a href="https://instagram.com/hila_mamaa" target="_blank" rel="noopener noreferrer">اینستاگرام</a></div></div></footer>
-<div class="mobile-drawer" id="drawer" onclick="closeDrawer(event)"><aside><div class="drawer-head"><img src="assets/logo.png" alt="هیلا فود"><button onclick="closeDrawer()">×</button></div><a href="#products" onclick="closeDrawer()">محصولات</a><a href="#education" onclick="closeDrawer()">اولین خوشمزه‌های من</a><a href="#knowledge" onclick="closeDrawer()">دانستنی‌های علمی، طب ایرانی</a><a href="#about" onclick="closeDrawer()">درباره هیلا فود</a><a href="#contact" onclick="closeDrawer()">ارتباط با ما</a><a href="#faq" onclick="closeDrawer()">سوالات متداول</a></aside></div>
-<div class="cart-panel" id="cartPanel"><div class="cart-head"><h3>سبد خرید</h3><button onclick="closeCart()">×</button></div><div id="cartItems"></div><div class="cart-total"><span>مبلغ</span><strong>پس از اعلام فروشنده</strong></div><button class="btn primary full" onclick="closeCart();document.getElementById('contact').scrollIntoView({behavior:'smooth'})">ادامه و هماهنگی سفارش</button></div>
-<script>
-const defaultData={
- categories:['فرنی‌ها','حریره‌ها','سوپ‌ها','کاچی‌ها','سویق‌ها','پک کودک','پک قاعدگی','پک زایمان','پک اقدام به بارداری','پک رحم و تخمدان','پک سالمندان','پک ضعف'],
- products:[
-  {id:1,name:'فرنی تخم خربزه',cat:'فرنی‌ها',img:'assets/seedmelon.jpg',badge:'پرفروش',desc:'نیمه‌آماده و خوش‌طعم',price:''},
-  {id:2,name:'چاشنی امگا',cat:'سویق‌ها',img:'assets/omega.jpg',badge:'جدید',desc:'ترکیبی کاربردی برای مصرف روزانه',price:''},
-  {id:3,name:'کاچی بزرگ',cat:'کاچی‌ها',img:'assets/kachibozorg.jpg',badge:'محبوب',desc:'ساده، سریع و خوشمزه',price:''},
-  {id:4,name:'فرنی به و سیب',cat:'فرنی‌ها',img:'assets/farnibe-sib.jpg',badge:'ویژه',desc:'خوش‌طعم و لطیف',price:''},
-  {id:5,name:'فرنی کودک',cat:'فرنی‌ها',img:'assets/farnibe-sib.jpg',badge:'',desc:'انتخابی لطیف برای کودک',price:''},
-  {id:6,name:'کاچی ساده',cat:'کاچی‌ها',img:'assets/kachibozorg.jpg',badge:'',desc:'آماده‌سازی سریع در خانه',price:''},
-  {id:7,name:'حریره بادام',cat:'حریره‌ها',img:'assets/omega.jpg',badge:'',desc:'نرم، خوش‌عطر و کاربردی',price:''},
-  {id:8,name:'حریره نارگیل',cat:'حریره‌ها',img:'assets/omega.jpg',badge:'',desc:'یک انتخاب متفاوت و خوش‌طعم',price:''}
- ],
- course:{title:'اولین خوشمزه‌های من',desc:'یک دوره آموزشی کاربردی و دوست‌داشتنی از هیلا فود.'},
- knowledge:[{title:'مطالب علمی و تغذیه‌ای',text:'دانستنی‌های کاربردی درباره مواد غذایی، تغذیه و سبک زندگی.',icon:'📚'},{title:'آشنایی با طب ایرانی',text:'مطالب آموزشی درباره مفاهیم و دیدگاه‌های طب ایرانی با بیان ساده.',icon:'🌿'}]
-};
-function getData(){try{return JSON.parse(localStorage.getItem('hilaData'))||defaultData}catch(e){return defaultData}}
-let data=getData(),currentCategory='همه',cart=[];
-function renderCategories(){document.getElementById('categoryGrid').innerHTML='<a href="#products" onclick="setCategory(\'همه\')"><span class="cat-icon pink">✦</span><b>همه محصولات</b><small>مشاهده همه</small></a>'+data.categories.map((c,i)=>`<a href="#products" onclick="setCategory('${c.replace(/'/g,"\\'")}')"><span class="cat-icon ${['pink','aqua','purple','gold'][i%4]}">${['✦','🥣','✿','◈'][i%4]}</span><b>${c}</b><small>مشاهده محصولات</small></a>`).join('')}
-function renderProducts(){let q=(document.getElementById('searchInput').value||'').trim().toLowerCase();let list=data.products.filter(p=>(currentCategory==='همه'||p.cat===currentCategory)&&(!q||(p.name+' '+p.cat).toLowerCase().includes(q)));document.getElementById('productGrid').innerHTML=list.length?list.map(p=>`<article class="product-card"><div class="product-image"><img src="${p.img}" alt="${p.name}">${p.badge?`<span class="badge">${p.badge}</span>`:''}<button class="heart" aria-label="علاقه‌مندی">♡</button></div><div class="product-info"><span class="product-cat">${p.cat}</span><h3>${p.name}</h3><p>${p.desc||''}</p><div class="product-bottom"><span class="price-placeholder">قیمت ثبت نشده</span><button class="add" onclick="addToCart(${p.id})">افزودن به سبد</button></div></div></article>`).join(''):'<div class="empty-products">محصولی در این دسته پیدا نشد.</div>'}
-function renderKnowledge(){document.getElementById('knowledgeGrid').innerHTML=data.knowledge.map(k=>`<article><span>${k.icon||'📚'}</span><h3>${k.title}</h3><p>${k.text}</p><a href="#contact">ادامه و ارتباط با ما ←</a></article>`).join('')+`<article class="links-card"><span>🔗</span><h3>لینک‌های مرتبط</h3><p>راه‌های رسمی ارتباط با هیلا فود و ماماهیلا.</p><div class="related-links"><a href="https://eitaa.com/hilafood" target="_blank" rel="noopener noreferrer">کانال هیلا فود در ایتا</a><a href="https://eitaa.com/hila_mama" target="_blank" rel="noopener noreferrer">کانال ماماهیلا در ایتا</a><a href="https://instagram.com/hila_mamaa" target="_blank" rel="noopener noreferrer">اینستاگرام هیلا فود</a></div></article>`}
-function renderCourse(){document.getElementById('courseTitle').textContent=data.course.title;document.getElementById('courseDesc').textContent=data.course.desc}
-function setCategory(c){currentCategory=c;renderProducts();document.getElementById('products').scrollIntoView({behavior:'smooth'})}
-function addToCart(id){const p=data.products.find(x=>x.id===id);if(p){cart.push(p);updateCart();openCart()}}
-function updateCart(){document.getElementById('cartCount').textContent=cart.length;const box=document.getElementById('cartItems');box.innerHTML=cart.length?cart.map((p,i)=>`<div class="cart-item"><img src="${p.img}" alt=""><div><b>${p.name}</b><span>قیمت پس از اعلام فروشنده</span></div><button onclick="cart.splice(${i},1);updateCart()">×</button></div>`).join(''):'<div class="empty-cart">سبد خرید شما خالی است.</div>'}
-function openCart(){document.getElementById('cartPanel').classList.add('open')}function closeCart(){document.getElementById('cartPanel').classList.remove('open')}function openDrawer(){document.getElementById('drawer').classList.add('open')}function closeDrawer(e){if(!e||e.target.id==='drawer')document.getElementById('drawer').classList.remove('open')}function focusSearch(){document.getElementById('searchInput').focus();window.scrollTo({top:130,behavior:'smooth'})}
-window.addEventListener('storage',()=>{data=getData();renderCategories();renderProducts();renderKnowledge();renderCourse()});renderCategories();renderProducts();renderKnowledge();renderCourse();updateCart();
-</script></body></html>
+<footer><div class="container footer-inner"><img src="assets/logo.png" alt="هیلا فود"><div>© هیلا فود — همه حقوق محفوظ است.</div><a href="admin.html">مدیریت سایت</a></div></footer>
+<script src="app.js"></script>
+</body></html>

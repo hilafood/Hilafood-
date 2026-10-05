@@ -1,21 +1,7 @@
-# HILA FOOD — نسخه جدید
-
-این نسخه شامل:
-- طراحی RTL و موبایل‌محور
-- دسته‌بندی‌های کامل محصولات هیلا فود
-- عدم نمایش قیمت در سایت عمومی
-- دوره «اولین خوشمزه‌های من»
-- بخش «دانستنی‌های علمی، طب ایرانی»
-- لینک‌های فعال ایتا هیلا فود، ایتا ماماهیلا و اینستاگرام
-- منوی موبایل و دکمه‌های ارتباطی قابل لمس
-- سبد خرید بدون نمایش قیمت
-- پنل مدیریت در `admin.html`
-
-## ورود پنل مدیریت
-آدرس: `/admin.html`
-رمز پیش‌فرض: `hila1404`
-
-پنل فعلی برای نسخه استاتیک، اطلاعات را در LocalStorage همان مرورگر ذخیره می‌کند و امکان خروجی/ورودی JSON دارد. برای مدیریت ابری و تغییرات قابل مشاهده برای همه دستگاه‌ها، مرحله بعدی اتصال همین پنل به Cloudflare D1 است.
-
-## انتشار روی Cloudflare
-محتویات پوشه `hila-food-store` را به‌عنوان Static Assets منتشر کنید. Cloudflare Workers Static Assets برای میزبانی فایل‌های HTML/CSS/JS و تصاویر مناسب است.
+# Hila Food v4
+Static RTL Persian storefront for Hila Food.
+- Main site: `/index.html`
+- Admin: `/admin.html`
+- Product images and logo are local under `/assets`.
+- Public prices are hidden.
+- Current admin stores product edits in browser localStorage only; it is not a shared database.
