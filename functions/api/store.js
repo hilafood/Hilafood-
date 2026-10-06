@@ -4,10 +4,26 @@ const DATA = {
     currency: "تومان",
     paymentEnabled: false,
     paymentProvider: "zarinpal",
+
     phone: "۰۹۲۲۷۱۴۰۷۲۶",
     eitaa: "https://eitaa.com/hilafood",
     instagram: "https://instagram.com/hila_mamaa",
-    eitaaMama: "https://eitaa.com/hila_mama"
+    eitaaMama: "https://eitaa.com/hila_mama",
+
+    shippingMethods: [
+      {
+        id: "post-pishtaz",
+        name: "پست پیشتاز",
+        price: 0,
+        active: true
+      },
+      {
+        id: "post-sefareshi",
+        name: "پست سفارشی",
+        price: 0,
+        active: false
+      }
+    ]
   },
 
   categories: [
@@ -37,102 +53,27 @@ const DATA = {
   ],
 
   products: [
-    {
-      id: "1",
-      name: "پودر کاچی ساده | ۳۵۰ گرم",
-      price: 120000,
-      img: ""
-    },
-    {
-      id: "2",
-      name: "کاچی ۴مغز۳ارد | ترکیب ۳ آرد",
-      price: 450000,
-      img: ""
-    },
-    {
-      id: "3",
-      name: "پودر کاچی کودک",
-      price: 300000,
-      img: ""
-    },
-    {
-      id: "4",
-      name: "پودر کاچی بَزَرَک",
-      price: 409000,
-      img: "kachi-bozorg.webp"
-    },
-    {
-      id: "5",
-      name: "پودر کاچی قاعدگی",
-      price: 330000,
-      img: ""
-    },
-    {
-      id: "6",
-      name: "پودر گداخته | کاچی مخصوص زایمان | ۲۵۰ گرم",
-      price: 340000,
-      img: ""
-    },
-    {
-      id: "7",
-      name: "چاشنی اُمیلا",
-      price: 189000,
-      img: "chasni-omega.webp"
-    },
-    {
-      id: "8",
-      name: "فرنی تخم خربزه",
-      price: 135000,
-      img: "farni-tokhm-kharbeze.webp"
-    },
-    {
-      id: "9",
-      name: "حریره بادام",
-      price: 300000,
-      img: ""
-    },
-    {
-      id: "10",
-      name: "حریره نارگیل",
-      price: 400000,
-      img: ""
-    },
-    {
-      id: "11",
-      name: "فرنی جوانه گندم",
-      price: 450000,
-      img: ""
-    },
-    {
-      id: "12",
-      name: "فرنی برنج ساده",
-      price: 120000,
-      img: ""
-    },
-    {
-      id: "13",
-      name: "فرنی کدوحلوایی",
-      price: 500000,
-      img: ""
-    },
-    {
-      id: "14",
-      name: "فرنی به، سیب",
-      price: 550000,
-      img: "farni-beh-sib.webp"
-    },
-    {
-      id: "15",
-      name: "سویلاک",
-      price: 700000,
-      img: ""
-    }
+    { id: "1", name: "پودر کاچی ساده | ۳۵۰ گرم", price: 120000, img: "" },
+    { id: "2", name: "کاچی ۴مغز۳ارد | ترکیب ۳ آرد", price: 450000, img: "" },
+    { id: "3", name: "پودر کاچی کودک", price: 300000, img: "" },
+    { id: "4", name: "پودر کاچی بَزَرَک", price: 409000, img: "kachi-bozorg.webp" },
+    { id: "5", name: "پودر کاچی قاعدگی", price: 330000, img: "" },
+    { id: "6", name: "پودر گداخته | کاچی مخصوص زایمان | ۲۵۰ گرم", price: 340000, img: "" },
+    { id: "7", name: "چاشنی اُمیلا", price: 189000, img: "chasni-omega.webp" },
+    { id: "8", name: "فرنی تخم خربزه", price: 135000, img: "farni-tokhm-kharbeze.webp" },
+    { id: "9", name: "حریره بادام", price: 300000, img: "" },
+    { id: "10", name: "حریره نارگیل", price: 400000, img: "" },
+    { id: "11", name: "فرنی جوانه گندم", price: 450000, img: "" },
+    { id: "12", name: "فرنی برنج ساده", price: 120000, img: "" },
+    { id: "13", name: "فرنی کدوحلوایی", price: 500000, img: "" },
+    { id: "14", name: "فرنی به، سیب", price: 550000, img: "farni-beh-sib.webp" },
+    { id: "15", name: "سویلاک", price: 700000, img: "" }
   ]
 };
 
 
 /* ==================================================
-   ابزارهای عمومی
+   ابزار عمومی
 ================================================== */
 
 function json(data, status = 200) {
@@ -296,11 +237,8 @@ async function seedProducts(db) {
 async function setupDatabase(db) {
 
   await createTables(db);
-
   await seedSettings(db);
-
   await seedCategories(db);
-
   await seedProducts(db);
 }
 
@@ -358,7 +296,6 @@ async function getStore(db) {
       ORDER BY rowid
     `).all();
 
-
   const settings = {};
 
   for (const row of settingsResult.results || []) {
@@ -372,6 +309,24 @@ async function getStore(db) {
     }
   }
 
+  /* اگر تنظیمات ارسال هنوز وجود نداشت */
+  if (!Array.isArray(settings.shippingMethods)) {
+
+    settings.shippingMethods = [
+      {
+        id: "post-pishtaz",
+        name: "پست پیشتاز",
+        price: 0,
+        active: true
+      },
+      {
+        id: "post-sefareshi",
+        name: "پست سفارشی",
+        price: 0,
+        active: false
+      }
+    ];
+  }
 
   const products =
     (productsResult.results || []).map(product => ({
@@ -380,10 +335,12 @@ async function getStore(db) {
       cat: product.cat || "",
       desc: product.desc || "",
       price: Number(product.price || 0),
+
       discountPrice:
         product.discount_price == null
           ? 0
           : Number(product.discount_price),
+
       stage: product.stage || "",
       video: product.video || "",
       img: product.img || "",
@@ -392,13 +349,10 @@ async function getStore(db) {
       updatedAt: product.updated_at || ""
     }));
 
-
   return {
     settings,
-
     categories:
       categoriesResult.results || [],
-
     products
   };
 }
@@ -406,7 +360,6 @@ async function getStore(db) {
 
 /* ==================================================
    GET
-   دریافت اطلاعات فروشگاه
 ================================================== */
 
 export async function onRequestGet({ env }) {
@@ -441,7 +394,6 @@ export async function onRequestGet({ env }) {
 
 /* ==================================================
    POST
-   افزودن محصول / تنظیمات / بررسی مدیر
 ================================================== */
 
 export async function onRequestPost({ request, env }) {
@@ -526,13 +478,16 @@ export async function onRequestPost({ request, env }) {
         String(p.cat || ""),
         String(p.desc || ""),
         Number(p.price || 0),
+
         p.discountPrice == null ||
         p.discountPrice === ""
           ? null
           : Number(p.discountPrice),
+
         String(p.stage || ""),
         String(p.video || ""),
         String(p.img || ""),
+
         p.active === false ? 0 : 1
       )
       .run();
@@ -545,7 +500,7 @@ export async function onRequestPost({ request, env }) {
 
 
     /* ----------------------------------------------
-       تغییر تنظیمات
+       ذخیره تنظیمات فروشگاه
     ---------------------------------------------- */
 
     if (action === "save-settings") {
@@ -578,6 +533,69 @@ export async function onRequestPost({ request, env }) {
     }
 
 
+    /* ----------------------------------------------
+       ذخیره نوع ارسال و کرایه
+    ---------------------------------------------- */
+
+    if (action === "save-shipping") {
+
+      let shippingMethods =
+        body.shippingMethods;
+
+      if (!Array.isArray(shippingMethods)) {
+
+        return json({
+          error: "اطلاعات روش‌های ارسال نامعتبر است"
+        }, 400);
+      }
+
+      shippingMethods =
+        shippingMethods
+          .map((item, index) => ({
+
+            id:
+              String(
+                item.id ||
+                `shipping-${Date.now()}-${index}`
+              ),
+
+            name:
+              String(
+                item.name || ""
+              ).trim(),
+
+            price:
+              Math.max(
+                0,
+                Number(item.price || 0)
+              ),
+
+            active:
+              item.active !== false
+
+          }))
+          .filter(item => item.name);
+
+      await db.prepare(`
+        INSERT INTO settings
+        (key, value)
+        VALUES (?, ?)
+        ON CONFLICT(key)
+        DO UPDATE SET value = excluded.value
+      `)
+      .bind(
+        "shippingMethods",
+        JSON.stringify(shippingMethods)
+      )
+      .run();
+
+      return json({
+        success: true,
+        shippingMethods
+      });
+    }
+
+
     return json({
       error: "Unknown action"
     }, 400);
@@ -595,7 +613,6 @@ export async function onRequestPost({ request, env }) {
 
 /* ==================================================
    PUT
-   ویرایش محصول
 ================================================== */
 
 export async function onRequestPut({ request, env }) {
@@ -639,7 +656,6 @@ export async function onRequestPut({ request, env }) {
       }, 400);
     }
 
-
     const result =
       await db.prepare(`
         UPDATE products
@@ -661,25 +677,26 @@ export async function onRequestPut({ request, env }) {
         String(p.cat || ""),
         String(p.desc || ""),
         Number(p.price || 0),
+
         p.discountPrice == null ||
         p.discountPrice === ""
           ? null
           : Number(p.discountPrice),
+
         String(p.stage || ""),
         String(p.video || ""),
         String(p.img || ""),
+
         p.active === false ? 0 : 1,
         id
       )
       .run();
-
 
     if (!result.meta?.changes) {
       return json({
         error: "محصول پیدا نشد"
       }, 404);
     }
-
 
     return json({
       success: true
@@ -698,7 +715,6 @@ export async function onRequestPut({ request, env }) {
 
 /* ==================================================
    DELETE
-   حذف محصول
 ================================================== */
 
 export async function onRequestDelete({ request, env }) {
@@ -733,7 +749,6 @@ export async function onRequestDelete({ request, env }) {
       }, 400);
     }
 
-
     const result =
       await db.prepare(`
         DELETE FROM products
@@ -742,13 +757,11 @@ export async function onRequestDelete({ request, env }) {
       .bind(id)
       .run();
 
-
     if (!result.meta?.changes) {
       return json({
         error: "محصول پیدا نشد"
       }, 404);
     }
-
 
     return json({
       success: true
