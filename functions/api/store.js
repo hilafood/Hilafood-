@@ -1111,11 +1111,7 @@ export async function onRequestPost({
             "شماره موبایل الزامی است"
         }, 400);
       }
-
-
-      if (!customerAddress) {
-
-        return json({
+              return json({
           error:
             "آدرس الزامی است"
         }, 400);
@@ -2160,4 +2156,114 @@ export async function onRequestPut({
 
       return json({
         error:
-          "شناسه محصول الزامی
+          "شناسه محصول الزامی است"
+      }, 400);
+    }
+
+
+    const exists =
+      await db.prepare(`
+        SELECT id
+        FROM products
+        WHERE id = ?
+      `)
+      .bind(id)
+      .first();
+
+
+    if (!exists) {
+
+      return json({
+        error:
+          "محصول پیدا نشد"
+      }, 404);
+    }
+
+
+    await db.prepare(`
+      UPDATE products
+      SET
+        name = ?,
+        cat = ?,
+        "desc" = ?,
+        price = ?,
+        discount_price = ?,
+        stage = ?,
+        video = ?,
+        img = ?,
+        active = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `)
+    .bind(
+
+      String(
+        p.name || ""
+      ).trim(),
+
+      String(
+        p.cat || ""
+      ),
+
+      String(
+        p.desc || ""
+      ),
+
+      Number(
+        p.price || 0
+      ),
+
+      p.discountPrice == null ||
+      p.discountPrice === ""
+        ? null
+        : Number(
+            p.discountPrice
+          ),
+
+      String(
+        p.stage || ""
+      ),
+
+      String(
+        p.video || ""
+      ),
+
+      String(
+        p.img || ""
+      ),
+
+      p.active === false
+        ? 0
+        : 1,
+
+      id
+
+    )
+    .run();
+
+
+    return json({
+
+      success: true,
+
+      id
+
+    });
+
+  } catch (error) {
+
+    console.error(
+      "PUT store error:",
+      error
+    );
+
+
+    return json({
+
+      error:
+        error?.message ||
+        String(error)
+
+    }, 500);
+  }
+          }
