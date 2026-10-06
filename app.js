@@ -2,7 +2,8 @@ let STORE = {
   settings: {
     showPrices: false,
     currency: "تومان",
-    paymentEnabled: false
+    paymentEnabled: false,
+    shippingMethods: []
   },
   products: [],
   categories: []
@@ -11,6 +12,9 @@ let STORE = {
 let cart = JSON.parse(
   localStorage.getItem("hilaCart") || "[]"
 );
+
+let selectedShippingId =
+  localStorage.getItem("hilaShippingId") || "";
 
 
 /* --------------------------------------------------
@@ -54,6 +58,103 @@ function finalPrice(product) {
 
 
 /* --------------------------------------------------
+   روش‌های ارسال
+-------------------------------------------------- */
+
+function getShippingMethods() {
+
+  const methods =
+    STORE.settings.shippingMethods || [];
+
+  return methods.filter(
+    method =>
+      method &&
+      method.active !== false
+  );
+}
+
+
+function getSelectedShipping() {
+
+  const methods =
+    getShippingMethods();
+
+  if (!methods.length) {
+    return null;
+  }
+
+  let selected =
+    methods.find(
+      method =>
+        String(method.id) ===
+        String(selectedShippingId)
+    );
+
+  if (!selected) {
+    selected = methods[0];
+
+    selectedShippingId =
+      String(selected.id);
+
+    localStorage.setItem(
+      "hilaShippingId",
+      selectedShippingId
+    );
+  }
+
+  return selected;
+}
+
+
+function cartSubtotal() {
+
+  return cart.reduce(
+    (sum, item) => {
+
+      const product =
+        STORE.products.find(
+          p =>
+            String(p.id) ===
+            String(item.id)
+        );
+
+      return (
+        sum +
+        (
+          product
+            ? finalPrice(product) *
+              item.qty
+            : 0
+        )
+      );
+
+    },
+    0
+  );
+}
+
+
+function shippingPrice() {
+
+  const shipping =
+    getSelectedShipping();
+
+  return shipping
+    ? Number(shipping.price || 0)
+    : 0;
+}
+
+
+function cartGrandTotal() {
+
+  return (
+    cartSubtotal() +
+    shippingPrice()
+  );
+}
+
+
+/* --------------------------------------------------
    دریافت اطلاعات از D1
 -------------------------------------------------- */
 
@@ -91,6 +192,15 @@ async function load() {
     };
 
 
+    if (
+      !Array.isArray(
+        STORE.settings.shippingMethods
+      )
+    ) {
+      STORE.settings.shippingMethods = [];
+    }
+
+
   } catch (error) {
 
     console.error(
@@ -108,7 +218,8 @@ async function load() {
       settings: {
         showPrices: false,
         currency: "تومان",
-        paymentEnabled: false
+        paymentEnabled: false,
+        shippingMethods: []
       },
       products: [],
       categories: []
@@ -629,30 +740,7 @@ function updateCart() {
 
 
   const total =
-    cart.reduce(
-      (sum, item) => {
-
-        const product =
-          STORE.products.find(
-            p =>
-              String(p.id) ===
-              String(item.id)
-          );
-
-
-        return (
-          sum +
-          (
-            product
-              ? finalPrice(product) *
-                item.qty
-              : 0
-          )
-        );
-
-      },
-      0
-    );
+    cartSubtotal();
 
 
   const cartTotal =
@@ -783,7 +871,389 @@ function toggleMenu() {
 
 
 /* --------------------------------------------------
-   پرداخت
+   ساخت مرحله انتخاب ارسال
+-------------------------------------------------- */
+
+function showCheckoutShipping() {
+
+  const methods =
+    getShippingMethods();
+
+
+  if (!methods.length) {
+
+    alert(
+      "هنوز هیچ روش ارسال فعالی توسط مدیر ثبت نشده است."
+    );
+
+    return;
+  }
+
+
+  let selected =
+    getSelectedShipping();
+
+
+  const old =
+    document.getElementById(
+      "shippingCheckoutBox"
+    );
+
+
+  if (old) {
+    old.remove();
+  }
+
+
+  const box =
+    document.createElement("div");
+
+  box.id =
+    "shippingCheckoutBox";
+
+  box.style.cssText = `
+    margin:16px 0 0;
+    padding:16px;
+    border-radius:18px;
+    background:rgba(255,255,255,.96);
+    border:1px solid rgba(0,0,0,.08);
+  `;
+
+
+  box.innerHTML = `
+
+    <div style="margin-bottom:14px">
+
+      <strong style="font-size:18px">
+        انتخاب روش ارسال
+      </strong>
+
+      <p style="
+        margin:6px 0 0;
+        opacity:.7;
+        font-size:13px;
+      ">
+        روش ارسال سفارش خود را انتخاب کنید.
+      </p>
+
+    </div>
+
+
+    <div id="shippingOptions">
+
+      ${methods.map(method => {
+
+        const checked =
+          String(method.id) ===
+          String(selected.id)
+            ? "checked"
+            : "";
+
+
+        return `
+
+          <label
+            style="
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              gap:10px;
+              padding:12px;
+              margin-bottom:8px;
+              border:1px solid rgba(0,0,0,.08);
+              border-radius:14px;
+              cursor:pointer;
+            "
+          >
+
+            <span style="
+              display:flex;
+              align-items:center;
+              gap:8px;
+            ">
+
+              <input
+                type="radio"
+                name="shippingMethod"
+                value="${method.id}"
+                ${checked}
+              >
+
+              <b>
+                ${method.name}
+              </b>
+
+            </span>
+
+
+            <strong>
+              ${
+                Number(method.price || 0) > 0
+                  ? money(method.price)
+                  : "رایگان"
+              }
+            </strong>
+
+          </label>
+
+        `;
+
+      }).join("")}
+
+    </div>
+
+
+    <div style="
+      margin-top:16px;
+      padding-top:14px;
+      border-top:1px solid rgba(0,0,0,.08);
+    ">
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:8px;
+      ">
+        <span>جمع محصولات</span>
+        <b id="shippingSubtotal">
+          ${money(cartSubtotal())}
+        </b>
+      </div>
+
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:8px;
+      ">
+        <span>هزینه ارسال</span>
+        <b id="shippingFee">
+          ${money(selected.price)}
+        </b>
+      </div>
+
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        font-size:18px;
+        padding-top:10px;
+        margin-top:8px;
+        border-top:1px solid rgba(0,0,0,.08);
+      ">
+        <strong>مبلغ نهایی</strong>
+
+        <strong id="shippingGrandTotal">
+          ${money(
+            cartSubtotal() +
+            Number(selected.price || 0)
+          )}
+        </strong>
+      </div>
+
+    </div>
+
+
+    <button
+      id="confirmShippingBtn"
+      type="button"
+      style="
+        width:100%;
+        margin-top:16px;
+        border:0;
+        border-radius:14px;
+        padding:13px;
+        font-size:15px;
+        font-weight:700;
+        cursor:pointer;
+      "
+    >
+      تأیید روش ارسال
+    </button>
+
+  `;
+
+
+  const checkoutButton =
+    document.querySelector(
+      ".checkout"
+    );
+
+
+  if (checkoutButton) {
+
+    checkoutButton.style.display =
+      "none";
+
+    checkoutButton
+      .parentNode
+      .insertBefore(
+        box,
+        checkoutButton
+      );
+
+  } else {
+
+    const drawer =
+      $("cartDrawer");
+
+    if (drawer) {
+      drawer.appendChild(box);
+    }
+  }
+
+
+  box
+    .querySelectorAll(
+      'input[name="shippingMethod"]'
+    )
+    .forEach(input => {
+
+      input.addEventListener(
+        "change",
+        function() {
+
+          selectedShippingId =
+            this.value;
+
+          localStorage.setItem(
+            "hilaShippingId",
+            selectedShippingId
+          );
+
+
+          const method =
+            methods.find(
+              x =>
+                String(x.id) ===
+                String(this.value)
+            );
+
+
+          if (!method) return;
+
+
+          const fee =
+            Number(
+              method.price || 0
+            );
+
+
+          const feeEl =
+            document.getElementById(
+              "shippingFee"
+            );
+
+
+          const totalEl =
+            document.getElementById(
+              "shippingGrandTotal"
+            );
+
+
+          if (feeEl) {
+            feeEl.textContent =
+              money(fee);
+          }
+
+
+          if (totalEl) {
+            totalEl.textContent =
+              money(
+                cartSubtotal() +
+                fee
+              );
+          }
+
+        }
+      );
+
+    });
+
+
+  const confirmButton =
+    document.getElementById(
+      "confirmShippingBtn"
+    );
+
+
+  if (confirmButton) {
+
+    confirmButton.onclick =
+      confirmShipping;
+
+  }
+
+
+  box.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
+}
+
+
+/* --------------------------------------------------
+   تأیید روش ارسال
+-------------------------------------------------- */
+
+function confirmShipping() {
+
+  const method =
+    getSelectedShipping();
+
+
+  if (!method) {
+
+    alert(
+      "لطفاً یک روش ارسال انتخاب کنید."
+    );
+
+    return;
+  }
+
+
+  const checkoutBox =
+    document.getElementById(
+      "shippingCheckoutBox"
+    );
+
+
+  if (checkoutBox) {
+    checkoutBox.remove();
+  }
+
+
+  const checkoutButton =
+    document.querySelector(
+      ".checkout"
+    );
+
+
+  if (checkoutButton) {
+    checkoutButton.style.display =
+      "block";
+
+    checkoutButton.textContent =
+      "ادامه و پرداخت";
+  }
+
+
+  updateCart();
+
+
+  alert(
+    "روش ارسال انتخاب شد.\n" +
+    "هزینه ارسال: " +
+    money(method.price) +
+    "\n" +
+    "مبلغ نهایی: " +
+    money(cartGrandTotal())
+  );
+}
+
+
+/* --------------------------------------------------
+   پرداخت / ادامه سفارش
 -------------------------------------------------- */
 
 async function checkout() {
@@ -798,95 +1268,29 @@ async function checkout() {
   }
 
 
-  if (
-    !STORE.settings.paymentEnabled
-  ) {
+  /*
+   * مرحله اول:
+   * انتخاب روش ارسال
+   *
+   * فعلاً قبل از اتصال زرین‌پال
+   * همین مرحله را کامل می‌کنیم.
+   */
+
+  const shippingMethods =
+    getShippingMethods();
+
+
+  if (!shippingMethods.length) {
 
     alert(
-      "درگاه زرین‌پال هنوز توسط مدیر فعال نشده است."
+      "هنوز هیچ روش ارسال فعالی ثبت نشده است."
     );
 
     return;
   }
 
 
-  const amount =
-    cart.reduce(
-      (sum, item) => {
-
-        const product =
-          STORE.products.find(
-            p =>
-              String(p.id) ===
-              String(item.id)
-          );
-
-
-        return (
-          sum +
-          (
-            product
-              ? finalPrice(product) *
-                item.qty
-              : 0
-          )
-        );
-
-      },
-      0
-    );
-
-
-  try {
-
-    const response =
-      await fetch(
-        "/api/payment",
-        {
-          method: "POST",
-
-          headers: {
-            "content-type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-            items: cart,
-            amount
-          })
-        }
-      );
-
-
-    const data =
-      await response
-        .json()
-        .catch(() => ({}));
-
-
-    if (data.url) {
-
-      location.href =
-        data.url;
-
-    } else {
-
-      alert(
-        data.error ||
-        "شروع پرداخت ناموفق بود."
-      );
-
-    }
-
-  } catch (error) {
-
-    console.error(error);
-
-
-    alert(
-      "ارتباط با درگاه پرداخت برقرار نشد."
-    );
-  }
+  showCheckoutShipping();
 }
 
 
