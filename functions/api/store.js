@@ -27,47 +27,174 @@ const DATA = {
   },
 
   categories: [
-    { id: "pre", name: "اقدام به بارداری", image: "category/pre.webp" },
-    { id: "preg", name: "بارداری", image: "category/pregnancy.webp" },
-    { id: "6m", name: "کودک ۶ ماه", image: "category/6m.webp" },
-    { id: "7m", name: "کودک ۷ ماه", image: "category/7m.webp" },
-    { id: "8m", name: "کودک ۸ ماه", image: "category/8m.webp" },
-    { id: "9m", name: "کودک ۹ ماه", image: "category/9m.webp" },
-    { id: "10m", name: "کودک ۱۰ ماه", image: "category/10m.webp" },
-    { id: "11m", name: "کودک ۱۱ ماه", image: "category/11m.webp" },
-    { id: "12m", name: "کودک ۱۲ ماه", image: "category/12m.webp" },
+    {
+      id: "pre",
+      name: "اقدام به بارداری",
+      image: "category/pre.webp"
+    },
+    {
+      id: "preg",
+      name: "بارداری",
+      image: "category/pregnancy.webp"
+    },
+    {
+      id: "6m",
+      name: "کودک ۶ ماه",
+      image: "category/6m.webp"
+    },
+    {
+      id: "7m",
+      name: "کودک ۷ ماه",
+      image: "category/7m.webp"
+    },
+    {
+      id: "8m",
+      name: "کودک ۸ ماه",
+      image: "category/8m.webp"
+    },
+    {
+      id: "9m",
+      name: "کودک ۹ ماه",
+      image: "category/9m.webp"
+    },
+    {
+      id: "10m",
+      name: "کودک ۱۰ ماه",
+      image: "category/10m.webp"
+    },
+    {
+      id: "11m",
+      name: "کودک ۱۱ ماه",
+      image: "category/11m.webp"
+    },
+    {
+      id: "12m",
+      name: "کودک ۱۲ ماه",
+      image: "category/12m.webp"
+    },
     {
       id: "post",
       name: "پس از زایمان و شیردهی",
       image: "category/postpartum.webp"
     },
-    { id: "cycle", name: "قاعدگی", image: "category/cycle.webp" },
-    { id: "uterus", name: "رحم و تخمدان", image: "category/uterus.webp" },
+    {
+      id: "cycle",
+      name: "قاعدگی",
+      image: "category/cycle.webp"
+    },
+    {
+      id: "uterus",
+      name: "رحم و تخمدان",
+      image: "category/uterus.webp"
+    },
     {
       id: "elder",
       name: "پک مامانجون و باباجون",
       image: "category/elder.webp"
     },
-    { id: "weak", name: "ضعف", image: "category/weak.webp" },
-    { id: "test", name: "محصولات تست", image: "category/test.webp" }
+    {
+      id: "weak",
+      name: "ضعف",
+      image: "category/weak.webp"
+    },
+    {
+      id: "test",
+      name: "محصولات تست",
+      image: "category/test.webp"
+    }
   ],
 
   products: [
-    { id: "1", name: "پودر کاچی ساده | ۳۵۰ گرم", price: 120000, img: "" },
-    { id: "2", name: "کاچی ۴مغز۳ارد | ترکیب ۳ آرد", price: 450000, img: "" },
-    { id: "3", name: "پودر کاچی کودک", price: 300000, img: "" },
-    { id: "4", name: "پودر کاچی بَزَرَک", price: 409000, img: "kachi-bozorg.webp" },
-    { id: "5", name: "پودر کاچی قاعدگی", price: 330000, img: "" },
-    { id: "6", name: "پودر گداخته | کاچی مخصوص زایمان | ۲۵۰ گرم", price: 340000, img: "" },
-    { id: "7", name: "چاشنی اُمیلا", price: 189000, img: "chasni-omega.webp" },
-    { id: "8", name: "فرنی تخم خربزه", price: 135000, img: "farni-tokhm-kharbeze.webp" },
-    { id: "9", name: "حریره بادام", price: 300000, img: "" },
-    { id: "10", name: "حریره نارگیل", price: 400000, img: "" },
-    { id: "11", name: "فرنی جوانه گندم", price: 450000, img: "" },
-    { id: "12", name: "فرنی برنج ساده", price: 120000, img: "" },
-    { id: "13", name: "فرنی کدوحلوایی", price: 500000, img: "" },
-    { id: "14", name: "فرنی به، سیب", price: 550000, img: "farni-beh-sib.webp" },
-    { id: "15", name: "سویلاک", price: 700000, img: "" }
+    {
+      id: "1",
+      name: "پودر کاچی ساده | ۳۵۰ گرم",
+      price: 120000,
+      img: ""
+    },
+    {
+      id: "2",
+      name: "کاچی ۴مغز۳ارد | ترکیب ۳ آرد",
+      price: 450000,
+      img: ""
+    },
+    {
+      id: "3",
+      name: "پودر کاچی کودک",
+      price: 300000,
+      img: ""
+    },
+    {
+      id: "4",
+      name: "پودر کاچی بَزَرَک",
+      price: 409000,
+      img: "kachi-bozorg.webp"
+    },
+    {
+      id: "5",
+      name: "پودر کاچی قاعدگی",
+      price: 330000,
+      img: ""
+    },
+    {
+      id: "6",
+      name: "پودر گداخته | کاچی مخصوص زایمان | ۲۵۰ گرم",
+      price: 340000,
+      img: ""
+    },
+    {
+      id: "7",
+      name: "چاشنی اُمیلا",
+      price: 189000,
+      img: "chasni-omega.webp"
+    },
+    {
+      id: "8",
+      name: "فرنی تخم خربزه",
+      price: 135000,
+      img: "farni-tokhm-kharbeze.webp"
+    },
+    {
+      id: "9",
+      name: "حریره بادام",
+      price: 300000,
+      img: ""
+    },
+    {
+      id: "10",
+      name: "حریره نارگیل",
+      price: 400000,
+      img: ""
+    },
+    {
+      id: "11",
+      name: "فرنی جوانه گندم",
+      price: 450000,
+      img: ""
+    },
+    {
+      id: "12",
+      name: "فرنی برنج ساده",
+      price: 120000,
+      img: ""
+    },
+    {
+      id: "13",
+      name: "فرنی کدوحلوایی",
+      price: 500000,
+      img: ""
+    },
+    {
+      id: "14",
+      name: "فرنی به، سیب",
+      price: 550000,
+      img: "farni-beh-sib.webp"
+    },
+    {
+      id: "15",
+      name: "سویلاک",
+      price: 700000,
+      img: ""
+    }
   ]
 };
 
@@ -77,13 +204,17 @@ const DATA = {
 ================================================== */
 
 function json(data, status = 200) {
+
   return new Response(
     JSON.stringify(data),
     {
       status,
       headers: {
-        "content-type": "application/json; charset=utf-8",
-        "cache-control": "no-store"
+        "content-type":
+          "application/json; charset=utf-8",
+
+        "cache-control":
+          "no-store"
       }
     }
   );
@@ -103,6 +234,7 @@ async function createTables(db) {
     )
   `).run();
 
+
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS categories (
       id TEXT PRIMARY KEY,
@@ -110,6 +242,7 @@ async function createTables(db) {
       image TEXT
     )
   `).run();
+
 
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS products (
@@ -127,6 +260,41 @@ async function createTables(db) {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
+
+  /* ----------------------------------------------
+     جدول سفارش‌ها
+  ---------------------------------------------- */
+
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+      customer_name TEXT NOT NULL,
+
+      customer_phone TEXT NOT NULL,
+
+      customer_address TEXT NOT NULL,
+
+      items TEXT NOT NULL,
+
+      subtotal INTEGER DEFAULT 0,
+
+      shipping_id TEXT DEFAULT '',
+
+      shipping_name TEXT DEFAULT '',
+
+      shipping_price INTEGER DEFAULT 0,
+
+      total INTEGER DEFAULT 0,
+
+      status TEXT DEFAULT 'new',
+
+      payment_status TEXT DEFAULT 'unpaid',
+
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
 }
 
 
@@ -136,7 +304,10 @@ async function createTables(db) {
 
 async function seedSettings(db) {
 
-  for (const [key, value] of Object.entries(DATA.settings)) {
+  for (
+    const [key, value]
+    of Object.entries(DATA.settings)
+  ) {
 
     await db.prepare(`
       INSERT OR IGNORE INTO settings
@@ -181,17 +352,23 @@ async function seedCategories(db) {
 
 async function seedProducts(db) {
 
-  const countResult = await db.prepare(`
-    SELECT COUNT(*) AS total
-    FROM products
-  `).first();
+  const countResult =
+    await db.prepare(`
+      SELECT COUNT(*) AS total
+      FROM products
+    `).first();
+
 
   const totalProducts =
-    Number(countResult?.total || 0);
+    Number(
+      countResult?.total || 0
+    );
+
 
   if (totalProducts > 0) {
     return;
   }
+
 
   for (const product of DATA.products) {
 
@@ -213,17 +390,30 @@ async function seedProducts(db) {
     `)
     .bind(
       String(product.id),
+
       product.name || "",
+
       product.cat || "",
+
       product.desc || "",
-      Number(product.price || 0),
+
+      Number(
+        product.price || 0
+      ),
+
       product.discountPrice == null
         ? null
         : Number(product.discountPrice),
+
       product.stage || "",
+
       product.video || "",
+
       product.img || "",
-      product.active === false ? 0 : 1
+
+      product.active === false
+        ? 0
+        : 1
     )
     .run();
   }
@@ -237,8 +427,11 @@ async function seedProducts(db) {
 async function setupDatabase(db) {
 
   await createTables(db);
+
   await seedSettings(db);
+
   await seedCategories(db);
+
   await seedProducts(db);
 }
 
@@ -250,10 +443,14 @@ async function setupDatabase(db) {
 function isAdmin(request, env) {
 
   const key =
-    request.headers.get("x-admin-key") || "";
+    request.headers.get(
+      "x-admin-key"
+    ) || "";
 
-  return !!env.ADMIN_KEY &&
-         key === env.ADMIN_KEY;
+  return (
+    !!env.ADMIN_KEY &&
+    key === env.ADMIN_KEY
+  );
 }
 
 
@@ -270,12 +467,14 @@ async function getStore(db) {
       ORDER BY key
     `).all();
 
+
   const categoriesResult =
     await db.prepare(`
       SELECT id, name, image
       FROM categories
       ORDER BY rowid
     `).all();
+
 
   const productsResult =
     await db.prepare(`
@@ -296,64 +495,113 @@ async function getStore(db) {
       ORDER BY rowid
     `).all();
 
+
   const settings = {};
 
-  for (const row of settingsResult.results || []) {
+
+  for (
+    const row
+    of settingsResult.results || []
+  ) {
 
     try {
+
       settings[row.key] =
         JSON.parse(row.value);
+
     } catch {
+
       settings[row.key] =
         row.value;
     }
   }
 
-  /* اگر تنظیمات ارسال هنوز وجود نداشت */
-  if (!Array.isArray(settings.shippingMethods)) {
+
+  /* اگر تنظیمات ارسال وجود نداشت */
+
+  if (
+    !Array.isArray(
+      settings.shippingMethods
+    )
+  ) {
 
     settings.shippingMethods = [
+
       {
         id: "post-pishtaz",
         name: "پست پیشتاز",
         price: 0,
         active: true
       },
+
       {
         id: "post-sefareshi",
         name: "پست سفارشی",
         price: 0,
         active: false
       }
+
     ];
   }
 
+
   const products =
-    (productsResult.results || []).map(product => ({
+    (
+      productsResult.results || []
+    ).map(product => ({
+
       id: product.id,
+
       name: product.name,
-      cat: product.cat || "",
-      desc: product.desc || "",
-      price: Number(product.price || 0),
+
+      cat:
+        product.cat || "",
+
+      desc:
+        product.desc || "",
+
+      price:
+        Number(
+          product.price || 0
+        ),
 
       discountPrice:
         product.discount_price == null
           ? 0
-          : Number(product.discount_price),
+          : Number(
+              product.discount_price
+            ),
 
-      stage: product.stage || "",
-      video: product.video || "",
-      img: product.img || "",
-      active: Number(product.active) === 1,
-      createdAt: product.created_at || "",
-      updatedAt: product.updated_at || ""
+      stage:
+        product.stage || "",
+
+      video:
+        product.video || "",
+
+      img:
+        product.img || "",
+
+      active:
+        Number(product.active) === 1,
+
+      createdAt:
+        product.created_at || "",
+
+      updatedAt:
+        product.updated_at || ""
+
     }));
 
+
   return {
+
     settings,
+
     categories:
       categoriesResult.results || [],
+
     products
+
   };
 }
 
@@ -362,22 +610,31 @@ async function getStore(db) {
    GET
 ================================================== */
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({
+  env
+}) {
 
   if (!env.DB) {
+
     return json({
-      error: "D1 database is not configured"
+      error:
+        "D1 database is not configured"
     }, 500);
   }
 
+
   try {
 
-    const db = env.DB;
+    const db =
+      env.DB;
+
 
     await setupDatabase(db);
 
+
     const store =
       await getStore(db);
+
 
     return json(store);
 
@@ -396,31 +653,409 @@ export async function onRequestGet({ env }) {
    POST
 ================================================== */
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({
+  request,
+  env
+}) {
 
   if (!env.DB) {
+
     return json({
-      error: "D1 database is not configured"
+      error:
+        "D1 database is not configured"
     }, 500);
   }
 
-  if (!isAdmin(request, env)) {
-    return json({
-      error: "Unauthorized"
-    }, 401);
-  }
 
   try {
 
-    const db = env.DB;
+    const db =
+      env.DB;
+
 
     await setupDatabase(db);
+
 
     const body =
       await request.json();
 
+
     const action =
       body.action || "";
+
+
+    /* ==================================================
+       ثبت سفارش مشتری
+       این بخش عمومی است و ADMIN_KEY نمی‌خواهد
+    ================================================== */
+
+    if (action === "create-order") {
+
+      const customer =
+        body.customer || {};
+
+
+      const items =
+        Array.isArray(body.items)
+          ? body.items
+          : [];
+
+
+      const shippingId =
+        String(
+          body.shippingId || ""
+        );
+
+
+      const customerName =
+        String(
+          customer.name || ""
+        ).trim();
+
+
+      const customerPhone =
+        String(
+          customer.phone || ""
+        ).trim();
+
+
+      const customerAddress =
+        String(
+          customer.address || ""
+        ).trim();
+
+
+      if (!customerName) {
+
+        return json({
+          error:
+            "نام مشتری الزامی است"
+        }, 400);
+      }
+
+
+      if (!customerPhone) {
+
+        return json({
+          error:
+            "شماره موبایل الزامی است"
+        }, 400);
+      }
+
+
+      if (!customerAddress) {
+
+        return json({
+          error:
+            "آدرس الزامی است"
+        }, 400);
+      }
+
+
+      if (!items.length) {
+
+        return json({
+          error:
+            "سبد خرید خالی است"
+        }, 400);
+      }
+
+
+      /* ----------------------------------------------
+         محاسبه مبلغ محصولات از D1
+      ---------------------------------------------- */
+
+      let subtotal = 0;
+
+      const cleanItems = [];
+
+
+      for (const item of items) {
+
+        const productId =
+          String(
+            item.id || ""
+          );
+
+
+        const quantity =
+          Math.max(
+            1,
+            Math.floor(
+              Number(
+                item.qty || 1
+              )
+            )
+          );
+
+
+        if (!productId) {
+          continue;
+        }
+
+
+        const product =
+          await db.prepare(`
+            SELECT
+              id,
+              name,
+              price,
+              discount_price,
+              active
+            FROM products
+            WHERE id = ?
+          `)
+          .bind(productId)
+          .first();
+
+
+        if (!product) {
+          continue;
+        }
+
+
+        if (
+          Number(product.active) !== 1
+        ) {
+          continue;
+        }
+
+
+        const price =
+          Number(
+            product.discount_price != null &&
+            Number(product.discount_price) > 0 &&
+            Number(product.discount_price) <
+              Number(product.price || 0)
+
+              ? product.discount_price
+
+              : product.price || 0
+          );
+
+
+        if (price <= 0) {
+          continue;
+        }
+
+
+        subtotal +=
+          price * quantity;
+
+
+        cleanItems.push({
+
+          id:
+            product.id,
+
+          name:
+            product.name,
+
+          qty:
+            quantity,
+
+          price
+
+        });
+      }
+
+
+      if (!cleanItems.length) {
+
+        return json({
+          error:
+            "هیچ محصول معتبر و فعالی در سفارش وجود ندارد"
+        }, 400);
+      }
+
+
+      /* ----------------------------------------------
+         دریافت روش ارسال از D1
+      ---------------------------------------------- */
+
+      const shippingSetting =
+        await db.prepare(`
+          SELECT value
+          FROM settings
+          WHERE key = 'shippingMethods'
+        `)
+        .first();
+
+
+      let shippingMethods = [];
+
+
+      if (shippingSetting?.value) {
+
+        try {
+
+          shippingMethods =
+            JSON.parse(
+              shippingSetting.value
+            );
+
+        } catch {
+
+          shippingMethods = [];
+
+        }
+      }
+
+
+      if (
+        !Array.isArray(
+          shippingMethods
+        )
+      ) {
+
+        shippingMethods = [];
+
+      }
+
+
+      const shipping =
+        shippingMethods.find(
+          method =>
+            method &&
+            method.active !== false &&
+            String(method.id) ===
+            shippingId
+        );
+
+
+      if (!shipping) {
+
+        return json({
+          error:
+            "روش ارسال انتخاب‌شده معتبر نیست"
+        }, 400);
+      }
+
+
+      const shippingPrice =
+        Math.max(
+          0,
+          Number(
+            shipping.price || 0
+          )
+        );
+
+
+      const total =
+        subtotal +
+        shippingPrice;
+
+
+      /* ----------------------------------------------
+         ذخیره سفارش
+      ---------------------------------------------- */
+
+      const result =
+        await db.prepare(`
+          INSERT INTO orders
+          (
+            customer_name,
+            customer_phone,
+            customer_address,
+            items,
+            subtotal,
+            shipping_id,
+            shipping_name,
+            shipping_price,
+            total,
+            status,
+            payment_status
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `)
+        .bind(
+
+          customerName,
+
+          customerPhone,
+
+          customerAddress,
+
+          JSON.stringify(
+            cleanItems
+          ),
+
+          subtotal,
+
+          String(
+            shipping.id
+          ),
+
+          String(
+            shipping.name
+          ),
+
+          shippingPrice,
+
+          total,
+
+          "new",
+
+          "unpaid"
+
+        )
+        .run();
+
+
+      const orderNumber =
+        Number(
+          result.meta?.last_row_id || 0
+        );
+
+
+      return json({
+
+        success: true,
+
+        orderId:
+          `HF-${orderNumber}`,
+
+        orderNumber,
+
+        customerName,
+
+        subtotal,
+
+        shippingPrice,
+
+        total,
+
+        shipping: {
+
+          id:
+            shipping.id,
+
+          name:
+            shipping.name,
+
+          price:
+            shippingPrice
+
+        },
+
+        items:
+          cleanItems
+
+      });
+    }
+
+
+    /* ==================================================
+       از اینجا به بعد فقط مدیریت
+    ================================================== */
+
+    if (!isAdmin(request, env)) {
+
+      return json({
+        error:
+          "Unauthorized"
+      }, 401);
+    }
 
 
     /* ----------------------------------------------
@@ -444,17 +1079,26 @@ export async function onRequestPost({ request, env }) {
       const p =
         body.product || {};
 
-      if (!String(p.name || "").trim()) {
+
+      if (
+        !String(
+          p.name || ""
+        ).trim()
+      ) {
+
         return json({
-          error: "نام محصول الزامی است"
+          error:
+            "نام محصول الزامی است"
         }, 400);
       }
+
 
       const id =
         String(
           p.id ||
           Date.now()
         );
+
 
       await db.prepare(`
         INSERT INTO products
@@ -473,24 +1117,51 @@ export async function onRequestPost({ request, env }) {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
+
         id,
-        String(p.name || "").trim(),
-        String(p.cat || ""),
-        String(p.desc || ""),
-        Number(p.price || 0),
+
+        String(
+          p.name || ""
+        ).trim(),
+
+        String(
+          p.cat || ""
+        ),
+
+        String(
+          p.desc || ""
+        ),
+
+        Number(
+          p.price || 0
+        ),
 
         p.discountPrice == null ||
         p.discountPrice === ""
           ? null
-          : Number(p.discountPrice),
+          : Number(
+              p.discountPrice
+            ),
 
-        String(p.stage || ""),
-        String(p.video || ""),
-        String(p.img || ""),
+        String(
+          p.stage || ""
+        ),
 
-        p.active === false ? 0 : 1
+        String(
+          p.video || ""
+        ),
+
+        String(
+          p.img || ""
+        ),
+
+        p.active === false
+          ? 0
+          : 1
+
       )
       .run();
+
 
       return json({
         success: true,
@@ -508,6 +1179,7 @@ export async function onRequestPost({ request, env }) {
       const settings =
         body.settings || {};
 
+
       for (
         const [key, value]
         of Object.entries(settings)
@@ -518,14 +1190,21 @@ export async function onRequestPost({ request, env }) {
           (key, value)
           VALUES (?, ?)
           ON CONFLICT(key)
-          DO UPDATE SET value = excluded.value
+          DO UPDATE SET
+            value = excluded.value
         `)
         .bind(
+
           key,
-          JSON.stringify(value)
+
+          JSON.stringify(
+            value
+          )
+
         )
         .run();
       }
+
 
       return json({
         success: true
@@ -542,70 +1221,107 @@ export async function onRequestPost({ request, env }) {
       let shippingMethods =
         body.shippingMethods;
 
-      if (!Array.isArray(shippingMethods)) {
+
+      if (
+        !Array.isArray(
+          shippingMethods
+        )
+      ) {
 
         return json({
-          error: "اطلاعات روش‌های ارسال نامعتبر است"
+          error:
+            "اطلاعات روش‌های ارسال نامعتبر است"
         }, 400);
       }
 
+
       shippingMethods =
         shippingMethods
-          .map((item, index) => ({
 
-            id:
-              String(
-                item.id ||
-                `shipping-${Date.now()}-${index}`
-              ),
+          .map(
+            (item, index) => ({
 
-            name:
-              String(
-                item.name || ""
-              ).trim(),
+              id:
+                String(
+                  item.id ||
+                  `shipping-${Date.now()}-${index}`
+                ),
 
-            price:
-              Math.max(
-                0,
-                Number(item.price || 0)
-              ),
+              name:
+                String(
+                  item.name || ""
+                ).trim(),
 
-            active:
-              item.active !== false
+              price:
+                Math.max(
+                  0,
+                  Number(
+                    item.price || 0
+                  )
+                ),
 
-          }))
-          .filter(item => item.name);
+              active:
+                item.active !== false
+
+            })
+          )
+
+          .filter(
+            item =>
+              item.name
+          );
+
 
       await db.prepare(`
         INSERT INTO settings
         (key, value)
         VALUES (?, ?)
         ON CONFLICT(key)
-        DO UPDATE SET value = excluded.value
+        DO UPDATE SET
+          value = excluded.value
       `)
       .bind(
+
         "shippingMethods",
-        JSON.stringify(shippingMethods)
+
+        JSON.stringify(
+          shippingMethods
+        )
+
       )
       .run();
 
+
       return json({
+
         success: true,
+
         shippingMethods
+
       });
     }
 
 
     return json({
-      error: "Unknown action"
+      error:
+        "Unknown action"
     }, 400);
+
 
   } catch (error) {
 
+    console.error(
+      "POST store error:",
+      error
+    );
+
+
     return json({
+
       error:
         error?.message ||
         String(error)
+
     }, 500);
   }
 }
@@ -615,46 +1331,73 @@ export async function onRequestPost({ request, env }) {
    PUT
 ================================================== */
 
-export async function onRequestPut({ request, env }) {
+export async function onRequestPut({
+  request,
+  env
+}) {
 
   if (!env.DB) {
+
     return json({
-      error: "D1 database is not configured"
+      error:
+        "D1 database is not configured"
     }, 500);
   }
 
+
   if (!isAdmin(request, env)) {
+
     return json({
-      error: "Unauthorized"
+      error:
+        "Unauthorized"
     }, 401);
   }
 
+
   try {
 
-    const db = env.DB;
+    const db =
+      env.DB;
+
 
     await setupDatabase(db);
+
 
     const body =
       await request.json();
 
+
     const p =
       body.product || {};
 
+
     const id =
-      String(p.id || "");
+      String(
+        p.id || ""
+      );
+
 
     if (!id) {
+
       return json({
-        error: "شناسه محصول الزامی است"
+        error:
+          "شناسه محصول الزامی است"
       }, 400);
     }
 
-    if (!String(p.name || "").trim()) {
+
+    if (
+      !String(
+        p.name || ""
+      ).trim()
+    ) {
+
       return json({
-        error: "نام محصول الزامی است"
+        error:
+          "نام محصول الزامی است"
       }, 400);
     }
+
 
     const result =
       await db.prepare(`
@@ -673,41 +1416,76 @@ export async function onRequestPut({ request, env }) {
         WHERE id = ?
       `)
       .bind(
-        String(p.name || "").trim(),
-        String(p.cat || ""),
-        String(p.desc || ""),
-        Number(p.price || 0),
+
+        String(
+          p.name || ""
+        ).trim(),
+
+        String(
+          p.cat || ""
+        ),
+
+        String(
+          p.desc || ""
+        ),
+
+        Number(
+          p.price || 0
+        ),
 
         p.discountPrice == null ||
         p.discountPrice === ""
           ? null
-          : Number(p.discountPrice),
+          : Number(
+              p.discountPrice
+            ),
 
-        String(p.stage || ""),
-        String(p.video || ""),
-        String(p.img || ""),
+        String(
+          p.stage || ""
+        ),
 
-        p.active === false ? 0 : 1,
+        String(
+          p.video || ""
+        ),
+
+        String(
+          p.img || ""
+        ),
+
+        p.active === false
+          ? 0
+          : 1,
+
         id
+
       )
       .run();
 
-    if (!result.meta?.changes) {
+
+    if (
+      !result.meta?.changes
+    ) {
+
       return json({
-        error: "محصول پیدا نشد"
+        error:
+          "محصول پیدا نشد"
       }, 404);
     }
+
 
     return json({
       success: true
     });
 
+
   } catch (error) {
 
     return json({
+
       error:
         error?.message ||
         String(error)
+
     }, 500);
   }
 }
@@ -717,37 +1495,56 @@ export async function onRequestPut({ request, env }) {
    DELETE
 ================================================== */
 
-export async function onRequestDelete({ request, env }) {
+export async function onRequestDelete({
+  request,
+  env
+}) {
 
   if (!env.DB) {
+
     return json({
-      error: "D1 database is not configured"
+      error:
+        "D1 database is not configured"
     }, 500);
   }
 
+
   if (!isAdmin(request, env)) {
+
     return json({
-      error: "Unauthorized"
+      error:
+        "Unauthorized"
     }, 401);
   }
 
+
   try {
 
-    const db = env.DB;
+    const db =
+      env.DB;
+
 
     await setupDatabase(db);
+
 
     const body =
       await request.json();
 
+
     const id =
-      String(body.id || "");
+      String(
+        body.id || ""
+      );
+
 
     if (!id) {
+
       return json({
-        error: "شناسه محصول الزامی است"
+        error:
+          "شناسه محصول الزامی است"
       }, 400);
     }
+
 
     const result =
       await db.prepare(`
@@ -757,22 +1554,31 @@ export async function onRequestDelete({ request, env }) {
       .bind(id)
       .run();
 
-    if (!result.meta?.changes) {
+
+    if (
+      !result.meta?.changes
+    ) {
+
       return json({
-        error: "محصول پیدا نشد"
+        error:
+          "محصول پیدا نشد"
       }, 404);
     }
+
 
     return json({
       success: true
     });
 
+
   } catch (error) {
 
     return json({
+
       error:
         error?.message ||
         String(error)
+
     }, 500);
   }
-}
+        }
