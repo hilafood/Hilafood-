@@ -1110,8 +1110,12 @@ export async function onRequestPost({
           error:
             "شماره موبایل الزامی است"
         }, 400);
-      }
-              return json({
+        }
+
+
+      if (!customerAddress) {
+
+        return json({
           error:
             "آدرس الزامی است"
         }, 400);
