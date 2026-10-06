@@ -903,7 +903,7 @@ async function loadStore(){
     render();
 
     await loadOrders();
-
+await loadSmsStatus();
     setStatus(
       "اطلاعات فروشگاه با موفقیت دریافت شد."
     );
