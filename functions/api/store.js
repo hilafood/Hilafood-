@@ -1301,7 +1301,226 @@ export async function onRequestPost({
       });
     }
 
+/* ----------------------------------------------
+   دریافت سفارش‌ها برای مدیریت
+---------------------------------------------- */
 
+if (action === "get-orders") {
+
+  const ordersResult =
+    await db.prepare(`
+      SELECT
+        id,
+        customer_name,
+        customer_phone,
+        customer_address,
+        items,
+        subtotal,
+        shipping_id,
+        shipping_name,
+        shipping_price,
+        total,
+        status,
+        payment_status,
+        created_at
+      FROM orders
+      ORDER BY id DESC
+    `)
+    .all();
+
+
+  const orders =
+    (ordersResult.results || [])
+      .map(order => {
+
+        let items = [];
+
+        try {
+
+          items =
+            JSON.parse(
+              order.items || "[]"
+            );
+
+        } catch {
+
+          items = [];
+
+        }
+
+
+        return {
+
+          id:
+            order.id,
+
+          orderId:
+            `HF-${order.id}`,
+
+          customerName:
+            order.customer_name,
+
+          customerPhone:
+            order.customer_phone,
+
+          customerAddress:
+            order.customer_address,
+
+          items,
+
+          subtotal:
+            Number(order.subtotal || 0),
+
+          shippingId:
+            order.shipping_id,
+
+          shippingName:
+            order.shipping_name,
+
+          shippingPrice:
+            Number(
+              order.shipping_price || 0
+            ),
+
+          total:
+            Number(order.total || 0),
+
+          status:
+            order.status || "new",
+
+          paymentStatus:
+            order.payment_status || "unpaid",
+
+          createdAt:
+            order.created_at
+
+        };
+
+      });
+
+
+  return json({
+
+    success: true,
+
+    orders
+
+  });
+}
+
+
+/* ----------------------------------------------
+   تغییر وضعیت سفارش
+---------------------------------------------- */
+
+if (action === "update-order") {
+
+  const orderId =
+    Number(
+      body.orderId || 0
+    );
+
+
+  if (!orderId) {
+
+    return json({
+      error:
+        "شماره سفارش نامعتبر است"
+    }, 400);
+
+  }
+
+
+  const status =
+    String(
+      body.status || "new"
+    );
+
+
+  const paymentStatus =
+    String(
+      body.paymentStatus || "unpaid"
+    );
+
+
+  const allowedStatuses = [
+    "new",
+    "processing",
+    "shipped",
+    "completed",
+    "cancelled"
+  ];
+
+
+  const allowedPaymentStatuses = [
+    "unpaid",
+    "paid",
+    "failed"
+  ];
+
+
+  if (
+    !allowedStatuses.includes(
+      status
+    )
+  ) {
+
+    return json({
+      error:
+        "وضعیت سفارش نامعتبر است"
+    }, 400);
+
+  }
+
+
+  if (
+    !allowedPaymentStatuses.includes(
+      paymentStatus
+    )
+  ) {
+
+    return json({
+      error:
+        "وضعیت پرداخت نامعتبر است"
+    }, 400);
+
+  }
+
+
+  const result =
+    await db.prepare(`
+      UPDATE orders
+      SET
+        status = ?,
+        payment_status = ?
+      WHERE id = ?
+    `)
+    .bind(
+      status,
+      paymentStatus,
+      orderId
+    )
+    .run();
+
+
+  if (
+    !result.meta?.changes
+  ) {
+
+    return json({
+      error:
+        "سفارش پیدا نشد"
+    }, 404);
+
+  }
+
+
+  return json({
+
+    success: true
+
+  });
+  }
     return json({
       error:
         "Unknown action"
