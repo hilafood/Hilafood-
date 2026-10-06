@@ -10,6 +10,13 @@ const DATA = {
     instagram: "https://instagram.com/hila_mamaa",
     eitaaMama: "https://eitaa.com/hila_mama",
 
+    /* ----------------------------------------------
+       تنظیمات پیامک
+       در صورت نبود این تنظیم در D1، پیامک فعال است
+    ---------------------------------------------- */
+
+    smsEnabled: true,
+
     shippingMethods: [
       {
         id: "post-pishtaz",
@@ -262,10 +269,6 @@ async function createTables(db) {
   `).run();
 
 
-  /* ----------------------------------------------
-     جدول سفارش‌ها
-  ---------------------------------------------- */
-
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS orders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -452,6 +455,248 @@ function isAdmin(request, env) {
     key === env.ADMIN_KEY
   );
 }
+
+
+/* ==================================================
+   خواندن وضعیت فعال بودن پیامک
+================================================== */
+
+async function isSmsEnabled(db) {
+
+  try {
+
+    const result =
+      await db.prepare(`
+        SELECT value
+        FROM settings
+        WHERE key = 'smsEnabled'
+      `)
+      .first();
+
+
+    if (!result?.value) {
+
+      return true;
+    }
+
+
+    return JSON.parse(
+      result.value
+    ) !== false;
+
+  } catch {
+
+    return true;
+  }
+}
+
+
+/* ==================================================
+   ارسال SMS از طریق ASA SMS
+================================================== */
+
+async function sendSms(
+  env,
+  message
+) {
+
+  if (
+    !env.SMS_API_KEY ||
+    !env.SMS_TO ||
+    !env.SMS_FROM
+  ) {
+
+    return {
+      success: false,
+      configured: false,
+      error:
+        "تنظیمات SMS در Cloudflare کامل نیست"
+    };
+  }
+
+
+  try {
+
+    const url =
+      new URL(
+        `https://api-payamak.com/api/v4/${encodeURIComponent(
+          env.SMS_API_KEY
+        )}/sms/send.json`
+      );
+
+
+    url.searchParams.set(
+      "from",
+      String(env.SMS_FROM)
+    );
+
+
+    url.searchParams.set(
+      "recipients",
+      String(env.SMS_TO)
+    );
+
+
+    url.searchParams.set(
+      "message",
+      String(message)
+    );
+
+
+    url.searchParams.set(
+      "type",
+      "0"
+    );
+
+
+    const response =
+      await fetch(
+        url.toString(),
+        {
+          method: "GET"
+        }
+      );
+
+
+    const responseText =
+      await response.text();
+
+
+    let data = null;
+
+
+    try {
+
+      data =
+        JSON.parse(
+          responseText
+        );
+
+    } catch {
+
+      data = null;
+    }
+
+
+    if (!response.ok) {
+
+      console.error(
+        "SMS HTTP error:",
+        response.status,
+        responseText
+      );
+
+
+      return {
+        success: false,
+        configured: true,
+        error:
+          `SMS HTTP ${response.status}`
+      };
+    }
+
+
+    const apiStatus =
+      Number(
+        data?.return?.status ?? -1
+      );
+
+
+    if (
+      apiStatus !== 200
+    ) {
+
+      console.error(
+        "SMS API error:",
+        responseText
+      );
+
+
+      return {
+        success: false,
+        configured: true,
+        error:
+          data?.return?.message ||
+          "ارسال پیامک ناموفق بود"
+      };
+    }
+
+
+    return {
+      success: true,
+      configured: true,
+      messageId:
+        data?.data?.messageid || null,
+      response: data
+    };
+
+  } catch (error) {
+
+    console.error(
+      "SMS request failed:",
+      error
+    );
+
+
+    return {
+      success: false,
+      configured: true,
+      error:
+        error?.message ||
+        String(error)
+    };
+  }
+}
+
+
+/* ==================================================
+   ارسال SMS سفارش
+================================================== */
+
+async function sendSmsOrderNotification(
+  db,
+  env,
+  orderNumber,
+  customerName,
+  shippingName,
+  total
+) {
+
+  const enabled =
+    await isSmsEnabled(db);
+
+
+  if (!enabled) {
+
+    return;
+  }
+
+
+  const message =
+`🛍 سفارش جدید هیلا فود
+HF-${orderNumber}
+مشتری: ${customerName}
+مبلغ: ${Number(total).toLocaleString("fa-IR")} تومان
+ارسال: ${shippingName}`;
+
+
+  const result =
+    await sendSms(
+      env,
+      message
+    );
+
+
+  if (!result.success) {
+
+    console.error(
+      "Order SMS failed:",
+      result.error
+    );
+  }
+}
+
+
 /* ==================================================
    ارسال اعلان سفارش به ایتا
 ================================================== */
@@ -571,6 +816,7 @@ ${Number(total).toLocaleString("fa-IR")} تومان
   }
 }
 
+
 /* ==================================================
    خواندن اطلاعات کامل فروشگاه
 ================================================== */
@@ -634,8 +880,6 @@ async function getStore(db) {
   }
 
 
-  /* اگر تنظیمات ارسال وجود نداشت */
-
   if (
     !Array.isArray(
       settings.shippingMethods
@@ -659,6 +903,15 @@ async function getStore(db) {
       }
 
     ];
+  }
+
+
+  if (
+    typeof settings.smsEnabled !==
+    "boolean"
+  ) {
+
+    settings.smsEnabled = true;
   }
 
 
@@ -1123,6 +1376,8 @@ export async function onRequestPost({
         Number(
           result.meta?.last_row_id || 0
         );
+
+
       /* ----------------------------------------------
          اعلان سفارش در کانال ایتا
       ---------------------------------------------- */
@@ -1152,6 +1407,31 @@ export async function onRequestPost({
         total
 
       );
+
+
+      /* ----------------------------------------------
+         اعلان سفارش از طریق SMS
+         خطای SMS نباید ثبت سفارش را خراب کند
+      ---------------------------------------------- */
+
+      await sendSmsOrderNotification(
+
+        db,
+
+        env,
+
+        orderNumber,
+
+        customerName,
+
+        String(
+          shipping.name
+        ),
+
+        total
+
+      );
+
 
       return json({
 
@@ -1211,6 +1491,133 @@ export async function onRequestPost({
 
       return json({
         success: true
+      });
+    }
+
+
+    /* ----------------------------------------------
+       وضعیت اتصال پیامک
+    ---------------------------------------------- */
+
+    if (action === "get-sms-status") {
+
+      const enabled =
+        await isSmsEnabled(db);
+
+
+      const configured =
+        !!(
+          env.SMS_API_KEY &&
+          env.SMS_TO &&
+          env.SMS_FROM
+        );
+
+
+      return json({
+
+        success: true,
+
+        enabled,
+
+        configured,
+
+        hasApiKey:
+          !!env.SMS_API_KEY,
+
+        hasRecipient:
+          !!env.SMS_TO,
+
+        hasSender:
+          !!env.SMS_FROM
+
+      });
+    }
+
+
+    /* ----------------------------------------------
+       فعال / غیرفعال کردن پیامک
+    ---------------------------------------------- */
+
+    if (action === "save-sms-settings") {
+
+      const enabled =
+        body.enabled !== false;
+
+
+      await db.prepare(`
+        INSERT INTO settings
+        (key, value)
+        VALUES (?, ?)
+        ON CONFLICT(key)
+        DO UPDATE SET
+          value = excluded.value
+      `)
+      .bind(
+
+        "smsEnabled",
+
+        JSON.stringify(
+          enabled
+        )
+
+      )
+      .run();
+
+
+      return json({
+
+        success: true,
+
+        enabled
+
+      });
+    }
+
+
+    /* ----------------------------------------------
+       ارسال SMS تست
+    ---------------------------------------------- */
+
+    if (action === "send-sms-test") {
+
+      const result =
+        await sendSms(
+
+          env,
+
+          `🧪 پیام تست هیلا فود
+
+اتصال سیستم پیامکی با موفقیت برقرار شد.
+
+هیلا فود`
+
+        );
+
+
+      if (!result.success) {
+
+        return json({
+
+          success: false,
+
+          error:
+            result.error ||
+            "ارسال پیامک تست ناموفق بود"
+
+        }, 400);
+      }
+
+
+      return json({
+
+        success: true,
+
+        message:
+          "پیامک تست با موفقیت به سرویس ارسال شد",
+
+        messageId:
+          result.messageId || null
+
       });
     }
 
@@ -1446,226 +1853,234 @@ export async function onRequestPost({
       });
     }
 
-/* ----------------------------------------------
-   دریافت سفارش‌ها برای مدیریت
----------------------------------------------- */
 
-if (action === "get-orders") {
+    /* ----------------------------------------------
+       دریافت سفارش‌ها برای مدیریت
+    ---------------------------------------------- */
 
-  const ordersResult =
-    await db.prepare(`
-      SELECT
-        id,
-        customer_name,
-        customer_phone,
-        customer_address,
-        items,
-        subtotal,
-        shipping_id,
-        shipping_name,
-        shipping_price,
-        total,
-        status,
-        payment_status,
-        created_at
-      FROM orders
-      ORDER BY id DESC
-    `)
-    .all();
+    if (action === "get-orders") {
 
-
-  const orders =
-    (ordersResult.results || [])
-      .map(order => {
-
-        let items = [];
-
-        try {
-
-          items =
-            JSON.parse(
-              order.items || "[]"
-            );
-
-        } catch {
-
-          items = [];
-
-        }
+      const ordersResult =
+        await db.prepare(`
+          SELECT
+            id,
+            customer_name,
+            customer_phone,
+            customer_address,
+            items,
+            subtotal,
+            shipping_id,
+            shipping_name,
+            shipping_price,
+            total,
+            status,
+            payment_status,
+            created_at
+          FROM orders
+          ORDER BY id DESC
+        `)
+        .all();
 
 
-        return {
+      const orders =
+        (ordersResult.results || [])
+          .map(order => {
 
-          id:
-            order.id,
+            let items = [];
 
-          orderId:
-            `HF-${order.id}`,
+            try {
 
-          customerName:
-            order.customer_name,
+              items =
+                JSON.parse(
+                  order.items || "[]"
+                );
 
-          customerPhone:
-            order.customer_phone,
+            } catch {
 
-          customerAddress:
-            order.customer_address,
+              items = [];
 
-          items,
+            }
 
-          subtotal:
-            Number(order.subtotal || 0),
 
-          shippingId:
-            order.shipping_id,
+            return {
 
-          shippingName:
-            order.shipping_name,
+              id:
+                order.id,
 
-          shippingPrice:
-            Number(
-              order.shipping_price || 0
-            ),
+              orderId:
+                `HF-${order.id}`,
 
-          total:
-            Number(order.total || 0),
+              customerName:
+                order.customer_name,
 
-          status:
-            order.status || "new",
+              customerPhone:
+                order.customer_phone,
 
-          paymentStatus:
-            order.payment_status || "unpaid",
+              customerAddress:
+                order.customer_address,
 
-          createdAt:
-            order.created_at
+              items,
 
-        };
+              subtotal:
+                Number(
+                  order.subtotal || 0
+                ),
+
+              shippingId:
+                order.shipping_id,
+
+              shippingName:
+                order.shipping_name,
+
+              shippingPrice:
+                Number(
+                  order.shipping_price || 0
+                ),
+
+              total:
+                Number(
+                  order.total || 0
+                ),
+
+              status:
+                order.status || "new",
+
+              paymentStatus:
+                order.payment_status ||
+                "unpaid",
+
+              createdAt:
+                order.created_at
+
+            };
+
+          });
+
+
+      return json({
+
+        success: true,
+
+        orders
 
       });
+    }
 
 
-  return json({
+    /* ----------------------------------------------
+       تغییر وضعیت سفارش
+    ---------------------------------------------- */
 
-    success: true,
+    if (action === "update-order") {
 
-    orders
-
-  });
-}
-
-
-/* ----------------------------------------------
-   تغییر وضعیت سفارش
----------------------------------------------- */
-
-if (action === "update-order") {
-
-  const orderId =
-    Number(
-      body.orderId || 0
-    );
+      const orderId =
+        Number(
+          body.orderId || 0
+        );
 
 
-  if (!orderId) {
+      if (!orderId) {
 
-    return json({
-      error:
-        "شماره سفارش نامعتبر است"
-    }, 400);
+        return json({
+          error:
+            "شماره سفارش نامعتبر است"
+        }, 400);
 
-  }
-
-
-  const status =
-    String(
-      body.status || "new"
-    );
+      }
 
 
-  const paymentStatus =
-    String(
-      body.paymentStatus || "unpaid"
-    );
+      const status =
+        String(
+          body.status || "new"
+        );
 
 
-  const allowedStatuses = [
-    "new",
-    "processing",
-    "shipped",
-    "completed",
-    "cancelled"
-  ];
+      const paymentStatus =
+        String(
+          body.paymentStatus || "unpaid"
+        );
 
 
-  const allowedPaymentStatuses = [
-    "unpaid",
-    "paid",
-    "failed"
-  ];
+      const allowedStatuses = [
+        "new",
+        "processing",
+        "shipped",
+        "completed",
+        "cancelled"
+      ];
 
 
-  if (
-    !allowedStatuses.includes(
-      status
-    )
-  ) {
-
-    return json({
-      error:
-        "وضعیت سفارش نامعتبر است"
-    }, 400);
-
-  }
+      const allowedPaymentStatuses = [
+        "unpaid",
+        "paid",
+        "failed"
+      ];
 
 
-  if (
-    !allowedPaymentStatuses.includes(
-      paymentStatus
-    )
-  ) {
+      if (
+        !allowedStatuses.includes(
+          status
+        )
+      ) {
 
-    return json({
-      error:
-        "وضعیت پرداخت نامعتبر است"
-    }, 400);
+        return json({
+          error:
+            "وضعیت سفارش نامعتبر است"
+        }, 400);
 
-  }
-
-
-  const result =
-    await db.prepare(`
-      UPDATE orders
-      SET
-        status = ?,
-        payment_status = ?
-      WHERE id = ?
-    `)
-    .bind(
-      status,
-      paymentStatus,
-      orderId
-    )
-    .run();
+      }
 
 
-  if (
-    !result.meta?.changes
-  ) {
+      if (
+        !allowedPaymentStatuses.includes(
+          paymentStatus
+        )
+      ) {
 
-    return json({
-      error:
-        "سفارش پیدا نشد"
-    }, 404);
+        return json({
+          error:
+            "وضعیت پرداخت نامعتبر است"
+        }, 400);
 
-  }
+      }
 
 
-  return json({
+      const result =
+        await db.prepare(`
+          UPDATE orders
+          SET
+            status = ?,
+            payment_status = ?
+          WHERE id = ?
+        `)
+        .bind(
+          status,
+          paymentStatus,
+          orderId
+        )
+        .run();
 
-    success: true
 
-  });
-  }
+      if (
+        !result.meta?.changes
+      ) {
+
+        return json({
+          error:
+            "سفارش پیدا نشد"
+        }, 404);
+
+      }
+
+
+      return json({
+
+        success: true
+
+      });
+    }
+
+
     return json({
       error:
         "Unknown action"
@@ -1745,204 +2160,4 @@ export async function onRequestPut({
 
       return json({
         error:
-          "شناسه محصول الزامی است"
-      }, 400);
-    }
-
-
-    if (
-      !String(
-        p.name || ""
-      ).trim()
-    ) {
-
-      return json({
-        error:
-          "نام محصول الزامی است"
-      }, 400);
-    }
-
-
-    const result =
-      await db.prepare(`
-        UPDATE products
-        SET
-          name = ?,
-          cat = ?,
-          "desc" = ?,
-          price = ?,
-          discount_price = ?,
-          stage = ?,
-          video = ?,
-          img = ?,
-          active = ?,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `)
-      .bind(
-
-        String(
-          p.name || ""
-        ).trim(),
-
-        String(
-          p.cat || ""
-        ),
-
-        String(
-          p.desc || ""
-        ),
-
-        Number(
-          p.price || 0
-        ),
-
-        p.discountPrice == null ||
-        p.discountPrice === ""
-          ? null
-          : Number(
-              p.discountPrice
-            ),
-
-        String(
-          p.stage || ""
-        ),
-
-        String(
-          p.video || ""
-        ),
-
-        String(
-          p.img || ""
-        ),
-
-        p.active === false
-          ? 0
-          : 1,
-
-        id
-
-      )
-      .run();
-
-
-    if (
-      !result.meta?.changes
-    ) {
-
-      return json({
-        error:
-          "محصول پیدا نشد"
-      }, 404);
-    }
-
-
-    return json({
-      success: true
-    });
-
-
-  } catch (error) {
-
-    return json({
-
-      error:
-        error?.message ||
-        String(error)
-
-    }, 500);
-  }
-}
-
-
-/* ==================================================
-   DELETE
-================================================== */
-
-export async function onRequestDelete({
-  request,
-  env
-}) {
-
-  if (!env.DB) {
-
-    return json({
-      error:
-        "D1 database is not configured"
-    }, 500);
-  }
-
-
-  if (!isAdmin(request, env)) {
-
-    return json({
-      error:
-        "Unauthorized"
-    }, 401);
-  }
-
-
-  try {
-
-    const db =
-      env.DB;
-
-
-    await setupDatabase(db);
-
-
-    const body =
-      await request.json();
-
-
-    const id =
-      String(
-        body.id || ""
-      );
-
-
-    if (!id) {
-
-      return json({
-        error:
-          "شناسه محصول الزامی است"
-      }, 400);
-    }
-
-
-    const result =
-      await db.prepare(`
-        DELETE FROM products
-        WHERE id = ?
-      `)
-      .bind(id)
-      .run();
-
-
-    if (
-      !result.meta?.changes
-    ) {
-
-      return json({
-        error:
-          "محصول پیدا نشد"
-      }, 404);
-    }
-
-
-    return json({
-      success: true
-    });
-
-
-  } catch (error) {
-
-    return json({
-
-      error:
-        error?.message ||
-        String(error)
-
-    }, 500);
-  }
-        }
+          "شناسه محصول الزامی
