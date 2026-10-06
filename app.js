@@ -21,12 +21,14 @@ let selectedShippingId =
    ابزارهای عمومی
 ================================================== */
 
-const $ = id => document.getElementById(id);
+const $ = id =>
+  document.getElementById(id);
 
 
 function img(path) {
 
-  const v = String(path || "");
+  const v =
+    String(path || "");
 
   if (!v) {
     return "";
@@ -50,18 +52,23 @@ function money(n) {
   return (
     Number(n || 0).toLocaleString("fa-IR") +
     " " +
-    (STORE.settings.currency || "تومان")
+    (
+      STORE.settings.currency ||
+      "تومان"
+    )
   );
 }
 
 
 function finalPrice(product) {
 
-  const discount =
-    Number(product.discountPrice || 0);
-
   const price =
     Number(product.price || 0);
+
+  const discount =
+    Number(
+      product.discountPrice || 0
+    );
 
   if (
     discount > 0 &&
@@ -141,7 +148,8 @@ function getSelectedShipping() {
 
   if (!selected) {
 
-    selected = methods[0];
+    selected =
+      methods[0];
 
     selectedShippingId =
       String(selected.id);
@@ -194,6 +202,7 @@ async function load() {
       );
 
     if (!response.ok) {
+
       throw new Error(
         "خطا در دریافت اطلاعات فروشگاه"
       );
@@ -203,7 +212,10 @@ async function load() {
       await response.json();
 
     if (data.error) {
-      throw new Error(data.error);
+
+      throw new Error(
+        data.error
+      );
     }
 
     STORE = {
@@ -219,6 +231,7 @@ async function load() {
 
     };
 
+
     if (
       !Array.isArray(
         STORE.settings.shippingMethods
@@ -228,6 +241,7 @@ async function load() {
       STORE.settings.shippingMethods = [];
 
     }
+
 
   } catch (error) {
 
@@ -286,31 +300,31 @@ function renderCategories() {
 
   el.innerHTML =
     (STORE.categories || [])
-      .map(c => {
+      .map(category => {
 
         return `
 
           <a
             class="category-card"
             href="category.html?cat=${encodeURIComponent(
-              c.name
+              category.name
             )}"
           >
 
             ${
-              c.image
+              category.image
                 ? `
                   <img
-                    src="${img(c.image)}"
+                    src="${img(category.image)}"
                     loading="lazy"
-                    alt="${c.name}"
+                    alt="${category.name}"
                   >
                 `
                 : ""
             }
 
             <b>
-              ${c.name}
+              ${category.name}
             </b>
 
           </a>
@@ -858,42 +872,25 @@ function updateCart() {
       `;
 
 
+  const total =
+    cartSubtotal();
+
+
   const cartTotal =
     $("cartTotal");
+
 
   if (cartTotal) {
 
     cartTotal.textContent =
-      money(cartSubtotal());
-
-  }
-
-
-  const shippingTotal =
-    $("shippingTotal");
-
-  if (shippingTotal) {
-
-    shippingTotal.textContent =
-      money(shippingPrice());
-
-  }
-
-
-  const grandTotal =
-    $("grandTotal");
-
-  if (grandTotal) {
-
-    grandTotal.textContent =
-      money(cartGrandTotal());
+      money(total);
 
   }
 }
 
 
 /* ==================================================
-   تعداد
+   تغییر تعداد
 ================================================== */
 
 function qty(id, change) {
@@ -939,7 +936,7 @@ function qty(id, change) {
 
 
 /* ==================================================
-   باز و بسته کردن سبد
+   سبد خرید
 ================================================== */
 
 function openCart() {
@@ -1007,10 +1004,10 @@ function toggleMenu() {
 
 
 /* ==================================================
-   فرم مشتری
+   انتخاب روش ارسال
 ================================================== */
 
-function showCustomerForm() {
+function showShippingCheckout() {
 
   const methods =
     getShippingMethods();
@@ -1026,20 +1023,8 @@ function showCustomerForm() {
   }
 
 
-  if (!cart.length) {
-
-    alert(
-      "سبد خرید خالی است."
-    );
-
-    return;
-  }
-
-
   const oldBox =
-    document.getElementById(
-      "customerCheckoutBox"
-    );
+    $("shippingCheckoutBox");
 
 
   if (oldBox) {
@@ -1047,8 +1032,357 @@ function showCustomerForm() {
   }
 
 
+  const oldCustomer =
+    $("customerCheckoutBox");
+
+
+  if (oldCustomer) {
+    oldCustomer.remove();
+  }
+
+
+  const selected =
+    getSelectedShipping();
+
+
+  const box =
+    document.createElement("div");
+
+
+  box.id =
+    "shippingCheckoutBox";
+
+
+  box.style.cssText = `
+
+    margin:16px 0 0;
+    padding:16px;
+    border-radius:18px;
+    background:#fff;
+    border:1px solid rgba(0,0,0,.08);
+
+  `;
+
+
+  box.innerHTML = `
+
+    <div style="
+      margin-bottom:14px;
+    ">
+
+      <strong style="
+        font-size:18px;
+      ">
+        انتخاب روش ارسال
+      </strong>
+
+      <p style="
+        margin:6px 0 0;
+        opacity:.7;
+        font-size:13px;
+      ">
+        روش ارسال سفارش خود را انتخاب کنید.
+      </p>
+
+    </div>
+
+
+    <div>
+
+      ${methods.map(method => {
+
+        const checked =
+          String(method.id) ===
+          String(selected.id)
+            ? "checked"
+            : "";
+
+
+        return `
+
+          <label style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+            padding:12px;
+            margin-bottom:8px;
+            border:1px solid rgba(0,0,0,.08);
+            border-radius:14px;
+            cursor:pointer;
+          ">
+
+            <span style="
+              display:flex;
+              align-items:center;
+              gap:8px;
+            ">
+
+              <input
+                type="radio"
+                name="shippingMethod"
+                value="${method.id}"
+                ${checked}
+              >
+
+              <b>
+                ${method.name}
+              </b>
+
+            </span>
+
+            <strong>
+              ${
+                Number(method.price || 0) > 0
+                  ? money(method.price)
+                  : "رایگان"
+              }
+            </strong>
+
+          </label>
+
+        `;
+
+      }).join("")}
+
+    </div>
+
+
+    <div style="
+      margin-top:16px;
+      padding-top:14px;
+      border-top:1px solid rgba(0,0,0,.08);
+    ">
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:8px;
+      ">
+
+        <span>
+          جمع محصولات
+        </span>
+
+        <b>
+          ${money(cartSubtotal())}
+        </b>
+
+      </div>
+
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:8px;
+      ">
+
+        <span>
+          هزینه ارسال
+        </span>
+
+        <b id="shippingFee">
+          ${
+            Number(selected.price || 0) > 0
+              ? money(selected.price)
+              : "رایگان"
+          }
+        </b>
+
+      </div>
+
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        font-size:18px;
+        padding-top:10px;
+        margin-top:8px;
+        border-top:1px solid rgba(0,0,0,.08);
+      ">
+
+        <strong>
+          مبلغ نهایی
+        </strong>
+
+        <strong id="shippingGrandTotal">
+          ${money(
+            cartSubtotal() +
+            Number(selected.price || 0)
+          )}
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <button
+      id="confirmShippingBtn"
+      type="button"
+      style="
+        width:100%;
+        margin-top:16px;
+        border:0;
+        border-radius:14px;
+        padding:13px;
+        font-size:15px;
+        font-weight:700;
+        cursor:pointer;
+      "
+    >
+      ادامه
+    </button>
+
+  `;
+
+
+  const checkoutButton =
+    document.querySelector(
+      ".checkout"
+    );
+
+
+  if (checkoutButton) {
+
+    checkoutButton.style.display =
+      "none";
+
+    checkoutButton
+      .parentNode
+      .insertBefore(
+        box,
+        checkoutButton
+      );
+  }
+
+
+  box
+    .querySelectorAll(
+      'input[name="shippingMethod"]'
+    )
+    .forEach(input => {
+
+      input.addEventListener(
+        "change",
+        function() {
+
+          selectedShippingId =
+            this.value;
+
+
+          localStorage.setItem(
+            "hilaShippingId",
+            selectedShippingId
+          );
+
+
+          const method =
+            methods.find(
+              x =>
+                String(x.id) ===
+                String(this.value)
+            );
+
+
+          if (!method) {
+            return;
+          }
+
+
+          const fee =
+            Number(method.price || 0);
+
+
+          const feeElement =
+            $("shippingFee");
+
+
+          const totalElement =
+            $("shippingGrandTotal");
+
+
+          if (feeElement) {
+
+            feeElement.textContent =
+              fee > 0
+                ? money(fee)
+                : "رایگان";
+
+          }
+
+
+          if (totalElement) {
+
+            totalElement.textContent =
+              money(
+                cartSubtotal() +
+                fee
+              );
+
+          }
+
+        }
+      );
+
+    });
+
+
+  const confirmButton =
+    $("confirmShippingBtn");
+
+
+  if (confirmButton) {
+
+    confirmButton.onclick =
+      showCustomerForm;
+
+  }
+
+
+  box.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
+}
+
+
+/* ==================================================
+   فرم اطلاعات مشتری
+================================================== */
+
+function showCustomerForm() {
+
   const shipping =
     getSelectedShipping();
+
+
+  if (!shipping) {
+
+    alert(
+      "لطفاً روش ارسال را انتخاب کنید."
+    );
+
+    return;
+  }
+
+
+  const oldShipping =
+    $("shippingCheckoutBox");
+
+
+  if (oldShipping) {
+    oldShipping.remove();
+  }
+
+
+  const oldCustomer =
+    $("customerCheckoutBox");
+
+
+  if (oldCustomer) {
+    oldCustomer.remove();
+  }
 
 
   const box =
@@ -1062,13 +1396,9 @@ function showCustomerForm() {
   box.style.cssText = `
 
     margin:16px 0 0;
-
     padding:18px;
-
     border-radius:18px;
-
     background:#fff;
-
     border:1px solid rgba(0,0,0,.08);
 
   `;
@@ -1083,7 +1413,7 @@ function showCustomerForm() {
       <strong style="
         font-size:18px;
       ">
-        اطلاعات دریافت سفارش
+        اطلاعات سفارش
       </strong>
 
       <p style="
@@ -1091,7 +1421,7 @@ function showCustomerForm() {
         opacity:.7;
         font-size:13px;
       ">
-        اطلاعات خود را وارد کنید تا سفارش ثبت شود.
+        اطلاعات دریافت سفارش را وارد کنید.
       </p>
 
     </div>
@@ -1146,7 +1476,7 @@ function showCustomerForm() {
         type="tel"
         inputmode="tel"
         autocomplete="tel"
-        placeholder="مثلاً ۰۹۱۲۱۲۳۴۵۶۷"
+        placeholder="۰۹۱۲۱۲۳۴۵۶۷"
         style="
           width:100%;
           box-sizing:border-box;
@@ -1277,7 +1607,7 @@ function showCustomerForm() {
 
 
     <button
-      id="backToShippingBtn"
+      id="backShippingBtn"
       type="button"
       style="
         width:100%;
@@ -1316,393 +1646,26 @@ function showCustomerForm() {
   }
 
 
-  const submit =
-    document.getElementById(
-      "submitOrderBtn"
-    );
+  const submitButton =
+    $("submitOrderBtn");
 
 
-  if (submit) {
+  if (submitButton) {
 
-    submit.onclick =
+    submitButton.onclick =
       submitOrder;
 
   }
 
 
-  const back =
-    document.getElementById(
-      "backToShippingBtn"
-    );
+  const backButton =
+    $("backShippingBtn");
 
 
-  if (back) {
+  if (backButton) {
 
-    back.onclick =
+    backButton.onclick =
       showShippingCheckout;
-
-  }
-
-
-  box.scrollIntoView({
-    behavior: "smooth",
-    block: "nearest"
-  });
-}
-
-
-/* ==================================================
-   انتخاب روش ارسال
-================================================== */
-
-function showShippingCheckout() {
-
-  const methods =
-    getShippingMethods();
-
-
-  if (!methods.length) {
-
-    alert(
-      "هنوز هیچ روش ارسال فعالی توسط مدیر ثبت نشده است."
-    );
-
-    return;
-  }
-
-
-  const oldCustomerBox =
-    document.getElementById(
-      "customerCheckoutBox"
-    );
-
-
-  if (oldCustomerBox) {
-    oldCustomerBox.remove();
-  }
-
-
-  const oldShippingBox =
-    document.getElementById(
-      "shippingCheckoutBox"
-    );
-
-
-  if (oldShippingBox) {
-    oldShippingBox.remove();
-  }
-
-
-  const selected =
-    getSelectedShipping();
-
-
-  const box =
-    document.createElement("div");
-
-
-  box.id =
-    "shippingCheckoutBox";
-
-
-  box.style.cssText = `
-
-    margin:16px 0 0;
-
-    padding:16px;
-
-    border-radius:18px;
-
-    background:#fff;
-
-    border:1px solid rgba(0,0,0,.08);
-
-  `;
-
-
-  box.innerHTML = `
-
-    <div style="
-      margin-bottom:14px;
-    ">
-
-      <strong style="
-        font-size:18px;
-      ">
-        انتخاب روش ارسال
-      </strong>
-
-      <p style="
-        margin:6px 0 0;
-        opacity:.7;
-        font-size:13px;
-      ">
-        روش ارسال سفارش خود را انتخاب کنید.
-      </p>
-
-    </div>
-
-
-    <div id="shippingOptions">
-
-      ${methods.map(method => {
-
-        const checked =
-          String(method.id) ===
-          String(selected.id)
-            ? "checked"
-            : "";
-
-
-        return `
-
-          <label style="
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:10px;
-            padding:12px;
-            margin-bottom:8px;
-            border:1px solid rgba(0,0,0,.08);
-            border-radius:14px;
-            cursor:pointer;
-          ">
-
-            <span style="
-              display:flex;
-              align-items:center;
-              gap:8px;
-            ">
-
-              <input
-                type="radio"
-                name="shippingMethod"
-                value="${method.id}"
-                ${checked}
-              >
-
-              <b>
-                ${method.name}
-              </b>
-
-            </span>
-
-            <strong>
-
-              ${
-                Number(method.price || 0) > 0
-                  ? money(method.price)
-                  : "رایگان"
-              }
-
-            </strong>
-
-          </label>
-
-        `;
-
-      }).join("")}
-
-    </div>
-
-
-    <div style="
-      margin-top:16px;
-      padding-top:14px;
-      border-top:1px solid rgba(0,0,0,.08);
-    ">
-
-      <div style="
-        display:flex;
-        justify-content:space-between;
-        margin-bottom:8px;
-      ">
-
-        <span>
-          جمع محصولات
-        </span>
-
-        <b id="shippingSubtotal">
-          ${money(cartSubtotal())}
-        </b>
-
-      </div>
-
-
-      <div style="
-        display:flex;
-        justify-content:space-between;
-        margin-bottom:8px;
-      ">
-
-        <span>
-          هزینه ارسال
-        </span>
-
-        <b id="shippingFee">
-          ${
-            Number(selected.price || 0) > 0
-              ? money(selected.price)
-              : "رایگان"
-          }
-        </b>
-
-      </div>
-
-
-      <div style="
-        display:flex;
-        justify-content:space-between;
-        font-size:18px;
-        padding-top:10px;
-        margin-top:8px;
-        border-top:1px solid rgba(0,0,0,.08);
-      ">
-
-        <strong>
-          مبلغ نهایی
-        </strong>
-
-        <strong id="shippingGrandTotal">
-          ${money(
-            cartSubtotal() +
-            Number(selected.price || 0)
-          )}
-        </strong>
-
-      </div>
-
-    </div>
-
-
-    <button
-      id="confirmShippingBtn"
-      type="button"
-      style="
-        width:100%;
-        margin-top:16px;
-        border:0;
-        border-radius:14px;
-        padding:13px;
-        font-size:15px;
-        font-weight:700;
-        cursor:pointer;
-      "
-    >
-      ادامه
-    </button>
-
-  `;
-
-
-  const checkoutButton =
-    document.querySelector(
-      ".checkout"
-    );
-
-
-  if (checkoutButton) {
-
-    checkoutButton.style.display =
-      "none";
-
-    checkoutButton
-      .parentNode
-      .insertBefore(
-        box,
-        checkoutButton
-      );
-
-  }
-
-
-  box
-    .querySelectorAll(
-      'input[name="shippingMethod"]'
-    )
-    .forEach(input => {
-
-      input.addEventListener(
-        "change",
-        function() {
-
-          selectedShippingId =
-            this.value;
-
-
-          localStorage.setItem(
-            "hilaShippingId",
-            selectedShippingId
-          );
-
-
-          const method =
-            methods.find(
-              x =>
-                String(x.id) ===
-                String(this.value)
-            );
-
-
-          if (!method) {
-            return;
-          }
-
-
-          const fee =
-            Number(
-              method.price || 0
-            );
-
-
-          const feeElement =
-            document.getElementById(
-              "shippingFee"
-            );
-
-
-          const totalElement =
-            document.getElementById(
-              "shippingGrandTotal"
-            );
-
-
-          if (feeElement) {
-
-            feeElement.textContent =
-              fee > 0
-                ? money(fee)
-                : "رایگان";
-
-          }
-
-
-          if (totalElement) {
-
-            totalElement.textContent =
-              money(
-                cartSubtotal() +
-                fee
-              );
-
-          }
-
-        }
-      );
-
-    });
-
-
-  const confirmButton =
-    document.getElementById(
-      "confirmShippingBtn"
-    );
-
-
-  if (confirmButton) {
-
-    confirmButton.onclick =
-      showCustomerForm;
 
   }
 
@@ -1720,37 +1683,21 @@ function showShippingCheckout() {
 
 async function submitOrder() {
 
-  const nameInput =
-    document.getElementById(
-      "customerName"
-    );
-
-  const phoneInput =
-    document.getElementById(
-      "customerPhone"
-    );
-
-  const addressInput =
-    document.getElementById(
-      "customerAddress"
-    );
-
-
   const name =
     String(
-      nameInput?.value || ""
+      $("customerName")?.value || ""
     ).trim();
 
 
   const phone =
     String(
-      phoneInput?.value || ""
+      $("customerPhone")?.value || ""
     ).trim();
 
 
   const address =
     String(
-      addressInput?.value || ""
+      $("customerAddress")?.value || ""
     ).trim();
 
 
@@ -1760,7 +1707,7 @@ async function submitOrder() {
       "لطفاً نام و نام خانوادگی را وارد کنید."
     );
 
-    nameInput?.focus();
+    $("customerName")?.focus();
 
     return;
   }
@@ -1769,282 +1716,4 @@ async function submitOrder() {
   if (!phone) {
 
     alert(
-      "لطفاً شماره موبایل را وارد کنید."
-    );
-
-    phoneInput?.focus();
-
-    return;
-  }
-
-
-  if (!address) {
-
-    alert(
-      "لطفاً آدرس کامل را وارد کنید."
-    );
-
-    addressInput?.focus();
-
-    return;
-  }
-
-
-  const shipping =
-    getSelectedShipping();
-
-
-  if (!shipping) {
-
-    alert(
-      "لطفاً روش ارسال را انتخاب کنید."
-    );
-
-    return;
-  }
-
-
-  if (!cart.length) {
-
-    alert(
-      "سبد خرید خالی است."
-    );
-
-    return;
-  }
-
-
-  const button =
-    document.getElementById(
-      "submitOrderBtn"
-    );
-
-
-  if (button) {
-
-    button.disabled =
-      true;
-
-    button.textContent =
-      "در حال ثبت سفارش...";
-
-  }
-
-
-  try {
-
-    const items =
-      cart.map(item => ({
-
-        id:
-          item.id,
-
-        qty:
-          Number(item.qty || 1)
-
-      }));
-
-
-    const response =
-      await fetch(
-        "/api/store",
-        {
-
-          method: "POST",
-
-          headers: {
-            "content-type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-
-              action:
-                "create-order",
-
-              customer: {
-
-                name,
-
-                phone,
-
-                address
-
-              },
-
-              items,
-
-              shippingId:
-                String(shipping.id)
-
-            })
-
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        "ثبت سفارش ناموفق بود."
-      );
-
-    }
-
-
-    if (!data.success) {
-
-      throw new Error(
-        data.error ||
-        "ثبت سفارش ناموفق بود."
-      );
-
-    }
-
-
-    localStorage.removeItem(
-      "hilaCart"
-    );
-
-
-    cart = [];
-
-
-    updateCart();
-
-
-    const customerBox =
-      document.getElementById(
-        "customerCheckoutBox"
-      );
-
-
-    if (customerBox) {
-      customerBox.remove();
-    }
-
-
-    const shippingBox =
-      document.getElementById(
-        "shippingCheckoutBox"
-      );
-
-
-    if (shippingBox) {
-      shippingBox.remove();
-    }
-
-
-    const checkoutButton =
-      document.querySelector(
-        ".checkout"
-      );
-
-
-    if (checkoutButton) {
-
-      checkoutButton.style.display =
-        "block";
-
-      checkoutButton.textContent =
-        "ادامه و پرداخت";
-
-    }
-
-
-    alert(
-
-      "سفارش شما با موفقیت ثبت شد.\n\n" +
-
-      "شماره سفارش: " +
-      data.orderId +
-      "\n\n" +
-
-      "مبلغ نهایی: " +
-      money(data.total) +
-
-      "\n\n" +
-
-      "سفارش شما ثبت شد و به‌زودی پیگیری می‌شود."
-
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "Create order error:",
-      error
-    );
-
-
-    alert(
-      error?.message ||
-      "ثبت سفارش انجام نشد. لطفاً دوباره تلاش کنید."
-    );
-
-
-  } finally {
-
-    if (button) {
-
-      button.disabled =
-        false;
-
-      button.textContent =
-        "ثبت سفارش";
-
-    }
-
-  }
-}
-
-
-/* ==================================================
-   checkout
-================================================== */
-
-async function checkout() {
-
-  if (!cart.length) {
-
-    alert(
-      "سبد خرید خالی است."
-    );
-
-    return;
-  }
-
-
-  const methods =
-    getShippingMethods();
-
-
-  if (!methods.length) {
-
-    alert(
-      "هنوز هیچ روش ارسال فعالی توسط مدیر ثبت نشده است."
-    );
-
-    return;
-  }
-
-
-  showShippingCheckout();
-}
-
-
-/* ==================================================
-   شروع برنامه
-================================================== */
-
-document.addEventListener(
-  "DOMContentLoaded",
-  load
-);
+      "
