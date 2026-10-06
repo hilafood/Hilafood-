@@ -1716,7 +1716,7 @@ async function submitOrder() {
   if (!phone) {
 
     alert(
-      "
+      
       "لطفاً شماره موبایل را وارد کنید."
     );
 
