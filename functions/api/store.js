@@ -452,7 +452,124 @@ function isAdmin(request, env) {
     key === env.ADMIN_KEY
   );
 }
+/* ==================================================
+   ارسال اعلان سفارش به ایتا
+================================================== */
 
+async function sendEitaaOrderNotification(
+  env,
+  orderNumber,
+  customerName,
+  customerPhone,
+  customerAddress,
+  items,
+  subtotal,
+  shippingName,
+  shippingPrice,
+  total
+) {
+
+  if (
+    !env.EITAA_TOKEN ||
+    !env.EITAA_CHAT_ID
+  ) {
+    return;
+  }
+
+
+  const itemsText =
+    items
+      .map(item =>
+        `• ${item.name} × ${item.qty} — ${Number(
+          item.price * item.qty
+        ).toLocaleString("fa-IR")} تومان`
+      )
+      .join("\n");
+
+
+  const message =
+`🛍 سفارش جدید هیلا فود
+
+🔢 شماره سفارش:
+HF-${orderNumber}
+
+👤 مشتری:
+${customerName}
+
+📱 موبایل:
+${customerPhone}
+
+📍 آدرس:
+${customerAddress}
+
+🧺 محصولات:
+${itemsText}
+
+💰 مبلغ کالاها:
+${Number(subtotal).toLocaleString("fa-IR")} تومان
+
+🚚 روش ارسال:
+${shippingName}
+
+💰 هزینه ارسال:
+${Number(shippingPrice).toLocaleString("fa-IR")} تومان
+
+💵 مبلغ نهایی:
+${Number(total).toLocaleString("fa-IR")} تومان
+
+💳 پرداخت:
+پرداخت نشده
+
+📌 وضعیت:
+جدید`;
+
+
+  try {
+
+    const url =
+      `https://eitaayar.ir/api/${encodeURIComponent(
+        env.EITAA_TOKEN
+      )}/sendMessage`;
+
+
+    const body =
+      new URLSearchParams({
+
+        chat_id:
+          String(env.EITAA_CHAT_ID),
+
+        text:
+          message,
+
+        title:
+          "سفارش جدید هیلا فود"
+
+      });
+
+
+    await fetch(
+      url,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+        body
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Eitaa notification failed:",
+      error
+    );
+
+  }
+}
 
 /* ==================================================
    خواندن اطلاعات کامل فروشگاه
@@ -1006,7 +1123,35 @@ export async function onRequestPost({
         Number(
           result.meta?.last_row_id || 0
         );
+      /* ----------------------------------------------
+         اعلان سفارش در کانال ایتا
+      ---------------------------------------------- */
 
+      await sendEitaaOrderNotification(
+
+        env,
+
+        orderNumber,
+
+        customerName,
+
+        customerPhone,
+
+        customerAddress,
+
+        cleanItems,
+
+        subtotal,
+
+        String(
+          shipping.name
+        ),
+
+        shippingPrice,
+
+        total
+
+      );
 
       return json({
 
