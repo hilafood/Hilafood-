@@ -172,6 +172,117 @@ button{cursor:pointer}
   white-space:nowrap;
 }
 
+
+/* =========================================
+   سفارش‌ها
+========================================= */
+
+.order-card{
+  border:1px solid #eee;
+  border-radius:16px;
+  padding:14px;
+  margin:12px 0;
+  background:#fff;
+}
+
+.order-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+
+.order-number{
+  font-size:18px;
+  font-weight:bold;
+  color:#7954a5;
+}
+
+.order-date{
+  color:#777;
+  font-size:12px;
+}
+
+.order-info{
+  background:#f8f5f8;
+  border-radius:12px;
+  padding:12px;
+  line-height:2;
+  margin:10px 0;
+}
+
+.order-items{
+  border-top:1px solid #eee;
+  margin-top:10px;
+  padding-top:10px;
+}
+
+.order-item{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:7px 0;
+  border-bottom:1px dashed #eee;
+  font-size:13px;
+}
+
+.order-item:last-child{
+  border-bottom:0;
+}
+
+.order-total{
+  font-weight:bold;
+  font-size:16px;
+  color:#7954a5;
+  margin-top:10px;
+}
+
+.order-controls{
+  display:grid;
+  grid-template-columns:1fr 1fr auto;
+  gap:10px;
+  margin-top:12px;
+}
+
+.order-controls button{
+  width:auto;
+}
+
+.order-empty{
+  padding:20px;
+  text-align:center;
+  color:#777;
+  background:#f8f5f8;
+  border-radius:12px;
+}
+
+.order-badge{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:8px;
+  font-size:11px;
+  background:#f1eafa;
+  color:#7954a5;
+}
+
+.payment-paid{
+  background:#e8f7ed;
+  color:#24723b;
+}
+
+.payment-unpaid{
+  background:#fff5dc;
+  color:#956d00;
+}
+
+.payment-failed{
+  background:#ffe9ee;
+  color:#c22;
+}
+
+
 @media(max-width:650px){
 
   .grid{
@@ -201,6 +312,15 @@ button{cursor:pointer}
   .shipping-active{
     margin-top:2px;
   }
+
+  .order-controls{
+    grid-template-columns:1fr;
+  }
+
+  .order-controls button{
+    width:100%;
+  }
+
 }
 </style>
 </head>
@@ -299,9 +419,7 @@ button{cursor:pointer}
     </div>
 
 
-    <!-- =========================
-         روش‌های ارسال
-    ========================== -->
+    <!-- روش‌های ارسال -->
 
     <div class="card">
 
@@ -333,6 +451,44 @@ button{cursor:pointer}
       </div>
 
       <div id="shippingStatus" class="status"></div>
+
+    </div>
+
+
+    <!-- =========================
+         سفارش‌ها
+    ========================== -->
+
+    <div class="card">
+
+      <div class="topbar">
+
+        <div>
+
+          <h2>سفارش‌ها</h2>
+
+          <p class="muted">
+            سفارش‌های ثبت‌شده مشتریان را ببین و وضعیت سفارش و پرداخت را مدیریت کن.
+          </p>
+
+        </div>
+
+        <button
+          onclick="loadOrders()"
+          style="width:auto"
+        >
+          تازه‌سازی سفارش‌ها
+        </button>
+
+      </div>
+
+      <div id="ordersList">
+
+        <div class="order-empty">
+          در حال دریافت سفارش‌ها...
+        </div>
+
+      </div>
 
     </div>
 
@@ -425,7 +581,10 @@ button{cursor:pointer}
 
         <h2>محصولات</h2>
 
-        <button onclick="loadStore()" style="width:auto">
+        <button
+          onclick="loadStore()"
+          style="width:auto"
+        >
           تازه‌سازی
         </button>
 
@@ -672,6 +831,8 @@ async function loadStore(){
     renderShipping();
 
     render();
+
+    await loadOrders();
 
     setStatus(
       "اطلاعات فروشگاه با موفقیت دریافت شد."
@@ -1041,6 +1202,498 @@ function escapeAttrValue(value){
     .replaceAll('"',"&quot;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;");
+
+}
+
+
+/* =========================================
+   سفارش‌ها
+========================================= */
+
+async function loadOrders(){
+
+  const container =
+    $("ordersList");
+
+  if(!container){
+
+    return;
+
+  }
+
+  container.innerHTML =
+    '<div class="order-empty">در حال دریافت سفارش‌ها...</div>';
+
+  try{
+
+    const result =
+      await api(
+        "POST",
+        {
+          action:"get-orders"
+        }
+      );
+
+    const orders =
+      Array.isArray(result.orders)
+        ? result.orders
+        : [];
+
+    renderOrders(orders);
+
+  }catch(error){
+
+    container.innerHTML =
+      `
+        <div class="order-empty">
+          خطا در دریافت سفارش‌ها:
+          ${escapeHtml(error.message)}
+        </div>
+      `;
+
+  }
+
+}
+
+
+/* =========================================
+   نمایش سفارش‌ها
+========================================= */
+
+function renderOrders(orders){
+
+  const container =
+    $("ordersList");
+
+  if(!orders.length){
+
+    container.innerHTML =
+      `
+        <div class="order-empty">
+          هنوز سفارشی ثبت نشده است.
+        </div>
+      `;
+
+    return;
+
+  }
+
+  container.innerHTML =
+    orders
+      .map(order => {
+
+        const items =
+          Array.isArray(order.items)
+            ? order.items
+            : [];
+
+        const status =
+          order.status || "new";
+
+        const paymentStatus =
+          order.paymentStatus ||
+          "unpaid";
+
+        const statusText =
+          getOrderStatusText(status);
+
+        const paymentText =
+          getPaymentStatusText(
+            paymentStatus
+          );
+
+        const paymentClass =
+          paymentStatus === "paid"
+            ? "payment-paid"
+            : paymentStatus === "failed"
+              ? "payment-failed"
+              : "payment-unpaid";
+
+        const createdAt =
+          order.createdAt
+            ? formatDate(order.createdAt)
+            : "";
+
+        const itemsHtml =
+          items.length
+            ? items
+                .map(item => {
+
+                  const qty =
+                    Number(item.qty || 1);
+
+                  const price =
+                    Number(item.price || 0);
+
+                  return `
+                    <div class="order-item">
+
+                      <span>
+                        ${escapeHtml(
+                          item.name || ""
+                        )}
+                        ×
+                        ${qty.toLocaleString("fa-IR")}
+                      </span>
+
+                      <span>
+                        ${(
+                          price * qty
+                        ).toLocaleString("fa-IR")}
+                        تومان
+                      </span>
+
+                    </div>
+                  `;
+
+                })
+                .join("")
+            : '<div class="muted">جزئیات محصول موجود نیست.</div>';
+
+
+        return `
+
+          <div class="order-card">
+
+            <div class="order-head">
+
+              <div>
+
+                <div class="order-number">
+                  ${escapeHtml(
+                    order.orderId || ""
+                  )}
+                </div>
+
+                <div class="order-date">
+                  ${escapeHtml(createdAt)}
+                </div>
+
+              </div>
+
+              <div>
+
+                <span class="order-badge">
+                  ${escapeHtml(statusText)}
+                </span>
+
+                &nbsp;
+
+                <span class="order-badge ${paymentClass}">
+                  ${escapeHtml(paymentText)}
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="order-info">
+
+              <div>
+                <b>نام مشتری:</b>
+                ${escapeHtml(
+                  order.customerName || ""
+                )}
+              </div>
+
+              <div>
+                <b>موبایل:</b>
+                ${escapeHtml(
+                  order.customerPhone || ""
+                )}
+              </div>
+
+              <div>
+                <b>آدرس:</b>
+                ${escapeHtml(
+                  order.customerAddress || ""
+                )}
+              </div>
+
+              <div>
+                <b>ارسال:</b>
+                ${escapeHtml(
+                  order.shippingName || ""
+                )}
+                -
+                ${Number(
+                  order.shippingPrice || 0
+                ).toLocaleString("fa-IR")}
+                تومان
+              </div>
+
+            </div>
+
+
+            <div class="order-items">
+
+              <b>محصولات سفارش</b>
+
+              ${itemsHtml}
+
+              <div class="order-total">
+
+                مبلغ نهایی:
+                ${Number(
+                  order.total || 0
+                ).toLocaleString("fa-IR")}
+                تومان
+
+              </div>
+
+            </div>
+
+
+            <div class="order-controls">
+
+              <select
+                id="status-${order.id}"
+              >
+
+                <option
+                  value="new"
+                  ${status === "new" ? "selected" : ""}
+                >
+                  جدید
+                </option>
+
+                <option
+                  value="processing"
+                  ${status === "processing" ? "selected" : ""}
+                >
+                  در حال آماده‌سازی
+                </option>
+
+                <option
+                  value="shipped"
+                  ${status === "shipped" ? "selected" : ""}
+                >
+                  ارسال شده
+                </option>
+
+                <option
+                  value="completed"
+                  ${status === "completed" ? "selected" : ""}
+                >
+                  تکمیل شده
+                </option>
+
+                <option
+                  value="cancelled"
+                  ${status === "cancelled" ? "selected" : ""}
+                >
+                  لغو شده
+                </option>
+
+              </select>
+
+
+              <select
+                id="payment-${order.id}"
+              >
+
+                <option
+                  value="unpaid"
+                  ${paymentStatus === "unpaid" ? "selected" : ""}
+                >
+                  پرداخت نشده
+                </option>
+
+                <option
+                  value="paid"
+                  ${paymentStatus === "paid" ? "selected" : ""}
+                >
+                  پرداخت شده
+                </option>
+
+                <option
+                  value="failed"
+                  ${paymentStatus === "failed" ? "selected" : ""}
+                >
+                  پرداخت ناموفق
+                </option>
+
+              </select>
+
+
+              <button
+                class="gold"
+                onclick="updateOrder(${order.id})"
+              >
+                ذخیره وضعیت
+              </button>
+
+            </div>
+
+          </div>
+
+        `;
+
+      })
+      .join("");
+
+}
+
+
+/* =========================================
+   متن وضعیت سفارش
+========================================= */
+
+function getOrderStatusText(status){
+
+  const map = {
+
+    new:
+      "جدید",
+
+    processing:
+      "در حال آماده‌سازی",
+
+    shipped:
+      "ارسال شده",
+
+    completed:
+      "تکمیل شده",
+
+    cancelled:
+      "لغو شده"
+
+  };
+
+  return (
+    map[status] ||
+    status ||
+    "جدید"
+  );
+
+}
+
+
+/* =========================================
+   متن وضعیت پرداخت
+========================================= */
+
+function getPaymentStatusText(status){
+
+  const map = {
+
+    unpaid:
+      "پرداخت نشده",
+
+    paid:
+      "پرداخت شده",
+
+    failed:
+      "پرداخت ناموفق"
+
+  };
+
+  return (
+    map[status] ||
+    status ||
+    "پرداخت نشده"
+  );
+
+}
+
+
+/* =========================================
+   تغییر وضعیت سفارش
+========================================= */
+
+async function updateOrder(orderId){
+
+  const statusElement =
+    $("status-" + orderId);
+
+  const paymentElement =
+    $("payment-" + orderId);
+
+  if(
+    !statusElement ||
+    !paymentElement
+  ){
+
+    return;
+
+  }
+
+  const status =
+    statusElement.value;
+
+  const paymentStatus =
+    paymentElement.value;
+
+  try{
+
+    await api(
+      "POST",
+      {
+        action:
+          "update-order",
+
+        orderId:
+          Number(orderId),
+
+        status,
+
+        paymentStatus
+      }
+    );
+
+    alert(
+      "وضعیت سفارش با موفقیت ذخیره شد."
+    );
+
+    await loadOrders();
+
+  }catch(error){
+
+    alert(
+      "خطا: " +
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================
+   تاریخ سفارش
+========================================= */
+
+function formatDate(value){
+
+  try{
+
+    const date =
+      new Date(
+        String(value)
+          .replace(" ","T") +
+        "Z"
+      );
+
+    if(
+      Number.isNaN(
+        date.getTime()
+      )
+    ){
+
+      return String(value);
+
+    }
+
+    return date.toLocaleString(
+      "fa-IR"
+    );
+
+  }catch{
+
+    return String(value);
+
+  }
 
 }
 
@@ -1589,4 +2242,4 @@ checkExistingLogin();
 </script>
 
 </body>
-</html>
+  </html>
