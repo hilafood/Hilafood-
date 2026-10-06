@@ -418,7 +418,77 @@ button{cursor:pointer}
 
     </div>
 
+    <!-- =========================
+         پیامک
+    ========================== -->
 
+    <div class="card">
+
+      <div class="topbar">
+
+        <div>
+          <h2>📱 مدیریت پیامک</h2>
+
+          <p class="muted">
+            پیامک سفارش‌های جدید از طریق سرویس ASA ارسال می‌شود.
+          </p>
+        </div>
+
+        <span
+          id="smsConnectionBadge"
+          class="order-badge"
+        >
+          در حال بررسی...
+        </span>
+
+      </div>
+
+
+      <div class="bar">
+
+        <label>
+          <input
+            type="checkbox"
+            id="smsEnabled"
+          >
+          فعال بودن پیامک سفارش
+        </label>
+
+      </div>
+
+
+      <div
+        id="smsStatusBox"
+        class="status"
+      >
+        در حال بررسی تنظیمات پیامک...
+      </div>
+
+
+      <div class="actions">
+
+        <button
+          class="gold"
+          onclick="saveSmsSettings()"
+        >
+          ذخیره وضعیت پیامک
+        </button>
+
+        <button
+          onclick="sendSmsTest()"
+        >
+          🧪 ارسال پیامک تست
+        </button>
+
+        <button
+          onclick="loadSmsStatus()"
+        >
+          🔄 بررسی اتصال
+        </button>
+
+      </div>
+
+    </div>
     <!-- روش‌های ارسال -->
 
     <div class="card">
@@ -2231,7 +2301,244 @@ async function checkExistingLogin(){
   }
 
 }
+/* =========================================
+   مدیریت پیامک
+========================================= */
 
+async function loadSmsStatus(){
+
+  const badge =
+    $("smsConnectionBadge");
+
+  const box =
+    $("smsStatusBox");
+
+  if(!badge || !box){
+    return;
+  }
+
+  badge.textContent =
+    "در حال بررسی...";
+
+  box.textContent =
+    "در حال دریافت وضعیت پیامک...";
+
+  try{
+
+    const result =
+      await api(
+        "POST",
+        {
+          action:
+            "get-sms-status"
+        }
+      );
+
+    if(
+      typeof result.enabled ===
+      "boolean"
+    ){
+
+      $("smsEnabled").checked =
+        result.enabled;
+
+    }
+
+    const configured =
+      !!result.configured;
+
+    const hasApiKey =
+      !!result.hasApiKey;
+
+    const hasRecipient =
+      !!result.hasRecipient;
+
+    const hasSender =
+      !!result.hasSender;
+
+
+    if(
+      configured &&
+      hasApiKey &&
+      hasRecipient &&
+      hasSender
+    ){
+
+      badge.textContent =
+        "✅ اتصال آماده";
+
+      box.textContent =
+        "تنظیمات سرویس پیامک کامل است و سیستم آماده ارسال پیامک است.";
+
+    }else{
+
+      badge.textContent =
+        "⚠️ تنظیمات ناقص";
+
+      const missing = [];
+
+      if(!hasApiKey){
+        missing.push(
+          "کلید API"
+        );
+      }
+
+      if(!hasRecipient){
+        missing.push(
+          "شماره دریافت‌کننده"
+        );
+      }
+
+      if(!hasSender){
+        missing.push(
+          "شماره فرستنده"
+        );
+      }
+
+      box.textContent =
+        "تنظیمات پیامک کامل نیست. موارد ناقص: " +
+        missing.join("، ");
+
+    }
+
+  }catch(error){
+
+    badge.textContent =
+      "❌ خطا";
+
+    box.textContent =
+      "خطا در بررسی پیامک: " +
+      error.message;
+
+  }
+
+}
+
+
+/* =========================================
+   ذخیره وضعیت پیامک
+========================================= */
+
+async function saveSmsSettings(){
+
+  const enabled =
+    $("smsEnabled").checked;
+
+  try{
+
+    $("smsStatusBox").textContent =
+      "در حال ذخیره وضعیت پیامک...";
+
+    await api(
+      "POST",
+      {
+        action:
+          "save-sms-settings",
+
+        enabled
+      }
+    );
+
+    await loadSmsStatus();
+
+    alert(
+      enabled
+        ? "پیامک سفارش فعال شد."
+        : "پیامک سفارش غیرفعال شد."
+    );
+
+  }catch(error){
+
+    $("smsStatusBox").textContent =
+      "خطا: " +
+      error.message;
+
+    alert(
+      "خطا: " +
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================
+   ارسال پیامک تست
+========================================= */
+
+async function sendSmsTest(){
+
+  const button =
+    event &&
+    event.target
+      ? event.target
+      : null;
+
+  if(button){
+
+    button.disabled = true;
+
+    button.textContent =
+      "در حال ارسال...";
+
+  }
+
+  try{
+
+    $("smsStatusBox").textContent =
+      "در حال ارسال پیامک تست...";
+
+    const result =
+      await api(
+        "POST",
+        {
+          action:
+            "send-sms-test"
+        }
+      );
+
+    if(!result.success){
+
+      throw new Error(
+        result.error ||
+        "ارسال پیامک ناموفق بود."
+      );
+
+    }
+
+    $("smsStatusBox").textContent =
+      "✅ پیامک تست با موفقیت به سرویس ASA ارسال شد.";
+
+    alert(
+      "پیامک تست با موفقیت به سرویس ارسال شد.\n\nحالا گوشی را بررسی کن."
+    );
+
+  }catch(error){
+
+    $("smsStatusBox").textContent =
+      "❌ خطا در ارسال پیامک: " +
+      error.message;
+
+    alert(
+      "ارسال پیامک ناموفق بود:\n" +
+      error.message
+    );
+
+  }finally{
+
+    if(button){
+
+      button.disabled = false;
+
+      button.textContent =
+        "🧪 ارسال پیامک تست";
+
+    }
+
+  }
+
+  }
 
 /* =========================================
    شروع
