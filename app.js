@@ -58,6 +58,37 @@ function finalPrice(product) {
 
 
 /* --------------------------------------------------
+   محاسبه مبلغ سبد
+-------------------------------------------------- */
+
+function cartSubtotal() {
+
+  return cart.reduce(
+    (sum, item) => {
+
+      const product =
+        STORE.products.find(
+          p =>
+            String(p.id) ===
+            String(item.id)
+        );
+
+      return (
+        sum +
+        (
+          product
+            ? finalPrice(product) * item.qty
+            : 0
+        )
+      );
+
+    },
+    0
+  );
+}
+
+
+/* --------------------------------------------------
    روش‌های ارسال
 -------------------------------------------------- */
 
@@ -83,6 +114,7 @@ function getSelectedShipping() {
     return null;
   }
 
+
   let selected =
     methods.find(
       method =>
@@ -90,7 +122,9 @@ function getSelectedShipping() {
         String(selectedShippingId)
     );
 
+
   if (!selected) {
+
     selected = methods[0];
 
     selectedShippingId =
@@ -102,35 +136,8 @@ function getSelectedShipping() {
     );
   }
 
+
   return selected;
-}
-
-
-function cartSubtotal() {
-
-  return cart.reduce(
-    (sum, item) => {
-
-      const product =
-        STORE.products.find(
-          p =>
-            String(p.id) ===
-            String(item.id)
-        );
-
-      return (
-        sum +
-        (
-          product
-            ? finalPrice(product) *
-              item.qty
-            : 0
-        )
-      );
-
-    },
-    0
-  );
 }
 
 
@@ -177,7 +184,8 @@ async function load() {
     }
 
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
 
     if (data.error) {
@@ -197,7 +205,9 @@ async function load() {
         STORE.settings.shippingMethods
       )
     ) {
+
       STORE.settings.shippingMethods = [];
+
     }
 
 
@@ -247,7 +257,8 @@ async function load() {
 
 function renderCategories() {
 
-  const el = $("categoryRail");
+  const el =
+    $("categoryRail");
 
   if (!el) return;
 
@@ -319,7 +330,8 @@ function card(product) {
 
   } else {
 
-    price = "قیمت فعلاً اعلام نشده";
+    price =
+      "قیمت فعلاً اعلام نشده";
 
   }
 
@@ -330,25 +342,26 @@ function card(product) {
     "";
 
 
-  const imageHTML = product.img
+  const imageHTML =
+    product.img
 
-    ? `
-      <img
-        src="${img(product.img)}"
-        loading="lazy"
-        alt="${product.name}"
-      >
-    `
+      ? `
+        <img
+          src="${img(product.img)}"
+          loading="lazy"
+          alt="${product.name}"
+        >
+      `
 
-    : `
-      <div class="no-image-text">
-        تصویر محصول
-        <br>
-        <small>
-          هنوز اضافه نشده
-        </small>
-      </div>
-    `;
+      : `
+        <div class="no-image-text">
+          تصویر محصول
+          <br>
+          <small>
+            هنوز اضافه نشده
+          </small>
+        </div>
+      `;
 
 
   return `
@@ -485,45 +498,50 @@ function renderProducts(list) {
 
 function filterProducts(q) {
 
-  q = (q || "").trim();
+  q =
+    (q || "").trim();
 
 
   const result =
-    STORE.products.filter(product => {
+    STORE.products.filter(
+      product => {
 
-      if (product.active === false) {
-        return false;
+        if (
+          product.active === false
+        ) {
+          return false;
+        }
+
+
+        if (!q) {
+          return true;
+        }
+
+
+        return (
+
+          String(product.name || "")
+            .includes(q)
+
+          ||
+
+          String(product.cat || "")
+            .includes(q)
+
+          ||
+
+          String(product.desc || "")
+            .includes(q)
+
+          ||
+
+          String(product.stage || "")
+            .includes(q)
+
+        );
+
       }
-
-
-      if (!q) {
-        return true;
-      }
-
-
-      return (
-
-        String(product.name || "")
-          .includes(q)
-
-        ||
-
-        String(product.cat || "")
-          .includes(q)
-
-        ||
-
-        String(product.desc || "")
-          .includes(q)
-
-        ||
-
-        String(product.stage || "")
-          .includes(q)
-
-      );
-
-    });
+    );
 
 
   renderProducts(result);
@@ -871,10 +889,10 @@ function toggleMenu() {
 
 
 /* --------------------------------------------------
-   ساخت مرحله انتخاب ارسال
+   نمایش انتخاب روش ارسال
 -------------------------------------------------- */
 
-function showCheckoutShipping() {
+function showShippingCheckout() {
 
   const methods =
     getShippingMethods();
@@ -890,18 +908,18 @@ function showCheckoutShipping() {
   }
 
 
-  let selected =
+  const selected =
     getSelectedShipping();
 
 
-  const old =
+  const oldBox =
     document.getElementById(
       "shippingCheckoutBox"
     );
 
 
-  if (old) {
-    old.remove();
+  if (oldBox) {
+    oldBox.remove();
   }
 
 
@@ -911,20 +929,25 @@ function showCheckoutShipping() {
   box.id =
     "shippingCheckoutBox";
 
+
   box.style.cssText = `
     margin:16px 0 0;
     padding:16px;
     border-radius:18px;
-    background:rgba(255,255,255,.96);
+    background:#fff;
     border:1px solid rgba(0,0,0,.08);
   `;
 
 
   box.innerHTML = `
 
-    <div style="margin-bottom:14px">
+    <div style="
+      margin-bottom:14px;
+    ">
 
-      <strong style="font-size:18px">
+      <strong style="
+        font-size:18px;
+      ">
         انتخاب روش ارسال
       </strong>
 
@@ -952,19 +975,17 @@ function showCheckoutShipping() {
 
         return `
 
-          <label
-            style="
-              display:flex;
-              align-items:center;
-              justify-content:space-between;
-              gap:10px;
-              padding:12px;
-              margin-bottom:8px;
-              border:1px solid rgba(0,0,0,.08);
-              border-radius:14px;
-              cursor:pointer;
-            "
-          >
+          <label style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+            padding:12px;
+            margin-bottom:8px;
+            border:1px solid rgba(0,0,0,.08);
+            border-radius:14px;
+            cursor:pointer;
+          ">
 
             <span style="
               display:flex;
@@ -984,7 +1005,6 @@ function showCheckoutShipping() {
               </b>
 
             </span>
-
 
             <strong>
               ${
@@ -1014,10 +1034,15 @@ function showCheckoutShipping() {
         justify-content:space-between;
         margin-bottom:8px;
       ">
-        <span>جمع محصولات</span>
+
+        <span>
+          جمع محصولات
+        </span>
+
         <b id="shippingSubtotal">
           ${money(cartSubtotal())}
         </b>
+
       </div>
 
 
@@ -1026,10 +1051,15 @@ function showCheckoutShipping() {
         justify-content:space-between;
         margin-bottom:8px;
       ">
-        <span>هزینه ارسال</span>
+
+        <span>
+          هزینه ارسال
+        </span>
+
         <b id="shippingFee">
           ${money(selected.price)}
         </b>
+
       </div>
 
 
@@ -1041,7 +1071,10 @@ function showCheckoutShipping() {
         margin-top:8px;
         border-top:1px solid rgba(0,0,0,.08);
       ">
-        <strong>مبلغ نهایی</strong>
+
+        <strong>
+          مبلغ نهایی
+        </strong>
 
         <strong id="shippingGrandTotal">
           ${money(
@@ -1049,6 +1082,7 @@ function showCheckoutShipping() {
             Number(selected.price || 0)
           )}
         </strong>
+
       </div>
 
     </div>
@@ -1085,6 +1119,7 @@ function showCheckoutShipping() {
     checkoutButton.style.display =
       "none";
 
+
     checkoutButton
       .parentNode
       .insertBefore(
@@ -1092,14 +1127,6 @@ function showCheckoutShipping() {
         checkoutButton
       );
 
-  } else {
-
-    const drawer =
-      $("cartDrawer");
-
-    if (drawer) {
-      drawer.appendChild(box);
-    }
   }
 
 
@@ -1115,6 +1142,7 @@ function showCheckoutShipping() {
 
           selectedShippingId =
             this.value;
+
 
           localStorage.setItem(
             "hilaShippingId",
@@ -1139,30 +1167,34 @@ function showCheckoutShipping() {
             );
 
 
-          const feeEl =
+          const feeElement =
             document.getElementById(
               "shippingFee"
             );
 
 
-          const totalEl =
+          const totalElement =
             document.getElementById(
               "shippingGrandTotal"
             );
 
 
-          if (feeEl) {
-            feeEl.textContent =
+          if (feeElement) {
+
+            feeElement.textContent =
               money(fee);
+
           }
 
 
-          if (totalEl) {
-            totalEl.textContent =
+          if (totalElement) {
+
+            totalElement.textContent =
               money(
                 cartSubtotal() +
                 fee
               );
+
           }
 
         }
@@ -1212,6 +1244,12 @@ function confirmShipping() {
   }
 
 
+  localStorage.setItem(
+    "hilaShippingId",
+    String(method.id)
+  );
+
+
   const checkoutBox =
     document.getElementById(
       "shippingCheckoutBox"
@@ -1230,11 +1268,13 @@ function confirmShipping() {
 
 
   if (checkoutButton) {
+
     checkoutButton.style.display =
       "block";
 
     checkoutButton.textContent =
       "ادامه و پرداخت";
+
   }
 
 
@@ -1242,7 +1282,10 @@ function confirmShipping() {
 
 
   alert(
-    "روش ارسال انتخاب شد.\n" +
+    "روش ارسال انتخاب شد.\n\n" +
+    "روش ارسال: " +
+    method.name +
+    "\n" +
     "هزینه ارسال: " +
     money(method.price) +
     "\n" +
@@ -1269,28 +1312,25 @@ async function checkout() {
 
 
   /*
-   * مرحله اول:
-   * انتخاب روش ارسال
-   *
-   * فعلاً قبل از اتصال زرین‌پال
-   * همین مرحله را کامل می‌کنیم.
+   * فعلاً زرین‌پال را بررسی نمی‌کنیم.
+   * ابتدا روش ارسال انتخاب می‌شود.
    */
 
-  const shippingMethods =
+  const methods =
     getShippingMethods();
 
 
-  if (!shippingMethods.length) {
+  if (!methods.length) {
 
     alert(
-      "هنوز هیچ روش ارسال فعالی ثبت نشده است."
+      "هنوز هیچ روش ارسال فعالی توسط مدیر ثبت نشده است."
     );
 
     return;
   }
 
 
-  showCheckoutShipping();
+  showShippingCheckout();
 }
 
 
