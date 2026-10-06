@@ -6,9 +6,7 @@
 <title>مدیریت هیلا فود</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -31,9 +29,7 @@ body{
   box-shadow:0 4px 18px #0000000b;
 }
 
-h1,h2{
-  margin-top:0;
-}
+h1,h2{margin-top:0}
 
 .grid{
   display:grid;
@@ -41,10 +37,7 @@ h1,h2{
   gap:10px;
 }
 
-input,
-textarea,
-select,
-button{
+input,textarea,select,button{
   width:100%;
   font:inherit;
   padding:11px;
@@ -57,13 +50,9 @@ textarea{
   resize:vertical;
 }
 
-.full{
-  grid-column:1/-1;
-}
+.full{grid-column:1/-1}
 
-button{
-  cursor:pointer;
-}
+button{cursor:pointer}
 
 .primary{
   background:#7954a5;
@@ -89,9 +78,7 @@ button{
   line-height:1.9;
 }
 
-.hidden{
-  display:none !important;
-}
+.hidden{display:none!important}
 
 .topbar{
   display:flex;
@@ -161,8 +148,28 @@ button{
   flex-wrap:wrap;
 }
 
-.actions button{
-  flex:1;
+.actions button{flex:1}
+
+.shipping-row{
+  display:grid;
+  grid-template-columns:1.5fr 1fr auto auto;
+  gap:10px;
+  align-items:center;
+  padding:12px;
+  border:1px solid #eee;
+  border-radius:14px;
+  margin:10px 0;
+}
+
+.shipping-row input[type="checkbox"]{
+  width:auto;
+}
+
+.shipping-active{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  white-space:nowrap;
 }
 
 @media(max-width:650px){
@@ -186,6 +193,14 @@ button{
   .actions{
     flex-direction:column;
   }
+
+  .shipping-row{
+    grid-template-columns:1fr;
+  }
+
+  .shipping-active{
+    margin-top:2px;
+  }
 }
 </style>
 </head>
@@ -194,9 +209,7 @@ button{
 
 <div class="wrap">
 
-  <!-- =========================
-       ورود مدیریت
-  ========================== -->
+  <!-- ورود -->
 
   <div id="loginPanel" class="login-box">
 
@@ -217,10 +230,7 @@ button{
 
       <br><br>
 
-      <button
-        class="primary"
-        onclick="login()"
-      >
+      <button class="primary" onclick="login()">
         ورود به پنل مدیریت
       </button>
 
@@ -231,9 +241,7 @@ button{
   </div>
 
 
-  <!-- =========================
-       پنل مدیریت
-  ========================== -->
+  <!-- پنل مدیریت -->
 
   <div id="adminPanel" class="hidden">
 
@@ -247,19 +255,14 @@ button{
         <h1>مدیریت کامل هیلا فود</h1>
       </div>
 
-      <button
-        class="logout"
-        onclick="logout()"
-      >
+      <button class="logout" onclick="logout()">
         خروج
       </button>
 
     </div>
 
 
-    <!-- =========================
-         تنظیمات فروشگاه
-    ========================== -->
+    <!-- تنظیمات فروشگاه -->
 
     <div class="card">
 
@@ -268,28 +271,17 @@ button{
       <div class="bar">
 
         <label>
-          <input
-            type="checkbox"
-            id="showPrices"
-          >
+          <input type="checkbox" id="showPrices">
           نمایش قیمت‌ها در سایت
         </label>
 
         <select id="currency">
-          <option value="تومان">
-            تومان
-          </option>
-
-          <option value="ریال">
-            ریال
-          </option>
+          <option value="تومان">تومان</option>
+          <option value="ریال">ریال</option>
         </select>
 
         <label>
-          <input
-            type="checkbox"
-            id="paymentEnabled"
-          >
+          <input type="checkbox" id="paymentEnabled">
           فعال‌کردن پرداخت
         </label>
 
@@ -300,10 +292,7 @@ button{
         فعال نشود.
       </p>
 
-      <button
-        class="gold"
-        onclick="saveSettings()"
-      >
+      <button class="gold" onclick="saveSettings()">
         ذخیره تنظیمات
       </button>
 
@@ -311,14 +300,48 @@ button{
 
 
     <!-- =========================
-         محصول
+         روش‌های ارسال
     ========================== -->
 
     <div class="card">
 
-      <h2>
-        افزودن / ویرایش محصول
-      </h2>
+      <div class="topbar">
+
+        <div>
+          <h2>روش‌های ارسال و کرایه</h2>
+
+          <p class="muted">
+            مبلغ کرایه را از همین قسمت تعیین کن.
+            روش‌های فعال در مرحله خرید به مشتری نمایش داده می‌شوند.
+          </p>
+        </div>
+
+      </div>
+
+      <div id="shippingList"></div>
+
+      <div class="actions">
+
+        <button onclick="addShippingMethod()">
+          + افزودن روش ارسال
+        </button>
+
+        <button class="gold" onclick="saveShipping()">
+          ذخیره روش‌های ارسال
+        </button>
+
+      </div>
+
+      <div id="shippingStatus" class="status"></div>
+
+    </div>
+
+
+    <!-- محصول -->
+
+    <div class="card">
+
+      <h2>افزودن / ویرایش محصول</h2>
 
       <div class="grid">
 
@@ -374,16 +397,11 @@ button{
 
         <div class="actions full">
 
-          <button
-            class="primary"
-            onclick="saveProduct()"
-          >
+          <button class="primary" onclick="saveProduct()">
             ذخیره محصول
           </button>
 
-          <button
-            onclick="clearForm()"
-          >
+          <button onclick="clearForm()">
             پاک کردن فرم
           </button>
 
@@ -399,22 +417,15 @@ button{
     </div>
 
 
-    <!-- =========================
-         محصولات
-    ========================== -->
+    <!-- محصولات -->
 
     <div class="card">
 
       <div class="topbar">
 
-        <h2>
-          محصولات
-        </h2>
+        <h2>محصولات</h2>
 
-        <button
-          onclick="loadStore()"
-          style="width:auto"
-        >
+        <button onclick="loadStore()" style="width:auto">
           تازه‌سازی
         </button>
 
@@ -425,10 +436,7 @@ button{
     </div>
 
 
-    <div
-      id="status"
-      class="status"
-    ></div>
+    <div id="status" class="status"></div>
 
   </div>
 
@@ -444,7 +452,7 @@ let adminKey =
 
 
 /* =========================================
-   ابزار انتخاب عنصر
+   انتخاب عنصر
 ========================================= */
 
 const $ = id =>
@@ -452,7 +460,7 @@ const $ = id =>
 
 
 /* =========================================
-   نمایش وضعیت
+   وضعیت اصلی
 ========================================= */
 
 function setStatus(message){
@@ -464,7 +472,19 @@ function setStatus(message){
 
 
 /* =========================================
-   درخواست به API
+   وضعیت ارسال
+========================================= */
+
+function setShippingStatus(message){
+
+  $("shippingStatus").textContent =
+    message || "";
+
+}
+
+
+/* =========================================
+   API
 ========================================= */
 
 async function api(
@@ -473,29 +493,30 @@ async function api(
 ){
 
   const options = {
+
     method,
+
     headers:{
-      "Accept":
-        "application/json"
+      "Accept":"application/json"
     }
+
   };
 
   if(adminKey){
 
-    options.headers[
-      "x-admin-key"
-    ] = adminKey;
+    options.headers["x-admin-key"] =
+      adminKey;
+
   }
 
   if(body !== null){
 
-    options.headers[
-      "Content-Type"
-    ] =
+    options.headers["Content-Type"] =
       "application/json";
 
     options.body =
       JSON.stringify(body);
+
   }
 
   const response =
@@ -522,6 +543,7 @@ async function api(
     result = {
       error:text
     };
+
   }
 
   if(!response.ok){
@@ -530,14 +552,16 @@ async function api(
       result.error ||
       "خطا در ارتباط با سرور"
     );
+
   }
 
   return result;
+
 }
 
 
 /* =========================================
-   ورود مدیر
+   ورود
 ========================================= */
 
 async function login(){
@@ -549,15 +573,14 @@ async function login(){
 
   if(!key){
 
-    $("loginStatus")
-      .textContent =
+    $("loginStatus").textContent =
       "کلید مدیریت را وارد کن.";
 
     return;
+
   }
 
-  $("loginStatus")
-    .textContent =
+  $("loginStatus").textContent =
     "در حال بررسی...";
 
   try{
@@ -568,8 +591,7 @@ async function login(){
       await api(
         "POST",
         {
-          action:
-            "check-admin"
+          action:"check-admin"
         }
       );
 
@@ -578,6 +600,7 @@ async function login(){
       throw new Error(
         "کلید مدیریت معتبر نیست."
       );
+
     }
 
     sessionStorage.setItem(
@@ -603,11 +626,12 @@ async function login(){
       "hilaAdminKey"
     );
 
-    $("loginStatus")
-      .textContent =
+    $("loginStatus").textContent =
       "ورود ناموفق: " +
       error.message;
+
   }
+
 }
 
 
@@ -624,11 +648,12 @@ function logout(){
   );
 
   location.reload();
+
 }
 
 
 /* =========================================
-   دریافت اطلاعات فروشگاه
+   دریافت فروشگاه
 ========================================= */
 
 async function loadStore(){
@@ -644,6 +669,8 @@ async function loadStore(){
 
     fillSettings();
 
+    renderShipping();
+
     render();
 
     setStatus(
@@ -656,7 +683,9 @@ async function loadStore(){
       "خطا: " +
       error.message
     );
+
   }
+
 }
 
 
@@ -666,29 +695,358 @@ async function loadStore(){
 
 function fillSettings(){
 
-  if(!data ||
-     !data.settings){
+  if(!data || !data.settings){
 
     return;
+
   }
 
-  $("showPrices")
-    .checked =
+  $("showPrices").checked =
     !!data.settings.showPrices;
 
-  $("currency")
-    .value =
+  $("currency").value =
     data.settings.currency ||
     "تومان";
 
-  $("paymentEnabled")
-    .checked =
+  $("paymentEnabled").checked =
     !!data.settings.paymentEnabled;
+
 }
 
 
 /* =========================================
-   نمایش محصولات
+   نمایش روش‌های ارسال
+========================================= */
+
+function renderShipping(){
+
+  const methods =
+    data &&
+    data.settings &&
+    Array.isArray(
+      data.settings.shippingMethods
+    )
+      ? data.settings.shippingMethods
+      : [];
+
+  const container =
+    $("shippingList");
+
+  if(!methods.length){
+
+    container.innerHTML =
+      '<p class="muted">هنوز روش ارسالی ثبت نشده است.</p>';
+
+    return;
+
+  }
+
+  container.innerHTML =
+    methods
+      .map(
+        (method,index) => {
+
+          const name =
+            method.name || "";
+
+          const price =
+            Number(method.price || 0);
+
+          const active =
+            method.active !== false;
+
+          return `
+
+            <div
+              class="shipping-row"
+              data-index="${index}"
+            >
+
+              <input
+                class="shipping-name"
+                value="${escapeAttrValue(name)}"
+                placeholder="نام روش ارسال"
+              >
+
+              <input
+                class="shipping-price"
+                type="number"
+                min="0"
+                value="${price}"
+                placeholder="کرایه به تومان"
+              >
+
+              <label class="shipping-active">
+
+                <input
+                  class="shipping-active-input"
+                  type="checkbox"
+                  ${active ? "checked" : ""}
+                >
+
+                فعال
+
+              </label>
+
+              <button
+                class="danger"
+                onclick="removeShippingMethod(${index})"
+              >
+                حذف
+              </button>
+
+            </div>
+
+          `;
+
+        }
+      )
+      .join("");
+
+}
+
+
+/* =========================================
+   افزودن روش ارسال
+========================================= */
+
+function addShippingMethod(){
+
+  if(
+    !data ||
+    !data.settings
+  ){
+
+    return;
+
+  }
+
+  if(
+    !Array.isArray(
+      data.settings.shippingMethods
+    )
+  ){
+
+    data.settings.shippingMethods = [];
+
+  }
+
+  data.settings.shippingMethods.push({
+
+    id:
+      "shipping-" +
+      Date.now(),
+
+    name:
+      "روش ارسال جدید",
+
+    price:0,
+
+    active:true
+
+  });
+
+  renderShipping();
+
+}
+
+
+/* =========================================
+   حذف روش ارسال
+========================================= */
+
+function removeShippingMethod(index){
+
+  if(
+    !data ||
+    !data.settings ||
+    !Array.isArray(
+      data.settings.shippingMethods
+    )
+  ){
+
+    return;
+
+  }
+
+  const method =
+    data.settings.shippingMethods[index];
+
+  const name =
+    method &&
+    method.name
+      ? method.name
+      : "این روش ارسال";
+
+  if(
+    !confirm(
+      "آیا «" +
+      name +
+      "» حذف شود؟"
+    )
+  ){
+
+    return;
+
+  }
+
+  data.settings.shippingMethods
+    .splice(index,1);
+
+  renderShipping();
+
+}
+
+
+/* =========================================
+   ذخیره روش‌های ارسال
+========================================= */
+
+async function saveShipping(){
+
+  try{
+
+    const rows =
+      document.querySelectorAll(
+        ".shipping-row"
+      );
+
+    const shippingMethods = [];
+
+    rows.forEach(
+      (row,index) => {
+
+        const name =
+          row
+            .querySelector(
+              ".shipping-name"
+            )
+            .value
+            .trim();
+
+        const price =
+          Number(
+            row
+              .querySelector(
+                ".shipping-price"
+              )
+              .value || 0
+          );
+
+        const active =
+          row
+            .querySelector(
+              ".shipping-active-input"
+            )
+            .checked;
+
+        if(!name){
+
+          throw new Error(
+            "نام روش ارسال شماره " +
+            (index + 1) +
+            " خالی است."
+          );
+
+        }
+
+        if(price < 0){
+
+          throw new Error(
+            "کرایه نمی‌تواند منفی باشد."
+          );
+
+        }
+
+        shippingMethods.push({
+
+          id:
+            data.settings
+              .shippingMethods[index]
+              ?.id ||
+            "shipping-" +
+            Date.now() +
+            "-" +
+            index,
+
+          name,
+
+          price,
+
+          active
+
+        });
+
+      }
+    );
+
+
+    setShippingStatus(
+      "در حال ذخیره روش‌های ارسال..."
+    );
+
+
+    await api(
+      "POST",
+      {
+        action:
+          "save-shipping",
+
+        shippingMethods
+      }
+    );
+
+
+    data.settings.shippingMethods =
+      shippingMethods;
+
+
+    renderShipping();
+
+
+    setShippingStatus(
+      "روش‌های ارسال با موفقیت ذخیره شدند."
+    );
+
+
+    alert(
+      "روش‌های ارسال و کرایه با موفقیت ذخیره شدند."
+    );
+
+  }catch(error){
+
+    setShippingStatus(
+      "خطا: " +
+      error.message
+    );
+
+    alert(
+      "خطا: " +
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================
+   escape برای input
+========================================= */
+
+function escapeAttrValue(value){
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+
+}
+
+
+/* =========================================
+   محصولات
 ========================================= */
 
 function render(){
@@ -696,6 +1054,7 @@ function render(){
   if(!data){
 
     return;
+
   }
 
   const products =
@@ -707,6 +1066,7 @@ function render(){
       '<p class="muted">هنوز محصولی ثبت نشده است.</p>';
 
     return;
+
   }
 
   $("list").innerHTML =
@@ -743,14 +1103,10 @@ function render(){
             `;
 
         const price =
-          Number(
-            product.price || 0
-          );
+          Number(product.price || 0);
 
         const discount =
-          Number(
-            product.discountPrice || 0
-          );
+          Number(product.discountPrice || 0);
 
         let priceText =
           price
@@ -767,9 +1123,11 @@ function render(){
             "تخفیف‌خورده: " +
             discount.toLocaleString("fa-IR") +
             " تومان";
+
         }
 
         return `
+
           <div class="row">
 
             <div>
@@ -785,7 +1143,8 @@ function render(){
               <div class="muted">
 
                 ${escapeHtml(
-                  product.cat || "بدون دسته"
+                  product.cat ||
+                  "بدون دسته"
                 )}
 
                 • 
@@ -816,10 +1175,12 @@ function render(){
             </button>
 
           </div>
+
         `;
 
       })
       .join("");
+
 }
 
 
@@ -835,6 +1196,7 @@ function escapeHtml(value){
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
+
 }
 
 
@@ -843,6 +1205,7 @@ function escapeAttr(value){
   return String(value)
     .replaceAll("\\","\\\\")
     .replaceAll("'","\\'");
+
 }
 
 
@@ -862,11 +1225,10 @@ function editProduct(id){
 
   if(!product){
 
-    alert(
-      "محصول پیدا نشد."
-    );
+    alert("محصول پیدا نشد.");
 
     return;
+
   }
 
   $("name").value =
@@ -900,6 +1262,7 @@ function editProduct(id){
     top:0,
     behavior:"smooth"
   });
+
 }
 
 
@@ -926,6 +1289,7 @@ function clearForm(){
   $("img").value = "";
 
   $("editId").value = "";
+
 }
 
 
@@ -947,6 +1311,7 @@ async function saveProduct(){
     );
 
     return;
+
   }
 
   try{
@@ -1002,6 +1367,7 @@ async function saveProduct(){
           .trim(),
 
       active:true
+
     };
 
 
@@ -1029,6 +1395,7 @@ async function saveProduct(){
           product
         }
       );
+
     }
 
 
@@ -1046,7 +1413,9 @@ async function saveProduct(){
       "خطا: " +
       error.message
     );
+
   }
+
 }
 
 
@@ -1079,6 +1448,7 @@ async function deleteProduct(id){
   ){
 
     return;
+
   }
 
 
@@ -1107,7 +1477,9 @@ async function deleteProduct(id){
       "خطا: " +
       error.message
     );
+
   }
+
 }
 
 
@@ -1132,17 +1504,16 @@ async function saveSettings(){
         settings:{
 
           showPrices:
-            $("showPrices")
-              .checked,
+            $("showPrices").checked,
 
           currency:
-            $("currency")
-              .value,
+            $("currency").value,
 
           paymentEnabled:
-            $("paymentEnabled")
-              .checked
+            $("paymentEnabled").checked
+
         }
+
       }
     );
 
@@ -1158,7 +1529,9 @@ async function saveSettings(){
       "خطا: " +
       error.message
     );
+
   }
+
 }
 
 
@@ -1171,6 +1544,7 @@ async function checkExistingLogin(){
   if(!adminKey){
 
     return;
+
   }
 
   try{
@@ -1200,7 +1574,9 @@ async function checkExistingLogin(){
     sessionStorage.removeItem(
       "hilaAdminKey"
     );
+
   }
+
 }
 
 
