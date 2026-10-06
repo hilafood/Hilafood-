@@ -1717,3 +1717,262 @@ async function submitOrder() {
 
     alert(
       "
+      "لطفاً شماره موبایل را وارد کنید."
+    );
+
+    $("customerPhone")?.focus();
+
+    return;
+  }
+
+
+  if (!address) {
+
+    alert(
+      "لطفاً آدرس کامل را وارد کنید."
+    );
+
+    $("customerAddress")?.focus();
+
+    return;
+  }
+
+
+  const shipping =
+    getSelectedShipping();
+
+
+  if (!shipping) {
+
+    alert(
+      "لطفاً روش ارسال را انتخاب کنید."
+    );
+
+    return;
+  }
+
+
+  if (!cart.length) {
+
+    alert(
+      "سبد خرید خالی است."
+    );
+
+    return;
+  }
+
+
+  const button =
+    $("submitOrderBtn");
+
+
+  if (button) {
+
+    button.disabled =
+      true;
+
+    button.textContent =
+      "در حال ثبت سفارش...";
+
+  }
+
+
+  try {
+
+    const items =
+      cart.map(item => ({
+
+        id:
+          String(item.id),
+
+        qty:
+          Number(item.qty || 1)
+
+      }));
+
+
+    const response =
+      await fetch(
+        "/api/store",
+        {
+
+          method: "POST",
+
+          headers: {
+            "content-type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+
+              action:
+                "create-order",
+
+              customer: {
+
+                name,
+                phone,
+                address
+
+              },
+
+              items,
+
+              shippingId:
+                String(shipping.id)
+
+            })
+
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "ثبت سفارش انجام نشد."
+      );
+
+    }
+
+
+    if (!data.success) {
+
+      throw new Error(
+        data.error ||
+        "ثبت سفارش انجام نشد."
+      );
+
+    }
+
+
+    cart = [];
+
+
+    localStorage.removeItem(
+      "hilaCart"
+    );
+
+
+    updateCart();
+
+
+    const customerBox =
+      $("customerCheckoutBox");
+
+
+    if (customerBox) {
+      customerBox.remove();
+    }
+
+
+    const checkoutButton =
+      document.querySelector(
+        ".checkout"
+      );
+
+
+    if (checkoutButton) {
+
+      checkoutButton.style.display =
+        "block";
+
+      checkoutButton.textContent =
+        "ادامه و پرداخت";
+
+    }
+
+
+    alert(
+
+      "سفارش با موفقیت ثبت شد.\n\n" +
+
+      "شماره سفارش: " +
+      data.orderId +
+
+      "\n\n" +
+
+      "مبلغ نهایی: " +
+      money(data.total)
+
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Create order error:",
+      error
+    );
+
+
+    alert(
+      error?.message ||
+      "ثبت سفارش انجام نشد. لطفاً دوباره تلاش کنید."
+    );
+
+
+  } finally {
+
+    if (button) {
+
+      button.disabled =
+        false;
+
+      button.textContent =
+        "ثبت سفارش";
+
+    }
+
+  }
+}
+
+
+/* ==================================================
+   شروع checkout
+================================================== */
+
+async function checkout() {
+
+  if (!cart.length) {
+
+    alert(
+      "سبد خرید خالی است."
+    );
+
+    return;
+  }
+
+
+  const methods =
+    getShippingMethods();
+
+
+  if (!methods.length) {
+
+    alert(
+      "هنوز هیچ روش ارسال فعالی توسط مدیر ثبت نشده است."
+    );
+
+    return;
+  }
+
+
+  showShippingCheckout();
+}
+
+
+/* ==================================================
+   شروع برنامه
+================================================== */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  load
+);
