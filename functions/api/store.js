@@ -298,6 +298,57 @@ async function createTables(db) {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+    // ================================
+  // جداول دوره‌های آموزشی
+  // ================================
+
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS courses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      description TEXT DEFAULT '',
+      price INTEGER DEFAULT 0,
+      image TEXT DEFAULT '',
+      active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS course_chapters (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      course_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      sort_order INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (course_id)
+        REFERENCES courses(id)
+        ON DELETE CASCADE
+    )
+  `).run();
+
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS course_lessons (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chapter_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      content_type TEXT DEFAULT 'text',
+      content_url TEXT DEFAULT '',
+      content_text TEXT DEFAULT '',
+      image TEXT DEFAULT '',
+      is_free INTEGER DEFAULT 0,
+      sort_order INTEGER DEFAULT 0,
+      active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (chapter_id)
+        REFERENCES course_chapters(id)
+        ON DELETE CASCADE
+    )
+  `).run();
 }
 
 
