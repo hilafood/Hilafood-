@@ -2135,8 +2135,6 @@ export async function onRequestPut({
       env.DB;
 
 
-    await setupDatabase(db);
-
 
     const body =
       await request.json();
