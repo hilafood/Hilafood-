@@ -880,7 +880,399 @@ async function api(
   return result;
 
 }
+/* =========================================
+   مدیریت دوره‌های آموزشی
+========================================= */
 
+async function loadCourses(){
+
+  const container =
+    $("coursesList");
+
+  if(!container){
+    return;
+  }
+
+  container.innerHTML =
+    '<p class="muted">در حال دریافت دوره‌ها...</p>';
+
+  try{
+
+    const result =
+      await api(
+        "POST",
+        {
+          action:
+            "admin-courses-list"
+        }
+      );
+
+    const courses =
+      Array.isArray(result.courses)
+        ? result.courses
+        : [];
+
+    if(!courses.length){
+
+      container.innerHTML =
+        '<p class="muted">هنوز دوره‌ای ثبت نشده است.</p>';
+
+      return;
+    }
+
+    container.innerHTML =
+      courses.map(course => {
+
+        const active =
+          Number(course.active) === 1;
+
+        const price =
+          Number(course.price || 0);
+
+        return `
+          <div
+            class="card"
+            style="margin-top:12px"
+          >
+
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:12px;
+                flex-wrap:wrap;
+              "
+            >
+
+              <div>
+
+                <h3 style="margin:0 0 8px">
+                  ${escapeHtml(course.title || "")}
+                </h3>
+
+                <div class="muted">
+                  قیمت:
+                  ${
+                    price.toLocaleString("fa-IR")
+                  }
+                  تومان
+                </div>
+
+                <div class="muted">
+                  وضعیت:
+                  ${
+                    active
+                      ? "فعال"
+                      : "غیرفعال"
+                  }
+                </div>
+
+              </div>
+
+              ${
+                course.image
+                  ? `
+                    <img
+                      src="${escapeHtml(course.image)}"
+                      alt=""
+                      style="
+                        width:90px;
+                        height:90px;
+                        object-fit:cover;
+                        border-radius:12px;
+                      "
+                    >
+                  `
+                  : ""
+              }
+
+            </div>
+
+            ${
+              course.description
+                ? `
+                  <p style="margin-top:12px">
+                    ${escapeHtml(course.description)}
+                  </p>
+                `
+                : ""
+            }
+
+            <div
+              class="actions"
+              style="margin-top:12px"
+            >
+
+              <button
+                onclick="editCourse(${Number(course.id)})"
+              >
+                ویرایش
+              </button>
+
+              <button
+                onclick="deleteCourse(${Number(course.id)})"
+              >
+                حذف
+              </button>
+
+            </div>
+
+          </div>
+        `;
+
+      }).join("");
+
+  }catch(error){
+
+    container.innerHTML =
+      `
+        <p class="muted">
+          خطا در دریافت دوره‌ها:
+          ${escapeHtml(error.message)}
+        </p>
+      `;
+
+  }
+
+}
+
+
+async function saveCourse(){
+
+  const title =
+    $("courseTitle")?.value.trim() || "";
+
+  const slug =
+    $("courseSlug")?.value.trim() || "";
+
+  const description =
+    $("courseDescription")?.value || "";
+
+  const price =
+    Number(
+      $("coursePrice")?.value || 0
+    );
+
+  const image =
+    $("courseImage")?.value.trim() || "";
+
+  const active =
+    $("courseActive")?.checked !== false;
+
+  const editId =
+    Number(
+      $("courseEditId")?.value || 0
+    );
+
+  if(!title){
+
+    alert("نام دوره را وارد کنید.");
+
+    return;
+  }
+
+  try{
+
+    const action =
+      editId
+        ? "admin-course-update"
+        : "admin-course-create";
+
+    const body = {
+
+      action,
+
+      title,
+
+      slug,
+
+      description,
+
+      price,
+
+      image,
+
+      active
+
+    };
+
+    if(editId){
+
+      body.id = editId;
+
+    }
+
+    await api(
+      "POST",
+      body
+    );
+
+    alert(
+      editId
+        ? "دوره با موفقیت ویرایش شد."
+        : "دوره با موفقیت ثبت شد."
+    );
+
+    clearCourseForm();
+
+    await loadCourses();
+
+  }catch(error){
+
+    alert(
+      "خطا در ذخیره دوره:\n" +
+      error.message
+    );
+
+  }
+
+}
+
+
+function clearCourseForm(){
+
+  if($("courseTitle")){
+    $("courseTitle").value = "";
+  }
+
+  if($("courseSlug")){
+    $("courseSlug").value = "";
+  }
+
+  if($("courseDescription")){
+    $("courseDescription").value = "";
+  }
+
+  if($("coursePrice")){
+    $("coursePrice").value = "";
+  }
+
+  if($("courseImage")){
+    $("courseImage").value = "";
+  }
+
+  if($("courseActive")){
+    $("courseActive").checked = true;
+  }
+
+  if($("courseEditId")){
+    $("courseEditId").value = "";
+  }
+
+}
+
+
+async function editCourse(id){
+
+  try{
+
+    const result =
+      await api(
+        "POST",
+        {
+          action:
+            "admin-courses-list"
+        }
+      );
+
+    const courses =
+      Array.isArray(result.courses)
+        ? result.courses
+        : [];
+
+    const course =
+      courses.find(
+        item =>
+          Number(item.id) === Number(id)
+      );
+
+    if(!course){
+
+      alert("دوره پیدا نشد.");
+
+      return;
+    }
+
+    $("courseTitle").value =
+      course.title || "";
+
+    $("courseSlug").value =
+      course.slug || "";
+
+    $("courseDescription").value =
+      course.description || "";
+
+    $("coursePrice").value =
+      Number(course.price || 0);
+
+    $("courseImage").value =
+      course.image || "";
+
+    $("courseActive").checked =
+      Number(course.active) === 1;
+
+    $("courseEditId").value =
+      course.id;
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  }catch(error){
+
+    alert(
+      "خطا در دریافت اطلاعات دوره:\n" +
+      error.message
+    );
+
+  }
+
+}
+
+
+async function deleteCourse(id){
+
+  const ok =
+    confirm(
+      "آیا از حذف این دوره مطمئن هستید؟\n\n" +
+      "فصل‌ها و درس‌های این دوره نیز حذف خواهند شد."
+    );
+
+  if(!ok){
+    return;
+  }
+
+  try{
+
+    await api(
+      "POST",
+      {
+        action:
+          "admin-course-delete",
+
+        id:
+          Number(id)
+      }
+    );
+
+    alert(
+      "دوره با موفقیت حذف شد."
+    );
+
+    await loadCourses();
+
+  }catch(error){
+
+    alert(
+      "خطا در حذف دوره:\n" +
+      error.message
+    );
+
+  }
+
+      }
 
 /* =========================================
    ورود
