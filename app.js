@@ -45,7 +45,63 @@ function img(path) {
 
   return "assets/" + v;
 }
+function renderCategories() {
 
+  const rail = $("categoryRail");
+
+  if (!rail) {
+    return;
+  }
+
+  const categories =
+    Array.isArray(STORE.categories)
+      ? STORE.categories
+      : [];
+
+  rail.innerHTML =
+    categories.length
+      ? categories.map(category => {
+
+          const id =
+            String(category.id || "");
+
+          const name =
+            String(category.name || "");
+
+          const image =
+            img(category.image || "");
+
+          return `
+            <a
+              class="category-card"
+              href="category.html?cat=${encodeURIComponent(id)}"
+            >
+              <div class="category-photo">
+                ${
+                  image
+                    ? `<img
+                        src="${image}"
+                        loading="lazy"
+                        alt="${name}"
+                      >`
+                    : `<div class="no-image-text">
+                        ${name}
+                      </div>`
+                }
+              </div>
+
+              <strong>${name}</strong>
+            </a>
+          `;
+
+        }).join("")
+
+      : `
+        <div class="empty">
+          هنوز دسته‌بندی‌ای ثبت نشده است.
+        </div>
+      `;
+}
 
 function money(n) {
 
