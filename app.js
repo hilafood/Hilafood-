@@ -187,17 +187,76 @@ function cartGrandTotal() {
 /* ==================================================
    دریافت اطلاعات فروشگاه
 ================================================== */
-
 async function load() {
 
+  const cacheKey = "hilafood_store_cache";
+
+  // اول اطلاعات ذخیره‌شده را فوراً نمایش بده
+  try {
+
+    const cached =
+      localStorage.getItem(cacheKey);
+
+    if (cached) {
+
+      const data =
+        JSON.parse(cached);
+
+      STORE = {
+
+        settings:
+          data.settings || {},
+
+        categories:
+          data.categories || [],
+
+        products:
+          data.products || []
+
+      };
+
+      if (
+        !Array.isArray(
+          STORE.settings.shippingMethods
+        )
+      ) {
+
+        STORE.settings.shippingMethods = [];
+
+      }
+
+      renderCategories();
+
+      renderProducts(
+        STORE.products.filter(
+          p => p.active !== false
+        )
+      );
+
+      updateCart();
+
+      renderVideo();
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Cache loading error:",
+      error
+    );
+
+  }
+
+
+  // سپس اطلاعات جدید را در پس‌زمینه دریافت کن
   try {
 
     const response =
       await fetch(
-        "/api/store?v=" +
-        Date.now(),
+        "/api/store",
         {
-          cache: "no-store"
+          cache: "default"
         }
       );
 
@@ -206,6 +265,7 @@ async function load() {
       throw new Error(
         "خطا در دریافت اطلاعات فروشگاه"
       );
+
     }
 
     const data =
@@ -216,6 +276,7 @@ async function load() {
       throw new Error(
         data.error
       );
+
     }
 
     STORE = {
@@ -243,6 +304,37 @@ async function load() {
     }
 
 
+    // ذخیره اطلاعات جدید برای بازدید بعدی
+    try {
+
+      localStorage.setItem(
+        cacheKey,
+        JSON.stringify(data)
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Cache save error:",
+        error
+      );
+
+    }
+
+
+    // نمایش اطلاعات جدید
+    renderCategories();
+
+    renderProducts(
+      STORE.products.filter(
+        p => p.active !== false
+      )
+    );
+
+    updateCart();
+
+    renderVideo();
+
   } catch (error) {
 
     console.error(
@@ -250,91 +342,44 @@ async function load() {
       error
     );
 
-    alert(
-      "اطلاعات فروشگاه دریافت نشد. لطفاً دوباره تلاش کنید."
-    );
+    // اگر اطلاعات جدید دریافت نشد ولی کش داشتیم،
+    // سایت همچنان با اطلاعات قبلی کار می‌کند.
+    if (
+      !localStorage.getItem(cacheKey)
+    ) {
 
-    STORE = {
+      alert(
+        "اطلاعات فروشگاه دریافت نشد. لطفاً دوباره تلاش کنید."
+      );
 
-      settings: {
-        showPrices: false,
-        currency: "تومان",
-        paymentEnabled: false,
-        shippingMethods: []
-      },
+      STORE = {
 
-      products: [],
+        settings: {
+          showPrices: false,
+          currency: "تومان",
+          paymentEnabled: false,
+          shippingMethods: []
+        },
 
-      categories: []
+        products: [],
 
-    };
+        categories: []
+
+      };
+
+      renderCategories();
+
+      renderProducts([]);
+
+      updateCart();
+
+      renderVideo();
+
+    }
+
   }
 
-
-  renderCategories();
-
-  renderProducts(
-    STORE.products.filter(
-      p => p.active !== false
-    )
-  );
-
-  updateCart();
-
-  renderVideo();
 }
-
-
-/* ==================================================
-   دسته‌بندی‌ها
-================================================== */
-
-function renderCategories() {
-
-  const el =
-    $("categoryRail");
-
-  if (!el) {
-    return;
-  }
-
-  el.innerHTML =
-    (STORE.categories || [])
-      .map(category => {
-
-        return `
-
-          <a
-            class="category-card"
-            href="category.html?cat=${encodeURIComponent(
-              category.name
-            )}"
-          >
-
-            ${
-              category.image
-                ? `
-                  <img
-                    src="${img(category.image)}"
-                    loading="lazy"
-                    alt="${category.name}"
-                  >
-                `
-                : ""
-            }
-
-            <b>
-              ${category.name}
-            </b>
-
-          </a>
-
-        `;
-
-      })
-      .join("");
-}
-
 
 /* ==================================================
    کارت محصول
