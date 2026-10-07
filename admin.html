@@ -641,7 +641,100 @@ button{cursor:pointer}
       </p>
 
     </div>
+<!-- ================================
+     دوره‌های آموزشی
+================================ -->
 
+<div class="card">
+
+  <div class="topbar">
+
+    <h2>🎓 دوره‌های آموزشی</h2>
+
+    <button
+      onclick="loadCourses()"
+      style="width:auto"
+    >
+      بروزرسانی
+    </button>
+
+  </div>
+
+  <div class="grid">
+
+    <input
+      id="courseTitle"
+      placeholder="نام دوره"
+    >
+
+    <input
+      id="courseSlug"
+      placeholder="نام انگلیسی دوره (اختیاری)"
+    >
+
+    <textarea
+      id="courseDescription"
+      class="full"
+      placeholder="توضیحات دوره"
+    ></textarea>
+
+    <input
+      id="coursePrice"
+      type="number"
+      placeholder="قیمت دوره"
+    >
+
+    <input
+      id="courseImage"
+      class="full"
+      placeholder="آدرس عکس دوره"
+    >
+
+    <label>
+      <input
+        id="courseActive"
+        type="checkbox"
+        checked
+      >
+      دوره فعال باشد
+    </label>
+
+    <input
+      id="courseEditId"
+      type="hidden"
+    >
+
+    <div class="actions full">
+
+      <button
+        class="primary"
+        onclick="saveCourse()"
+      >
+        ذخیره دوره
+      </button>
+
+      <button
+        onclick="clearCourseForm()"
+      >
+        پاک کردن فرم
+      </button>
+
+    </div>
+
+  </div>
+
+  <hr>
+
+  <div
+    id="coursesList"
+    class="list"
+  >
+    <p class="muted">
+      هنوز دوره‌ای ثبت نشده است.
+    </p>
+  </div>
+
+</div>
 
     <!-- محصولات -->
 
