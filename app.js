@@ -314,7 +314,7 @@ async function load() {
 
     const response =
       await fetch(
-        "/api/store",
+        "/api/store?v=" + Date.now(),
         {
           cache: "default"
         }
