@@ -999,7 +999,6 @@ export async function onRequestGet({
       env.DB;
 
 
-    await setupDatabase(db);
 
 
     const store =
@@ -1041,9 +1040,6 @@ export async function onRequestPost({
 
     const db =
       env.DB;
-
-
-    await setupDatabase(db);
 
 
     const body =
