@@ -5,8 +5,12 @@ let STORE = {
     paymentEnabled: false,
     shippingMethods: []
   },
+
   products: [],
-  categories: []
+
+  categories: [],
+
+  courses: []
 };
 
 let cart = JSON.parse(
