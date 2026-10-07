@@ -1,18 +1,660 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>هیلا فود | غذای فراسودمند</title><meta name="description" content="هیلا فود؛ غذاهای فراسودمند و محصولات نیمه‌آماده برای خانواده"><link rel="preload" as="image" href="assets/logo.webp"><link rel="stylesheet" href="style.css"></head><body>
-<div class="announcement">ارسال سفارش به سراسر کشور <span>•</span> غذای فراسودمند، ساده و خوشمزه</div>
-<header class="site-header"><button class="mobile-cart" onclick="openCart()" aria-label="سبد خرید">🛒<b class="cart-count">۰</b></button><div class="header-top container"><a class="brand" href="index.html"><img src="assets/logo.webp" alt="هیلا فود"><span>غذاهای فراسودمند و محصولات نیمه‌آماده</span></a><div class="head-side"><a href="tel:09227140726">۰۹۲۲۷۱۴۰۷۲۶</a><a class="eitaa" href="https://eitaa.com/hilafood" target="_blank" rel="noopener">کانال ایتا</a><a class="instagram" href="https://instagram.com/hila_mamaa" target="_blank" rel="noopener">اینستاگرام</a><button class="cart-btn" onclick="openCart()">سبد خرید <b class="cart-count">۰</b></button></div></div><nav class="nav container"><button class="hamb" onclick="toggleMenu()">☰</button><div class="nav-links"><a href="#categories">دسته‌بندی‌ها</a><a href="#products">محصولات</a><a href="#discounted">تخفیف خورده</a><a href="#video">طرز آماده‌سازی</a><a href="#course">دوره آموزشی</a><a href="#about">درباره ما</a><a href="#bego">بهم بگو</a></div><label class="search"><span>⌕</span><input id="searchInput" placeholder="جستجوی محصول..." oninput="filterProducts(this.value)"></label></nav></header>
-<div id="drawer" class="drawer"><div class="drawer-head"><img src="assets/logo.webp"><button onclick="toggleMenu()">×</button></div><a href="#categories">دسته‌بندی‌ها</a><a href="#products">محصولات</a><a href="#discounted">تخفیف خورده</a><a href="#video">طرز آماده‌سازی</a><a href="#course">دوره آموزشی</a><a href="#about">درباره ما</a><a href="#bego">بهم بگو</a><a class="drawer-cart" href="#" onclick="openCart();toggleMenu();return false">سبد خرید</a><a class="social-link" href="https://eitaa.com/hilafood" target="_blank" rel="noopener">کانال ایتا</a><a class="social-link" href="https://instagram.com/hila_mamaa" target="_blank" rel="noopener">اینستاگرام</a></div><div id="shade" class="shade" onclick="toggleMenu()"></div>
-<main>
-<section class="hero container"><div class="hero-copy"><span class="eyebrow">هیلا فود | غذای فراسودمند</span><h1>خوشمزه‌های فراسودمند،<br><strong>برای روزهای بهتر</strong></h1><p>محصولات نیمه‌آماده‌ای که آماده‌سازی را ساده‌تر می‌کنند؛ با حال‌وهوای خانه و نگاه به نیازهای خانواده.</p><a class="btn gold" href="#products">مشاهده محصولات</a></div><div class="hero-art"><img src="assets/products-group.webp" alt="محصولات هیلا فود" fetchpriority="high"></div></section>
-<section id="categories" class="container"><div class="section-title"><div><span>دسته‌بندی‌ها</span><h2>انتخاب بر اساس دوره و نیاز</h2></div><small>← به صورت افقی ورق بزنید</small></div><div id="categoryRail" class="horizontal-rail"></div></section>
-<section id="discounted" class="container"><div class="section-title"><div><span>پیشنهاد ویژه</span><h2>تخفیف خورده</h2></div></div><div id="discountRail" class="horizontal-rail product-rail"></div></section>
-<section id="products" class="container"><div class="section-title"><div><span>فروشگاه</span><h2>محصولات هیلا فود</h2></div><a class="view-all" href="category.html">مشاهده همه ←</a></div><div id="productRail" class="horizontal-rail product-rail"></div></section>
-<section id="video" class="container video-section"><div class="section-title"><div><span>آموزش محصول</span><h2>طرز آماده‌سازی محصولات</h2></div></div><div id="videoBox" class="video-box"><div><h3>ویدئوی آماده‌سازی</h3><p>ویدئوهای طرز آماده‌سازی هر محصول از داخل مدیریت سایت قابل ثبت و نمایش هستند.</p></div></div></section>
-<section id="course" class="container course"><img src="assets/farni-beh-sib.webp" alt="اولین خوشمزه‌های من" loading="lazy"><div><span>آموزش هیلا فود</span><h2>اولین خوشمزه‌های من</h2><p>یک دوره کاربردی برای آشنایی با اولین خوشمزه‌های کودک و آماده‌سازی ساده و اصولی در خانه.</p><a class="btn purple" href="#bego">اطلاعات دوره</a></div></section>
-<section id="bego" class="bego"><div class="container bego-inner"><span>بهم بگو</span><h2>سؤال یا نیازت رو بهم بگو</h2><p>اگر برای انتخاب محصول، روش آماده‌سازی یا موضوعی درباره تغذیه سؤال داری، در ایتا برایمان پیام بفرست.</p><a class="btn turq" href="https://eitaa.com/hilafood" target="_blank" rel="noopener">ارسال پرسش در ایتا</a></div></section>
-<section id="about" class="container about"><span>درباره ما</span><h2>هیلا فود؛ انتخابی برای غذای فراسودمند و زندگی ساده‌تر</h2><p>هیلا فود با تمرکز بر <strong>غذای فراسودمند</strong> و محصولات نیمه‌آماده شکل گرفته است؛ محصولاتی که هدفشان ساده‌تر کردن بخشی از آماده‌سازی خوراک و نزدیک‌تر کردن انتخاب‌های غذایی کاربردی به زندگی روزمره خانواده‌هاست. ما تلاش می‌کنیم کیفیت، سادگی و خوشمزگی را کنار هم قرار دهیم و تجربه‌ای صمیمی و قابل‌اعتماد بسازیم. هیلا فود در کنار محصولات، آموزش و محتوای کاربردی را هم جدی می‌گیرد تا انتخاب و آماده‌سازی برای شما روشن‌تر و راحت‌تر باشد.</p></section>
-<section class="container contact"><span>ارتباط با هیلا فود</span><h2>پشتیبانی و سفارش</h2><div class="contact-actions"><a href="tel:09227140726">۰۹۲۲۷۱۴۰۷۲۶</a><a href="https://eitaa.com/hilafood" target="_blank" rel="noopener">کانال ایتا</a><a href="https://instagram.com/hila_mamaa" target="_blank" rel="noopener">اینستاگرام</a><a href="https://eitaa.com/hila_mama" target="_blank" rel="noopener">ایتا ماماهیلا</a></div></section>
-</main><footer><div class="container footer-inner"><img src="assets/logo.webp" alt="هیلا فود"><span>© هیلا فود</span><a href="admin.html">مدیریت سایت</a></div></footer>
+<!doctype html>
+<html lang="fa" dir="rtl">
 
-<div id="cartShade" class="cart-shade" onclick="closeCart()"></div><aside id="cartDrawer" class="cart-drawer"><div class="cart-head"><h2>سبد خرید</h2><button onclick="closeCart()">×</button></div><div id="cartItems"></div><div class="cart-total"><span>جمع کل</span><strong id="cartTotal">۰ تومان</strong></div><button class="checkout" onclick="checkout()">ادامه و پرداخت</button></aside>
-<script src="app.js" defer></script></body></html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>هیلا فود | غذای فراسودمند</title>
+
+<meta
+  name="description"
+  content="هیلا فود؛ غذاهای فراسودمند و محصولات نیمه‌آماده برای خانواده"
+>
+
+<link
+  rel="preload"
+  as="image"
+  href="assets/logo.webp"
+>
+
+<link
+  rel="stylesheet"
+  href="style.css"
+>
+</head>
+
+<body>
+
+<div class="announcement">
+  ارسال سفارش به سراسر کشور
+  <span>•</span>
+  غذای فراسودمند، ساده و خوشمزه
+</div>
+
+
+<header class="site-header">
+
+<button
+  class="mobile-cart"
+  onclick="openCart()"
+  aria-label="سبد خرید"
+>
+🛒
+<b class="cart-count">۰</b>
+</button>
+
+<div class="header-top container">
+
+<a
+  class="brand"
+  href="index.html"
+>
+
+<img
+  src="assets/logo.webp"
+  alt="هیلا فود"
+>
+
+<span>
+غذاهای فراسودمند و محصولات نیمه‌آماده
+</span>
+
+</a>
+
+
+<div class="head-side">
+
+<a href="tel:09227140726">
+۰۹۲۲۷۱۴۰۷۲۶
+</a>
+
+<a
+  class="eitaa"
+  href="https://eitaa.com/hilafood"
+  target="_blank"
+  rel="noopener"
+>
+کانال ایتا
+</a>
+
+<a
+  class="instagram"
+  href="https://instagram.com/hila_mamaa"
+  target="_blank"
+  rel="noopener"
+>
+اینستاگرام
+</a>
+
+<button
+  class="cart-btn"
+  onclick="openCart()"
+>
+سبد خرید
+<b class="cart-count">۰</b>
+</button>
+
+</div>
+
+</div>
+
+
+<nav class="nav container">
+
+<button
+  class="hamb"
+  onclick="toggleMenu()"
+>
+☰
+</button>
+
+<div class="nav-links">
+
+<a href="#categories">دسته‌بندی‌ها</a>
+
+<a href="#products">محصولات</a>
+
+<a href="#discounted">تخفیف خورده</a>
+
+<a href="#video">طرز آماده‌سازی</a>
+
+<a href="#course">دوره آموزشی</a>
+
+<a href="#about">درباره ما</a>
+
+<a href="#bego">بهم بگو</a>
+
+</div>
+
+
+<label class="search">
+
+<span>⌕</span>
+
+<input
+  id="searchInput"
+  placeholder="جستجوی محصول..."
+  oninput="filterProducts(this.value)"
+>
+
+</label>
+
+</nav>
+
+</header>
+
+
+<div id="drawer" class="drawer">
+
+<div class="drawer-head">
+
+<img src="assets/logo.webp">
+
+<button onclick="toggleMenu()">
+×
+</button>
+
+</div>
+
+<a href="#categories">دسته‌بندی‌ها</a>
+
+<a href="#products">محصولات</a>
+
+<a href="#discounted">تخفیف خورده</a>
+
+<a href="#video">طرز آماده‌سازی</a>
+
+<a href="#course">دوره آموزشی</a>
+
+<a href="#about">درباره ما</a>
+
+<a href="#bego">بهم بگو</a>
+
+<a
+  class="drawer-cart"
+  href="#"
+  onclick="openCart();toggleMenu();return false"
+>
+سبد خرید
+</a>
+
+<a
+  class="social-link"
+  href="https://eitaa.com/hilafood"
+  target="_blank"
+  rel="noopener"
+>
+کانال ایتا
+</a>
+
+<a
+  class="social-link"
+  href="https://instagram.com/hila_mamaa"
+  target="_blank"
+  rel="noopener"
+>
+اینستاگرام
+</a>
+
+</div>
+
+<div
+  id="shade"
+  class="shade"
+  onclick="toggleMenu()"
+></div>
+
+
+<main>
+
+
+<!-- HERO -->
+
+<section class="hero container">
+
+<div class="hero-copy">
+
+<span class="eyebrow">
+هیلا فود | غذای فراسودمند
+</span>
+
+
+<h1>
+
+وقتی حرفه و حس مادری
+
+<br>
+
+<strong>
+تلفیق می‌شوند...
+</strong>
+
+</h1>
+
+
+<p>
+
+من مرضیه عسگری، کارشناس مامایی و مؤسس برند هیلا فود هستم.
+
+در هیلا فود تلاش کرده‌ایم دانش و تجربه حرفه‌ای را با حس مادری
+تلفیق کنیم و محصولات فراسودمند، کاربردی و باکیفیت ارائه دهیم.
+
+</p>
+
+
+<a
+  class="btn gold"
+  href="#products"
+>
+مشاهده محصولات
+</a>
+
+</div>
+
+
+<div class="hero-art">
+
+<img
+  src="assets/hero-marzyeh-asgari.png"
+  alt="مرضیه عسگری، مؤسس هیلا فود"
+  fetchpriority="high"
+>
+
+</div>
+
+</section>
+
+
+<!-- CATEGORIES -->
+
+<section
+  id="categories"
+  class="container"
+>
+
+<div class="section-title">
+
+<div>
+
+<span>
+دسته‌بندی‌ها
+</span>
+
+<h2>
+انتخاب بر اساس دوره و نیاز
+</h2>
+
+</div>
+
+<small>
+← به صورت افقی ورق بزنید
+</small>
+
+</div>
+
+
+<div
+  id="categoryRail"
+  class="horizontal-rail"
+></div>
+
+</section>
+
+
+<!-- DISCOUNT -->
+
+<section
+  id="discounted"
+  class="container"
+>
+
+<div class="section-title">
+
+<div>
+
+<span>
+پیشنهاد ویژه
+</span>
+
+<h2>
+تخفیف خورده
+</h2>
+
+</div>
+
+</div>
+
+
+<div
+  id="discountRail"
+  class="horizontal-rail product-rail"
+></div>
+
+</section>
+
+
+<!-- PRODUCTS -->
+
+<section
+  id="products"
+  class="container"
+>
+
+<div class="section-title">
+
+<div>
+
+<span>
+فروشگاه
+</span>
+
+<h2>
+محصولات هیلا فود
+</h2>
+
+</div>
+
+<a
+  class="view-all"
+  href="category.html"
+>
+مشاهده همه ←
+</a>
+
+</div>
+
+
+<div
+  id="productRail"
+  class="horizontal-rail product-rail"
+></div>
+
+</section>
+
+
+<!-- VIDEO -->
+
+<section
+  id="video"
+  class="container video-section"
+>
+
+<div class="section-title">
+
+<div>
+
+<span>
+آموزش محصول
+</span>
+
+<h2>
+طرز آماده‌سازی محصولات
+</h2>
+
+</div>
+
+</div>
+
+
+<div
+  id="videoBox"
+  class="video-box"
+>
+
+<div>
+
+<h3>
+ویدئوی آماده‌سازی
+</h3>
+
+<p>
+ویدئوهای طرز آماده‌سازی هر محصول از داخل مدیریت سایت قابل ثبت و نمایش هستند.
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- COURSES -->
+
+<section
+  id="course"
+  class="container course"
+>
+
+<div class="section-title">
+
+<div>
+
+<span>
+آموزش هیلا فود
+</span>
+
+<h2>
+دوره‌های آموزشی
+</h2>
+
+</div>
+
+<small>
+← به صورت افقی ورق بزنید
+</small>
+
+</div>
+
+
+<div
+  id="courseRail"
+  class="horizontal-rail product-rail"
+></div>
+
+</section>
+
+
+<!-- BEGO -->
+
+<section
+  id="bego"
+  class="bego"
+>
+
+<div class="container bego-inner">
+
+<span>
+بهم بگو
+</span>
+
+<h2>
+سؤال یا نیازت رو بهم بگو
+</h2>
+
+<p>
+اگر برای انتخاب محصول، روش آماده‌سازی یا موضوعی درباره تغذیه سؤال داری،
+در ایتا برایمان پیام بفرست.
+</p>
+
+<a
+  class="btn turq"
+  href="https://eitaa.com/hilafood"
+  target="_blank"
+  rel="noopener"
+>
+ارسال پرسش در ایتا
+</a>
+
+</div>
+
+</section>
+
+
+<!-- ABOUT -->
+
+<section
+  id="about"
+  class="container about"
+>
+
+<span>
+درباره ما
+</span>
+
+<h2>
+هیلا فود؛ انتخابی برای غذای فراسودمند و زندگی ساده‌تر
+</h2>
+
+<p>
+
+هیلا فود با تمرکز بر
+<strong>غذای فراسودمند</strong>
+و محصولات نیمه‌آماده شکل گرفته است؛
+محصولاتی که هدفشان ساده‌تر کردن بخشی از آماده‌سازی خوراک
+و نزدیک‌تر کردن انتخاب‌های غذایی کاربردی به زندگی روزمره خانواده‌هاست.
+
+ما تلاش می‌کنیم کیفیت، سادگی و خوشمزگی را کنار هم قرار دهیم
+و تجربه‌ای صمیمی و قابل‌اعتماد بسازیم.
+
+هیلا فود در کنار محصولات، آموزش و محتوای کاربردی را هم جدی می‌گیرد
+تا انتخاب و آماده‌سازی برای شما روشن‌تر و راحت‌تر باشد.
+
+</p>
+
+</section>
+
+
+<!-- CONTACT -->
+
+<section
+  class="container contact"
+>
+
+<span>
+ارتباط با هیلا فود
+</span>
+
+<h2>
+پشتیبانی و سفارش
+</h2>
+
+
+<div class="contact-actions">
+
+<a href="tel:09227140726">
+۰۹۲۲۷۱۴۰۷۲۶
+</a>
+
+<a
+  href="https://eitaa.com/hilafood"
+  target="_blank"
+  rel="noopener"
+>
+کانال ایتا
+</a>
+
+<a
+  href="https://instagram.com/hila_mamaa"
+  target="_blank"
+  rel="noopener"
+>
+اینستاگرام
+</a>
+
+<a
+  href="https://eitaa.com/hila_mama"
+  target="_blank"
+  rel="noopener"
+>
+ایتا ماماهیلا
+</a>
+
+</div>
+
+</section>
+
+</main>
+
+
+<footer>
+
+<div class="container footer-inner">
+
+<img
+  src="assets/logo.webp"
+  alt="هیلا فود"
+>
+
+<span>
+© هیلا فود
+</span>
+
+<a href="admin.html">
+مدیریت سایت
+</a>
+
+</div>
+
+</footer>
+
+
+<div
+  id="cartShade"
+  class="cart-shade"
+  onclick="closeCart()"
+></div>
+
+
+<aside
+  id="cartDrawer"
+  class="cart-drawer"
+>
+
+<div class="cart-head">
+
+<h2>
+سبد خرید
+</h2>
+
+<button onclick="closeCart()">
+×
+</button>
+
+</div>
+
+
+<div id="cartItems"></div>
+
+
+<div class="cart-total">
+
+<span>
+جمع کل
+</span>
+
+<strong id="cartTotal">
+۰ تومان
+</strong>
+
+</div>
+
+
+<button
+  class="checkout"
+  onclick="checkout()"
+>
+ادامه و پرداخت
+</button>
+
+</aside>
+
+
+<script
+  src="app.js"
+  defer
+></script>
+
+</body>
+
+</html>
