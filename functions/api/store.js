@@ -1099,6 +1099,214 @@ export async function onRequestPost({
 
     const action =
       body.action || "";
+        // =========================================
+    // مدیریت دوره‌های آموزشی
+    // =========================================
+
+    if (
+      action === "admin-courses-list" ||
+      action === "admin-course-create" ||
+      action === "admin-course-update" ||
+      action === "admin-course-delete"
+    ) {
+
+      const adminKey =
+        request.headers.get("x-admin-key") || "";
+
+      if (
+        !env.ADMIN_KEY ||
+        adminKey !== env.ADMIN_KEY
+      ) {
+
+        return json({
+          error: "دسترسی غیرمجاز"
+        }, 403);
+
+      }
+
+      // لیست دوره‌ها
+      if (action === "admin-courses-list") {
+
+        const result =
+          await db.prepare(`
+            SELECT *
+            FROM courses
+            ORDER BY id DESC
+          `).all();
+
+        return json({
+          courses: result.results || []
+        });
+
+      }
+
+      // افزودن دوره
+      if (action === "admin-course-create") {
+
+        const title =
+          String(body.title || "").trim();
+
+        if (!title) {
+
+          return json({
+            error: "نام دوره الزامی است"
+          }, 400);
+
+        }
+
+        const slug =
+          String(
+            body.slug ||
+            title
+              .toLowerCase()
+              .replace(/\s+/g, "-")
+          ).trim();
+
+        const description =
+          String(body.description || "");
+
+        const price =
+          Math.max(
+            0,
+            Number(body.price || 0)
+          );
+
+        const image =
+          String(body.image || "");
+
+        const active =
+          body.active === false ? 0 : 1;
+
+        const result =
+          await db.prepare(`
+            INSERT INTO courses
+            (
+              title,
+              slug,
+              description,
+              price,
+              image,
+              active
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+          `)
+          .bind(
+            title,
+            slug,
+            description,
+            price,
+            image,
+            active
+          )
+          .run();
+
+        return json({
+          ok: true,
+          id: result.meta?.last_row_id || null
+        });
+
+      }
+
+      // ویرایش دوره
+      if (action === "admin-course-update") {
+
+        const id =
+          Number(body.id || 0);
+
+        if (!id) {
+
+          return json({
+            error: "شناسه دوره نامعتبر است"
+          }, 400);
+
+        }
+
+        const title =
+          String(body.title || "").trim();
+
+        if (!title) {
+
+          return json({
+            error: "نام دوره الزامی است"
+          }, 400);
+
+        }
+
+        const slug =
+          String(body.slug || "").trim();
+
+        const description =
+          String(body.description || "");
+
+        const price =
+          Math.max(
+            0,
+            Number(body.price || 0)
+          );
+
+        const image =
+          String(body.image || "");
+
+        const active =
+          body.active === false ? 0 : 1;
+
+        await db.prepare(`
+          UPDATE courses
+          SET
+            title = ?,
+            slug = ?,
+            description = ?,
+            price = ?,
+            image = ?,
+            active = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `)
+        .bind(
+          title,
+          slug,
+          description,
+          price,
+          image,
+          active,
+          id
+        )
+        .run();
+
+        return json({
+          ok: true
+        });
+
+      }
+
+      // حذف دوره
+      if (action === "admin-course-delete") {
+
+        const id =
+          Number(body.id || 0);
+
+        if (!id) {
+
+          return json({
+            error: "شناسه دوره نامعتبر است"
+          }, 400);
+
+        }
+
+        await db.prepare(`
+          DELETE FROM courses
+          WHERE id = ?
+        `)
+        .bind(id)
+        .run();
+
+        return json({
+          ok: true
+        });
+
+      }
+
+    }
 
 
     /* ==================================================
