@@ -1308,7 +1308,366 @@ export async function onRequestPost({
 
     }
 
+    // =========================================
+    // مدیریت فصل‌ها و درس‌های دوره
+    // =========================================
 
+    if (
+      action === "admin-course-content" ||
+      action === "admin-chapter-create" ||
+      action === "admin-chapter-update" ||
+      action === "admin-chapter-delete" ||
+      action === "admin-lesson-create" ||
+      action === "admin-lesson-update" ||
+      action === "admin-lesson-delete"
+    ) {
+
+      const adminKey =
+        request.headers.get("x-admin-key") || "";
+
+      if (
+        !env.ADMIN_KEY ||
+        adminKey !== env.ADMIN_KEY
+      ) {
+
+        return json({
+          error: "دسترسی غیرمجاز"
+        }, 403);
+
+      }
+
+      // مشاهده فصل‌ها و درس‌های یک دوره
+      if (action === "admin-course-content") {
+
+        const courseId =
+          Number(body.course_id || 0);
+
+        if (!courseId) {
+          return json({
+            error: "شناسه دوره نامعتبر است"
+          }, 400);
+        }
+
+        const chapters =
+          await db.prepare(`
+            SELECT *
+            FROM course_chapters
+            WHERE course_id = ?
+            ORDER BY sort_order ASC, id ASC
+          `)
+          .bind(courseId)
+          .all();
+
+        const lessons =
+          await db.prepare(`
+            SELECT
+              l.*,
+              c.course_id
+            FROM course_lessons l
+            JOIN course_chapters c
+              ON c.id = l.chapter_id
+            WHERE c.course_id = ?
+            ORDER BY
+              l.chapter_id ASC,
+              l.sort_order ASC,
+              l.id ASC
+          `)
+          .bind(courseId)
+          .all();
+
+        return json({
+          chapters: chapters.results || [],
+          lessons: lessons.results || []
+        });
+
+      }
+
+      // افزودن فصل
+      if (action === "admin-chapter-create") {
+
+        const courseId =
+          Number(body.course_id || 0);
+
+        const title =
+          String(body.title || "").trim();
+
+        const sortOrder =
+          Number(body.sort_order || 0);
+
+        if (!courseId || !title) {
+          return json({
+            error: "دوره و نام فصل الزامی است"
+          }, 400);
+        }
+
+        const result =
+          await db.prepare(`
+            INSERT INTO course_chapters
+            (
+              course_id,
+              title,
+              sort_order
+            )
+            VALUES (?, ?, ?)
+          `)
+          .bind(
+            courseId,
+            title,
+            sortOrder
+          )
+          .run();
+
+        return json({
+          ok: true,
+          id: result.meta?.last_row_id || null
+        });
+
+      }
+
+      // ویرایش فصل
+      if (action === "admin-chapter-update") {
+
+        const id =
+          Number(body.id || 0);
+
+        const title =
+          String(body.title || "").trim();
+
+        const sortOrder =
+          Number(body.sort_order || 0);
+
+        if (!id || !title) {
+          return json({
+            error: "اطلاعات فصل کامل نیست"
+          }, 400);
+        }
+
+        await db.prepare(`
+          UPDATE course_chapters
+          SET
+            title = ?,
+            sort_order = ?
+          WHERE id = ?
+        `)
+        .bind(
+          title,
+          sortOrder,
+          id
+        )
+        .run();
+
+        return json({
+          ok: true
+        });
+
+      }
+
+      // حذف فصل
+      if (action === "admin-chapter-delete") {
+
+        const id =
+          Number(body.id || 0);
+
+        if (!id) {
+          return json({
+            error: "شناسه فصل نامعتبر است"
+          }, 400);
+        }
+
+        await db.prepare(`
+          DELETE FROM course_chapters
+          WHERE id = ?
+        `)
+        .bind(id)
+        .run();
+
+        return json({
+          ok: true
+        });
+
+      }
+
+      // افزودن درس
+      if (action === "admin-lesson-create") {
+
+        const chapterId =
+          Number(body.chapter_id || 0);
+
+        const title =
+          String(body.title || "").trim();
+
+        const description =
+          String(body.description || "");
+
+        const contentType =
+          String(
+            body.content_type || "text"
+          );
+
+        const contentUrl =
+          String(body.content_url || "");
+
+        const contentText =
+          String(body.content_text || "");
+
+        const image =
+          String(body.image || "");
+
+        const isFree =
+          body.is_free === true ? 1 : 0;
+
+        const sortOrder =
+          Number(body.sort_order || 0);
+
+        const active =
+          body.active === false ? 0 : 1;
+
+        if (!chapterId || !title) {
+          return json({
+            error: "فصل و عنوان درس الزامی است"
+          }, 400);
+        }
+
+        const result =
+          await db.prepare(`
+            INSERT INTO course_lessons
+            (
+              chapter_id,
+              title,
+              description,
+              content_type,
+              content_url,
+              content_text,
+              image,
+              is_free,
+              sort_order,
+              active
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `)
+          .bind(
+            chapterId,
+            title,
+            description,
+            contentType,
+            contentUrl,
+            contentText,
+            image,
+            isFree,
+            sortOrder,
+            active
+          )
+          .run();
+
+        return json({
+          ok: true,
+          id: result.meta?.last_row_id || null
+        });
+
+      }
+
+      // ویرایش درس
+      if (action === "admin-lesson-update") {
+
+        const id =
+          Number(body.id || 0);
+
+        const title =
+          String(body.title || "").trim();
+
+        const description =
+          String(body.description || "");
+
+        const contentType =
+          String(
+            body.content_type || "text"
+          );
+
+        const contentUrl =
+          String(body.content_url || "");
+
+        const contentText =
+          String(body.content_text || "");
+
+        const image =
+          String(body.image || "");
+
+        const isFree =
+          body.is_free === true ? 1 : 0;
+
+        const sortOrder =
+          Number(body.sort_order || 0);
+
+        const active =
+          body.active === false ? 0 : 1;
+
+        if (!id || !title) {
+          return json({
+            error: "اطلاعات درس کامل نیست"
+          }, 400);
+        }
+
+        await db.prepare(`
+          UPDATE course_lessons
+          SET
+            title = ?,
+            description = ?,
+            content_type = ?,
+            content_url = ?,
+            content_text = ?,
+            image = ?,
+            is_free = ?,
+            sort_order = ?,
+            active = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `)
+        .bind(
+          title,
+          description,
+          contentType,
+          contentUrl,
+          contentText,
+          image,
+          isFree,
+          sortOrder,
+          active,
+          id
+        )
+        .run();
+
+        return json({
+          ok: true
+        });
+
+      }
+
+      // حذف درس
+      if (action === "admin-lesson-delete") {
+
+        const id =
+          Number(body.id || 0);
+
+        if (!id) {
+          return json({
+            error: "شناسه درس نامعتبر است"
+          }, 400);
+        }
+
+        await db.prepare(`
+          DELETE FROM course_lessons
+          WHERE id = ?
+        `)
+        .bind(id)
+        .run();
+
+        return json({
+          ok: true
+        });
+
+      }
+
+    }
     /* ==================================================
        ثبت سفارش مشتری
        این بخش عمومی است و ADMIN_KEY نمی‌خواهد
