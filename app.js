@@ -299,9 +299,7 @@ renderCourses();
 
 updateCart();
 
-      updateCart();
-
-      renderVideo();
+renderVideo();
 
     }
 
@@ -403,10 +401,8 @@ renderCourses();
 
 updateCart();
 
-    updateCart();
-
-    renderVideo();
-
+renderVideo();
+    
   } catch (error) {
 
     console.error(
