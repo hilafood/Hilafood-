@@ -1060,16 +1060,13 @@ export async function onRequestGet({
 
 
   try {
+const db =
+  env.DB;
 
-    const db =
-      env.DB;
+await createTables(db);
 
-
-
-
-    const store =
-      await getStore(db);
-
+const store =
+  await getStore(db);
 
     return json(store);
 
