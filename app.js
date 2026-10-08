@@ -290,10 +290,14 @@ courses:
       renderCategories();
 
       renderProducts(
-        STORE.products.filter(
-          p => p.active !== false
-        )
-      );
+  STORE.products.filter(
+    p => p.active !== false
+  )
+);
+
+renderCourses();
+
+updateCart();
 
       updateCart();
 
@@ -390,10 +394,14 @@ courses:
     renderCategories();
 
     renderProducts(
-      STORE.products.filter(
-        p => p.active !== false
-      )
-    );
+  STORE.products.filter(
+    p => p.active !== false
+  )
+);
+
+renderCourses();
+
+updateCart();
 
     updateCart();
 
