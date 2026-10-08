@@ -271,10 +271,12 @@ async function load() {
           data.categories || [],
 
         products:
-          data.products || []
+  data.products || [],
 
-      };
+courses:
+  data.courses || []
 
+};
       if (
         !Array.isArray(
           STORE.settings.shippingMethods
