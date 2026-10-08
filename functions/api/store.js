@@ -1013,19 +1013,34 @@ async function getStore(db) {
 
     }));
 
-
+const coursesResult =
+  await db.prepare(`
+    SELECT
+      id,
+      title,
+      slug,
+      description,
+      price,
+      image,
+      active
+    FROM courses
+    WHERE active = 1
+    ORDER BY id DESC
+  `).all();
+  
   return {
 
-    settings,
+  settings,
 
-    categories:
-      categoriesResult.results || [],
+  categories:
+    categoriesResult.results || [],
 
-    products
+  products,
 
-  };
-}
+  courses:
+    coursesResult.results || []
 
+};
 
 /* ==================================================
    GET
