@@ -677,7 +677,85 @@ function renderProducts(list) {
       `;
 }
 
+function renderCourses() {
 
+  const rail = $("courseRail");
+
+  if (!rail) {
+    return;
+  }
+
+  const courses =
+    Array.isArray(STORE.courses)
+      ? STORE.courses
+      : [];
+
+  rail.innerHTML =
+    courses.length
+      ? courses.map(course => {
+
+          const image =
+            img(course.image || "");
+
+          const price =
+            Number(course.price || 0);
+
+          return `
+            <article class="product">
+
+              <div class="photo ${
+                image ? "" : "no-image"
+              }">
+
+                ${
+                  image
+                    ? `<img
+                        src="${image}"
+                        loading="lazy"
+                        alt="${course.title || "دوره آموزشی"}"
+                      >`
+                    : `
+                      <div class="no-image-text">
+                        تصویر دوره
+                      </div>
+                    `
+                }
+
+              </div>
+
+              <div class="product-body">
+
+                <h3>
+                  ${course.title || ""}
+                </h3>
+
+                <p>
+                  ${course.description || ""}
+                </p>
+
+                ${
+                  STORE.settings.showPrices
+                    ? `<div class="product-foot">
+                        <strong>
+                          ${money(price)}
+                        </strong>
+                      </div>`
+                    : ""
+                }
+
+              </div>
+
+            </article>
+          `;
+
+        }).join("")
+
+      : `
+        <div class="empty">
+          هنوز دوره آموزشی ثبت نشده است.
+        </div>
+      `;
+}
 /* ==================================================
    جستجو
 ================================================== */
