@@ -350,10 +350,12 @@ courses:
         data.categories || [],
 
       products:
-        data.products || []
+  data.products || [],
 
-    };
+courses:
+  data.courses || []
 
+};
 
     if (
       !Array.isArray(
