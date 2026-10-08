@@ -56,15 +56,23 @@ async function init() {
 }
 
 function apply() {
-  let list = (DATA.products || []).filter(p =>
-    p.active !== false &&
-    (
-      !cat ||
-      p.stage === cat ||
-      p.cat === cat ||
-      p.name === cat
-    )
-  );
+  const category = (DATA.categories || []).find(
+  c => c.id === cat || c.name === cat
+);
+
+const categoryName = category ? category.name : cat;
+
+let list = (DATA.products || []).filter(p =>
+  p.active !== false &&
+  (
+    !cat ||
+    p.stage === cat ||
+    p.cat === cat ||
+    p.stage === categoryName ||
+    p.cat === categoryName ||
+    p.name === cat
+  )
+);
 
   const q = ($('q').value || '').trim();
 
