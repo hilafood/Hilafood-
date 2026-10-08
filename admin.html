@@ -1834,9 +1834,10 @@ function renderOrders(orders){
   }
 
   container.innerHTML =
-    orders
-      .map(order => {
-
+  orders
+    .filter(order => order.paymentStatus !== "paid")
+    .map(order => {
+      
         const items =
           Array.isArray(order.items)
             ? order.items
