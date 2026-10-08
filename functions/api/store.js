@@ -1102,12 +1102,12 @@ export async function onRequestPost({
   try {
 
     const db =
-      env.DB;
+  env.DB;
 
+await createTables(db);
 
-    const body =
-      await request.json();
-
+const body =
+  await request.json();
 
     const action =
       body.action || "";
