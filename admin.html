@@ -1615,7 +1615,8 @@ async function loadStore(){
     render();
 
     await loadOrders();
-await loadSmsStatus();
+    await loadCourses();
+    await loadSmsStatus();
     setStatus(
       "اطلاعات فروشگاه با موفقیت دریافت شد."
     );
