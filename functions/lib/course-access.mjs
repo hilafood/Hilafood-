@@ -24,7 +24,9 @@ export function projectLessons(lessons, entitled) {
     if (contentAvailable) {
       projected.content_type = lesson.content_type || "text";
       projected.content_text = lesson.content_text || "";
-      projected.content_url = lesson.content_url || "";
+      // Public/external media URLs are not a protected delivery mechanism.
+      // Only free lessons may expose a URL until private media delivery exists.
+      projected.content_url = free ? (lesson.content_url || "") : "";
     }
     return projected;
   });
