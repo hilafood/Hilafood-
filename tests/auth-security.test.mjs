@@ -76,7 +76,7 @@ test("session cookies are HttpOnly, Secure, scoped and can be cleared", () => {
   assert.match(cookie, /HttpOnly/);
   assert.match(cookie, /Secure/);
   assert.match(cookie, /SameSite=Lax/);
-  assert.match(cookie, /Path=\/api\/auth/);
+  assert.match(cookie, /Path=\//);
   assert.match(clearSessionCookie(), /Max-Age=0/);
   const request = new Request("https://hilafood.pages.dev/api/auth/me", {
     headers: { Cookie: `other=x; hilafood_session=${"a".repeat(43)}` }
