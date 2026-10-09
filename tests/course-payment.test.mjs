@@ -53,15 +53,15 @@ test("gateway request uses saved order price in rial and validates callback orig
 
 test("rejects wrong authority, callback-only success and code 101 for a pending order", () => {
   const order = { status: "pending_payment", gatewayAuthority: "A-stored" };
-  assert.equal(validateCourseGatewayResult({ order, callbackAuthority: "A-other", gatewayResponse: { code: 100, data: { code: 100, ref_id: 99 } } }).ok, false);
+  assert.equal(validateCourseGatewayResult({ order, callbackAuthority: "A-other", gatewayResponse: { httpOk: true, data: { code: 100, ref_id: 99 } } }).ok, false);
   assert.equal(validateCourseGatewayResult({ order, callbackAuthority: "A-stored", gatewayResponse: { status: "success" } }).ok, false);
-  assert.equal(validateCourseGatewayResult({ order, callbackAuthority: "A-stored", gatewayResponse: { code: 101, data: { code: 101, ref_id: 99 } } }).ok, false);
+  assert.equal(validateCourseGatewayResult({ order, callbackAuthority: "A-stored", gatewayResponse: { httpOk: true, data: { code: 101, ref_id: 99 } } }).ok, false);
 });
 
 test("requires successful verification code and a reference ID", () => {
   const order = { status: "pending_payment", gatewayAuthority: "A-stored" };
-  assert.equal(validateCourseGatewayResult({ order, callbackAuthority: "A-stored", gatewayResponse: { code: 100, data: { code: 100 } } }).ok, false);
-  assert.deepEqual(validateCourseGatewayResult({ order, callbackAuthority: "A-stored", gatewayResponse: { code: 100, data: { code: 100, ref_id: 12345 } } }), { ok: true, alreadyPaid: false, refId: "12345" });
+  assert.equal(validateCourseGatewayResult({ order, callbackAuthority: "A-stored", gatewayResponse: { httpOk: true, data: { code: 100 } } }).ok, false);
+  assert.deepEqual(validateCourseGatewayResult({ order, callbackAuthority: "A-stored", gatewayResponse: { httpOk: true, data: { code: 100, ref_id: 12345 } } }), { ok: true, alreadyPaid: false, refId: "12345" });
 });
 
 test("only accepts exact replay of an already-paid reference", () => {
