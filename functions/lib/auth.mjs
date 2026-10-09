@@ -186,28 +186,25 @@ function clientIp(request) {
 }
 
 function isValidProviderConfig(env) {
-  if (!env?.SMS_API_URL || !env?.SMS_API_TOKEN) return false;
-  try {
-    return new URL(env.SMS_API_URL).protocol === "https:";
-  } catch {
-    return false;
-  }
+  return Boolean(env?.SMS_API_KEY && env?.SMS_FROM);
 }
 
 async function sendOtp(env, phone, code) {
-  const response = await fetch(env.SMS_API_URL, {
-    method: "POST",
-    redirect: "error",
-    headers: {
-      "Authorization": `Bearer ${env.SMS_API_TOKEN}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      to: phone,
-      message: `کد ورود هیلا فود: ${code} — اعتبار کد ۵ دقیقه است.`
-    })
-  });
-  return response.ok;
+  // Reuse the repository's existing ASA SMS provider and credentials, but send
+  // only to the phone being verified (never to the store owner's SMS_TO number).
+  const url = new URL(
+    `https://api-payamak.com/api/v4/${encodeURIComponent(env.SMS_API_KEY)}/sms/send.json`
+  );
+  url.searchParams.set("from", String(env.SMS_FROM));
+  url.searchParams.set("recipients", phone);
+  url.searchParams.set("message", `کد ورود هیلا فود: ${code} — اعتبار کد ۵ دقیقه است.`);
+  url.searchParams.set("type", "0");
+
+  const response = await fetch(url.toString(), { method: "GET", redirect: "error" });
+  if (!response.ok) return false;
+  let data;
+  try { data = await response.json(); } catch { return false; }
+  return Number(data?.return?.status ?? -1) === 200;
 }
 
 function requireDatabase(env) {
