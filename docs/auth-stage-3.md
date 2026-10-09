@@ -9,7 +9,7 @@
 - `GET /api/auth/me`: نمایش هویت نشست معتبر.
 - `POST /api/auth/logout`: ابطال نشست و پاک‌کردن کوکی.
 
-درخواست‌های تغییردهنده باید از همان Origin و با `application/json` باشند. کوکی نشست `Secure; HttpOnly; SameSite=Lax` و محدود به مسیر `/api/auth` است. هیچ endpoint موجود خرید دوره یا محصول به این نشست وصل نشده است؛ endpointهای بعدی باید صریحاً `requireAuthenticatedUser` را فراخوانی کنند.
+درخواست‌های تغییردهنده باید از همان Origin و با `application/json` باشند. کوکی نشست `Secure; HttpOnly; SameSite=Lax` و برای استفاده از APIهای احراز هویت و سایر APIهای نیازمند ورود، در مسیر `/` قابل ارسال است. هیچ endpoint موجود خرید دوره یا محصول به این نشست وصل نشده است؛ endpointهای بعدی باید صریحاً `requireAuthenticatedUser` را فراخوانی کنند.
 
 ## Secretها و پیامک
 هیچ Secret یا تنظیم Cloudflare در این تغییر ایجاد نشده است. برای فعال‌شدن endpointها، این Secret باید با مقدار تصادفی قوی (حداقل ۳۲ نویسه) در محیط Cloudflare تعریف شود:
