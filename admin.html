@@ -736,6 +736,73 @@ button{cursor:pointer}
 
 </div>
 
+<!-- ================================
+     مدیریت فصل‌ها و درس‌های دوره
+================================ -->
+<div class="card" id="courseContentCard">
+  <div class="topbar">
+    <h2>📚 مدیریت فصل‌ها و درس‌ها</h2>
+    <span class="muted" id="courseContentTitle">ابتدا یک دوره را انتخاب کن.</span>
+  </div>
+  <p class="muted">
+    از این بخش می‌توانی فصل‌ها و درس‌ها را اضافه یا ویرایش کنی.
+    برای حفظ اطلاعات فعلی، عملیات حذف در این رابط ارائه نشده است.
+    کنترل دسترسی محتوای پولی برای کاربران در مرحله جداگانه پیاده‌سازی خواهد شد.
+  </p>
+  <div id="courseContentStatus" class="status" role="status" aria-live="polite">هنوز دوره‌ای انتخاب نشده است.</div>
+  <div id="courseContentWorkspace" class="hidden">
+    <hr>
+    <h3>فصل‌ها</h3>
+    <div class="grid">
+      <input id="chapterTitle" placeholder="عنوان فصل">
+      <input id="chapterSortOrder" type="number" value="0" placeholder="ترتیب نمایش">
+      <input id="chapterEditId" type="hidden">
+      <div class="actions full">
+        <button class="primary" onclick="saveChapter()">ذخیره فصل</button>
+        <button onclick="clearChapterForm()">پاک کردن فرم فصل</button>
+      </div>
+    </div>
+    <div id="chaptersList" class="list"></div>
+    <hr>
+    <h3>درس‌ها</h3>
+    <div class="grid">
+      <label class="full">فصل مربوط به درس
+        <select id="lessonChapterId"></select>
+      </label>
+      <input id="lessonTitle" placeholder="عنوان درس">
+      <input id="lessonSortOrder" type="number" value="0" placeholder="ترتیب نمایش">
+      <textarea id="lessonDescription" class="full" placeholder="توضیحات درس"></textarea>
+      <label>نوع محتوا
+        <select id="lessonContentType">
+          <option value="text">متن</option>
+          <option value="video">ویدئو</option>
+          <option value="image">تصویر</option>
+          <option value="link">لینک</option>
+        </select>
+      </label>
+      <label>وضعیت درس
+        <select id="lessonActive">
+          <option value="1">فعال</option>
+          <option value="0">غیرفعال</option>
+        </select>
+      </label>
+      <input id="lessonContentUrl" class="full" placeholder="آدرس محتوا یا ویدئو">
+      <textarea id="lessonContentText" class="full" placeholder="متن درس"></textarea>
+      <input id="lessonImage" class="full" placeholder="آدرس تصویر درس">
+      <label class="full">
+        <input id="lessonIsFree" type="checkbox" style="width:auto">
+        این درس رایگان باشد
+      </label>
+      <input id="lessonEditId" type="hidden">
+      <div class="actions full">
+        <button class="primary" onclick="saveLesson()">ذخیره درس</button>
+        <button onclick="clearLessonForm()">پاک کردن فرم درس</button>
+      </div>
+    </div>
+    <div id="lessonsList" class="list"></div>
+  </div>
+</div>
+
     <!-- محصولات -->
 
     <div class="card">
@@ -1007,13 +1074,14 @@ async function loadCourses(){
               <button
                 onclick="editCourse(${Number(course.id)})"
               >
-                ویرایش
+                ویرایش دوره
               </button>
 
               <button
-                onclick="deleteCourse(${Number(course.id)})"
+                class="primary"
+                onclick="selectCourseContent(${Number(course.id)}, '${escapeAttr(course.title || "")}')"
               >
-                حذف
+                مدیریت فصل‌ها و درس‌ها
               </button>
 
             </div>
@@ -1232,47 +1300,206 @@ async function editCourse(id){
 }
 
 
-async function deleteCourse(id){
 
-  const ok =
-    confirm(
-      "آیا از حذف این دوره مطمئن هستید؟\n\n" +
-      "فصل‌ها و درس‌های این دوره نیز حذف خواهند شد."
-    );
+let selectedCourseContentId = 0;
+let selectedCourseContentTitle = "";
+let courseChaptersCache = [];
+let courseLessonsCache = [];
 
-  if(!ok){
+function setCourseContentStatus(message) {
+  const status = $("courseContentStatus");
+  if (status) status.textContent = message || "";
+}
+
+async function selectCourseContent(courseId, courseTitle) {
+  selectedCourseContentId = Number(courseId || 0);
+  selectedCourseContentTitle = String(courseTitle || "");
+  $("courseContentTitle").textContent = selectedCourseContentTitle || ("دوره شماره " + selectedCourseContentId);
+  $("courseContentWorkspace").classList.remove("hidden");
+  setCourseContentStatus("در حال دریافت فصل‌ها و درس‌ها...");
+  $("courseContentCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  try {
+    const result = await api("POST", { action: "admin-course-content", course_id: selectedCourseContentId });
+    courseChaptersCache = Array.isArray(result.chapters) ? result.chapters : [];
+    courseLessonsCache = Array.isArray(result.lessons) ? result.lessons : [];
+    renderCourseChapters();
+    renderCourseLessons();
+    setCourseContentStatus("محتوای دوره بارگذاری شد. حذف داده‌ها از این رابط غیرفعال است.");
+  } catch (error) {
+    setCourseContentStatus("خطا در دریافت محتوای دوره: " + error.message);
+  }
+}
+
+function renderCourseChapters() {
+  const container = $("chaptersList");
+  const chapterSelect = $("lessonChapterId");
+  if (!container || !chapterSelect) return;
+  chapterSelect.innerHTML = courseChaptersCache.map(function(chapter) {
+    return '<option value="' + Number(chapter.id) + '">' + escapeHtml(chapter.title || "") + '</option>';
+  }).join("");
+  if (!courseChaptersCache.length) {
+    chapterSelect.innerHTML = '<option value="">ابتدا یک فصل بساز</option>';
+    container.innerHTML = '<p class="muted">هنوز فصلی ثبت نشده است.</p>';
     return;
   }
+  container.innerHTML = courseChaptersCache.map(function(chapter) {
+    return '<div class="row"><div><b>' + escapeHtml(chapter.title || "") +
+      '</b><div class="muted">ترتیب نمایش: ' + Number(chapter.sort_order || 0) +
+      '</div></div><button onclick="editChapter(' + Number(chapter.id) + ')">ویرایش</button></div>';
+  }).join("");
+}
 
-  try{
-
-    await api(
-      "POST",
-      {
-        action:
-          "admin-course-delete",
-
-        id:
-          Number(id)
-      }
-    );
-
-    alert(
-      "دوره با موفقیت حذف شد."
-    );
-
-    await loadCourses();
-
-  }catch(error){
-
-    alert(
-      "خطا در حذف دوره:\n" +
-      error.message
-    );
-
+function renderCourseLessons() {
+  const container = $("lessonsList");
+  if (!container) return;
+  if (!courseLessonsCache.length) {
+    container.innerHTML = '<p class="muted">هنوز درسی ثبت نشده است.</p>';
+    return;
   }
+  container.innerHTML = courseLessonsCache.map(function(lesson) {
+    const chapter = courseChaptersCache.find(function(item) {
+      return Number(item.id) === Number(lesson.chapter_id);
+    });
+    const isFree = Number(lesson.is_free) === 1;
+    const active = Number(lesson.active) === 1;
+    let html = '<div class="row"><div><b>' + escapeHtml(lesson.title || "") +
+      '</b><div class="muted">فصل: ' + escapeHtml(chapter ? chapter.title : "نامشخص") +
+      ' · ' + (isFree ? "رایگان" : "پولی") + ' · ' + (active ? "فعال" : "غیرفعال") +
+      ' · ترتیب: ' + Number(lesson.sort_order || 0) + '</div>';
+    if (lesson.description) html += '<div class="muted">' + escapeHtml(lesson.description) + '</div>';
+    html += '</div><button onclick="editLesson(' + Number(lesson.id) + ')">ویرایش</button></div>';
+    return html;
+  }).join("");
+}
 
-      }
+async function saveChapter() {
+  if (!selectedCourseContentId) {
+    alert("ابتدا یک دوره را انتخاب کن.");
+    return;
+  }
+  const title = $("chapterTitle").value.trim();
+  const sortOrder = Number($("chapterSortOrder").value || 0);
+  const editId = Number($("chapterEditId").value || 0);
+  if (!title) {
+    alert("عنوان فصل را وارد کن.");
+    return;
+  }
+  try {
+    const body = {
+      action: editId ? "admin-chapter-update" : "admin-chapter-create",
+      title: title,
+      sort_order: sortOrder
+    };
+    if (editId) body.id = editId;
+    else body.course_id = selectedCourseContentId;
+    await api("POST", body);
+    clearChapterForm();
+    await selectCourseContent(selectedCourseContentId, selectedCourseContentTitle);
+    setCourseContentStatus("فصل با موفقیت ذخیره شد.");
+  } catch (error) {
+    alert("خطا در ذخیره فصل: " + error.message);
+  }
+}
+
+function editChapter(chapterId) {
+  const chapter = courseChaptersCache.find(function(item) {
+    return Number(item.id) === Number(chapterId);
+  });
+  if (!chapter) {
+    alert("فصل پیدا نشد.");
+    return;
+  }
+  $("chapterTitle").value = chapter.title || "";
+  $("chapterSortOrder").value = Number(chapter.sort_order || 0);
+  $("chapterEditId").value = chapter.id;
+  $("chapterTitle").focus();
+}
+
+function clearChapterForm() {
+  $("chapterTitle").value = "";
+  $("chapterSortOrder").value = "0";
+  $("chapterEditId").value = "";
+}
+
+async function saveLesson() {
+  if (!selectedCourseContentId) {
+    alert("ابتدا یک دوره را انتخاب کن.");
+    return;
+  }
+  const chapterId = Number($("lessonChapterId").value || 0);
+  const title = $("lessonTitle").value.trim();
+  const editId = Number($("lessonEditId").value || 0);
+  if (!chapterId || !title) {
+    alert("انتخاب فصل و واردکردن عنوان درس الزامی است.");
+    return;
+  }
+  try {
+    const body = {
+      action: editId ? "admin-lesson-update" : "admin-lesson-create",
+      chapter_id: chapterId,
+      title: title,
+      description: $("lessonDescription").value || "",
+      content_type: $("lessonContentType").value || "text",
+      content_url: $("lessonContentUrl").value.trim(),
+      content_text: $("lessonContentText").value || "",
+      image: $("lessonImage").value.trim(),
+      is_free: $("lessonIsFree").checked,
+      sort_order: Number($("lessonSortOrder").value || 0),
+      active: $("lessonActive").value === "1"
+    };
+    if (editId) {
+      body.id = editId;
+      const existing = courseLessonsCache.find(function(item) {
+        return Number(item.id) === editId;
+      });
+      if (existing) body.chapter_id = Number(existing.chapter_id);
+    }
+    await api("POST", body);
+    clearLessonForm();
+    await selectCourseContent(selectedCourseContentId, selectedCourseContentTitle);
+    setCourseContentStatus("درس با موفقیت ذخیره شد.");
+  } catch (error) {
+    alert("خطا در ذخیره درس: " + error.message);
+  }
+}
+
+function editLesson(lessonId) {
+  const lesson = courseLessonsCache.find(function(item) {
+    return Number(item.id) === Number(lessonId);
+  });
+  if (!lesson) {
+    alert("درس پیدا نشد.");
+    return;
+  }
+  $("lessonChapterId").value = String(lesson.chapter_id || "");
+  $("lessonChapterId").disabled = true;
+  $("lessonTitle").value = lesson.title || "";
+  $("lessonSortOrder").value = Number(lesson.sort_order || 0);
+  $("lessonDescription").value = lesson.description || "";
+  $("lessonContentType").value = lesson.content_type || "text";
+  $("lessonContentUrl").value = lesson.content_url || "";
+  $("lessonContentText").value = lesson.content_text || "";
+  $("lessonImage").value = lesson.image || "";
+  $("lessonIsFree").checked = Number(lesson.is_free) === 1;
+  $("lessonActive").value = Number(lesson.active) === 1 ? "1" : "0";
+  $("lessonEditId").value = lesson.id;
+  $("lessonTitle").focus();
+}
+
+function clearLessonForm() {
+  $("lessonChapterId").disabled = false;
+  $("lessonTitle").value = "";
+  $("lessonSortOrder").value = "0";
+  $("lessonDescription").value = "";
+  $("lessonContentType").value = "text";
+  $("lessonContentUrl").value = "";
+  $("lessonContentText").value = "";
+  $("lessonImage").value = "";
+  $("lessonIsFree").checked = false;
+  $("lessonActive").value = "1";
+  $("lessonEditId").value = "";
+}
+
 
 /* =========================================
    ورود
