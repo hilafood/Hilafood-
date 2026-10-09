@@ -63,6 +63,7 @@ test("course API returns paid content only for a server-verified entitlement", a
   assert.equal(data.authenticated, true);
   assert.equal(data.entitled, true);
   assert.equal(data.lessons.find(lesson => lesson.id === 2).content_text, "محتوای محرمانه");
+  assert.equal(data.lessons.find(lesson => lesson.id === 2).content_url, "");
 });
 
 test("course API denies paid content to a signed-in user without ownership", async () => {
