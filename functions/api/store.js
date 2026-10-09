@@ -1188,7 +1188,16 @@ const body =
 
         const active =
           body.active === false ? 0 : 1;
+let baseSlug = slug;
+let suffix = 2;
 
+while (
+  await db.prepare(
+    "SELECT id FROM courses WHERE slug = ?"
+  ).bind(baseSlug).first()
+) {
+  baseSlug = `${slug}-${suffix++}`;
+}
         const result =
           await db.prepare(`
             INSERT INTO courses
@@ -1204,7 +1213,7 @@ const body =
           `)
           .bind(
             title,
-            slug,
+            baseSlug,
             description,
             price,
             image,
