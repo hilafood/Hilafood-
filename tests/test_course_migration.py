@@ -60,6 +60,7 @@ def main():
     db.execute("INSERT INTO course_entitlements(user_id,course_id,course_order_id) VALUES('u1',1,'o1')")
     expect_integrity_error(db, "INSERT INTO course_entitlements(user_id,course_id,course_order_id) VALUES('u1',1,'o1')")
     expect_integrity_error(db, "UPDATE course_orders SET status='failed' WHERE id='o1'")
+    expect_integrity_error(db, "UPDATE course_orders SET amount_due_toman=1000 WHERE id='o1'")
     expect_integrity_error(db, "UPDATE course_entitlements SET user_id='other' WHERE course_order_id='o1'")
     expect_integrity_error(db, "DELETE FROM course_entitlements WHERE course_order_id='o1'")
 
