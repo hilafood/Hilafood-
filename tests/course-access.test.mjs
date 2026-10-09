@@ -25,7 +25,7 @@ test("guest and non-owner never receive paid lesson text or URL", () => {
 });
 
 test("server-confirmed entitlement permits paid lesson payload projection", () => {
-  const projected = projectLessons(lessons, true);
+  const projected = projectLessons(lessons, true, true);
   assert.equal(projected[1].contentAvailable, true);
   assert.equal(projected[1].content_text, "متن محرمانه");
   assert.equal(projected[1].content_url, "");
