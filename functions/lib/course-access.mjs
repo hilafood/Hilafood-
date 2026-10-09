@@ -1,14 +1,17 @@
 import { requireAuthenticatedUser, jsonResponse } from "./auth.mjs";
 
+// Intentionally disabled until the real course-purchase flow is implemented and audited.
+const COURSE_PURCHASES_ENABLED = false;
+
 function positiveId(value) {
   const id = Number(value);
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
-export function projectLessons(lessons, entitled) {
+export function projectLessons(lessons, entitled, purchasesEnabled = false) {
   return lessons.map(lesson => {
     const free = Number(lesson.is_free) === 1 || lesson.is_free === true;
-    const contentAvailable = free || entitled;
+    const contentAvailable = free || (entitled && purchasesEnabled);
     const projected = {
       id: lesson.id,
       chapter_id: lesson.chapter_id,
@@ -71,7 +74,7 @@ export async function getCourseContent({ request, env }) {
 
     const user = await requireAuthenticatedUser(request, env);
     let entitled = false;
-    if (user) {
+    if (user && COURSE_PURCHASES_ENABLED) {
       const entitlement = await env.DB.prepare(`
         SELECT e.id
         FROM course_entitlements e
@@ -87,10 +90,10 @@ export async function getCourseContent({ request, env }) {
           AND u.phone_verified_at IS NOT NULL
         LIMIT 1
       `).bind(user.id, courseId).first();
-      entitled = Boolean(entitlement?.id);
+      entitled = COURSE_PURCHASES_ENABLED && Boolean(entitlement?.id);
     }
 
-    const lessons = projectLessons(lessonResult.results || [], entitled);
+    const lessons = projectLessons(lessonResult.results || [], entitled, COURSE_PURCHASES_ENABLED);
     return jsonResponse({
       course: {
         id: course.id,
