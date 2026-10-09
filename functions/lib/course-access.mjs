@@ -30,28 +30,6 @@ export function projectLessons(lessons, entitled) {
   });
 }
 
-async function hasValidEntitlement(db, user) {
-  if (!user?.id || !user.phoneVerifiedAt) return false;
-  const row = await db.prepare(`
-    SELECT e.id
-    FROM course_entitlements e
-    JOIN course_orders o
-      ON o.id = e.course_order_id
-     AND o.user_id = e.user_id
-     AND o.course_id = e.course_id
-    JOIN users u
-      ON u.id = e.user_id
-    WHERE e.user_id = ?
-      AND e.course_id = ?
-      AND o.status = 'paid'
-      AND o.verified_at IS NOT NULL
-      AND u.phone_verified_at IS NOT NULL
-    LIMIT 1
-  `);
-  // Bind course ID at the call site to keep entitlement scoped to one course.
-  return row;
-}
-
 export async function getCourseContent({ request, env }) {
   if (request.method !== "GET") {
     return jsonResponse({ error: "روش درخواست پشتیبانی نمی‌شود." }, 405, { Allow: "GET" });
