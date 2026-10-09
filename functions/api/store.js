@@ -1415,10 +1415,13 @@ while (
         const sortOrder =
           Number(body.sort_order || 0);
 
-        if (!courseId || !title) {
-          return json({
-            error: "دوره و نام فصل الزامی است"
-          }, 400);
+        if (!Number.isSafeInteger(courseId) || courseId <= 0 || !title || !Number.isFinite(sortOrder)) {
+          return json({ error: "دوره، نام فصل و ترتیب معتبر الزامی است" }, 400);
+        }
+
+        const course = await db.prepare("SELECT id FROM courses WHERE id = ?").bind(courseId).first();
+        if (!course) {
+          return json({ error: "دوره پیدا نشد" }, 404);
         }
 
         const result =
@@ -1445,42 +1448,39 @@ while (
 
       }
 
-      // ویرایش فصل
+      // ویرایش فصل؛ شناسه فصل باید متعلق به دوره اعلام‌شده باشد
       if (action === "admin-chapter-update") {
+        const id = Number(body.id || 0);
+        const courseId = Number(body.course_id || 0);
+        const title = String(body.title || "").trim();
+        const sortOrder = Number(body.sort_order || 0);
 
-        const id =
-          Number(body.id || 0);
-
-        const title =
-          String(body.title || "").trim();
-
-        const sortOrder =
-          Number(body.sort_order || 0);
-
-        if (!id || !title) {
-          return json({
-            error: "اطلاعات فصل کامل نیست"
-          }, 400);
+        if (!Number.isSafeInteger(id) || id <= 0 ||
+            !Number.isSafeInteger(courseId) || courseId <= 0 || !title ||
+            !Number.isFinite(sortOrder)) {
+          return json({ error: "اطلاعات فصل کامل نیست" }, 400);
         }
 
-        await db.prepare(`
+        const chapter = await db.prepare(`
+          SELECT id FROM course_chapters
+          WHERE id = ? AND course_id = ?
+        `).bind(id, courseId).first();
+
+        if (!chapter) {
+          return json({ error: "فصل در دوره انتخاب‌شده پیدا نشد" }, 404);
+        }
+
+        const result = await db.prepare(`
           UPDATE course_chapters
-          SET
-            title = ?,
-            sort_order = ?
-          WHERE id = ?
-        `)
-        .bind(
-          title,
-          sortOrder,
-          id
-        )
-        .run();
+          SET title = ?, sort_order = ?
+          WHERE id = ? AND course_id = ?
+        `).bind(title, sortOrder, id, courseId).run();
 
-        return json({
-          ok: true
-        });
+        if (!result.meta?.changes) {
+          return json({ error: "فصل به‌روزرسانی نشد" }, 404);
+        }
 
+        return json({ ok: true });
       }
 
       // حذف فصل
@@ -1543,10 +1543,19 @@ while (
         const active =
           body.active === false ? 0 : 1;
 
-        if (!chapterId || !title) {
-          return json({
-            error: "فصل و عنوان درس الزامی است"
-          }, 400);
+        const courseId = Number(body.course_id || 0);
+        if (!Number.isSafeInteger(courseId) || courseId <= 0 ||
+            !Number.isSafeInteger(chapterId) || chapterId <= 0 || !title ||
+            !Number.isFinite(sortOrder)) {
+          return json({ error: "دوره، فصل، عنوان و ترتیب معتبر الزامی است" }, 400);
+        }
+
+        const chapter = await db.prepare(`
+          SELECT id FROM course_chapters
+          WHERE id = ? AND course_id = ?
+        `).bind(chapterId, courseId).first();
+        if (!chapter) {
+          return json({ error: "فصل متعلق به دوره انتخاب‌شده نیست" }, 400);
         }
 
         const result =
@@ -1587,50 +1596,52 @@ while (
 
       }
 
-      // ویرایش درس
+      // ویرایش/انتقال درس فقط درون همان دوره و با کنترل مالکیت فصل مقصد
       if (action === "admin-lesson-update") {
+        const id = Number(body.id || 0);
+        const courseId = Number(body.course_id || 0);
+        const chapterId = Number(body.chapter_id || 0);
+        const title = String(body.title || "").trim();
+        const description = String(body.description || "");
+        const contentType = String(body.content_type || "text");
+        const contentUrl = String(body.content_url || "");
+        const contentText = String(body.content_text || "");
+        const image = String(body.image || "");
+        const isFree = body.is_free === true ? 1 : 0;
+        const sortOrder = Number(body.sort_order || 0);
+        const active = body.active === false ? 0 : 1;
 
-        const id =
-          Number(body.id || 0);
-
-        const title =
-          String(body.title || "").trim();
-
-        const description =
-          String(body.description || "");
-
-        const contentType =
-          String(
-            body.content_type || "text"
-          );
-
-        const contentUrl =
-          String(body.content_url || "");
-
-        const contentText =
-          String(body.content_text || "");
-
-        const image =
-          String(body.image || "");
-
-        const isFree =
-          body.is_free === true ? 1 : 0;
-
-        const sortOrder =
-          Number(body.sort_order || 0);
-
-        const active =
-          body.active === false ? 0 : 1;
-
-        if (!id || !title) {
-          return json({
-            error: "اطلاعات درس کامل نیست"
-          }, 400);
+        if (!Number.isSafeInteger(id) || id <= 0 ||
+            !Number.isSafeInteger(courseId) || courseId <= 0 ||
+            !Number.isSafeInteger(chapterId) || chapterId <= 0 ||
+            !title || !Number.isFinite(sortOrder)) {
+          return json({ error: "اطلاعات درس کامل نیست" }, 400);
         }
 
-        await db.prepare(`
+        const existing = await db.prepare(`
+          SELECT l.id
+          FROM course_lessons l
+          JOIN course_chapters c ON c.id = l.chapter_id
+          WHERE l.id = ? AND c.course_id = ?
+        `).bind(id, courseId).first();
+
+        if (!existing) {
+          return json({ error: "درس در دوره انتخاب‌شده پیدا نشد" }, 404);
+        }
+
+        const targetChapter = await db.prepare(`
+          SELECT id FROM course_chapters
+          WHERE id = ? AND course_id = ?
+        `).bind(chapterId, courseId).first();
+
+        if (!targetChapter) {
+          return json({ error: "فصل مقصد متعلق به دوره انتخاب‌شده نیست" }, 400);
+        }
+
+        const result = await db.prepare(`
           UPDATE course_lessons
           SET
+            chapter_id = ?,
             title = ?,
             description = ?,
             content_type = ?,
@@ -1642,8 +1653,8 @@ while (
             active = ?,
             updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
-        `)
-        .bind(
+        `).bind(
+          chapterId,
           title,
           description,
           contentType,
@@ -1654,13 +1665,13 @@ while (
           sortOrder,
           active,
           id
-        )
-        .run();
+        ).run();
 
-        return json({
-          ok: true
-        });
+        if (!result.meta?.changes) {
+          return json({ error: "درس به‌روزرسانی نشد" }, 404);
+        }
 
+        return json({ ok: true });
       }
 
       // حذف درس
