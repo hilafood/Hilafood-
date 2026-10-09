@@ -127,7 +127,7 @@ export function validateCourseGatewayResult({ order, callbackAuthority, gatewayR
   if (order.status !== "pending_payment") {
     return Object.freeze({ ok: false, reason: "order_not_pending" });
   }
-  if (gatewayResponse?.code !== 100 || gatewayResponse?.data?.code !== 100) {
+  if (gatewayResponse?.httpOk !== true || gatewayResponse?.data?.code !== 100) {
     return Object.freeze({ ok: false, reason: "gateway_not_verified" });
   }
   const refId = gatewayResponse?.data?.ref_id;
