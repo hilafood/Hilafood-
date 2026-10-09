@@ -979,6 +979,11 @@ async function loadCourses(){
         ? result.courses
         : [];
 
+    courseAdminTitles = {};
+    courses.forEach(function(course) {
+      courseAdminTitles[Number(course.id)] = String(course.title || "");
+    });
+
     if(!courses.length){
 
       container.innerHTML =
@@ -1303,6 +1308,7 @@ async function editCourse(id){
 
 let selectedCourseContentId = 0;
 let selectedCourseContentTitle = "";
+let courseAdminTitles = {};
 let courseChaptersCache = [];
 let courseLessonsCache = [];
 
@@ -1313,7 +1319,7 @@ function setCourseContentStatus(message) {
 
 async function selectCourseContent(courseId, courseTitle) {
   selectedCourseContentId = Number(courseId || 0);
-  selectedCourseContentTitle = String(courseTitle || "");
+  selectedCourseContentTitle = String(courseAdminTitles[selectedCourseContentId] || courseTitle || "");
   $("courseContentTitle").textContent = selectedCourseContentTitle || ("دوره شماره " + selectedCourseContentId);
   $("courseContentWorkspace").classList.remove("hidden");
   setCourseContentStatus("در حال دریافت فصل‌ها و درس‌ها...");
