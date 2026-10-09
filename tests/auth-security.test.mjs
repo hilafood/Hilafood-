@@ -10,6 +10,7 @@ import {
   makeSessionCookie,
   normalizeIranMobile,
   requireAuthenticatedUser,
+  requestOtp,
   logout,
   otpAttemptAllowed,
   rateLimitAllowed,
@@ -156,4 +157,20 @@ test("logout revokes the matching hashed session and clears the cookie", async (
   assert.equal(typeof updateBindings[1], "string");
   assert.notEqual(updateBindings[1], token);
   assert.match(response.headers.get("Set-Cookie"), /Max-Age=0/);
+});
+
+
+test("OTP request fails closed without SMS credentials and stores no challenge", async () => {
+  const db = { prepare() { throw new Error("must not touch D1 without SMS credentials"); } };
+  const env = { AUTH_SECRET: "test-secret-that-is-long-enough-123", DB: db };
+  const makeRequest = phone => new Request("https://hilafood.pages.dev/api/auth/request-otp", {
+    method: "POST",
+    headers: { Origin: "https://hilafood.pages.dev", "Content-Type": "application/json" },
+    body: JSON.stringify({ phone })
+  });
+  const first = await requestOtp({ request: makeRequest("09123456789"), env });
+  const second = await requestOtp({ request: makeRequest("09987654321"), env });
+  assert.equal(first.status, 503);
+  assert.equal(second.status, 503);
+  assert.deepEqual(await first.json(), await second.json());
 });
