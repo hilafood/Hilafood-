@@ -2213,8 +2213,7 @@ async function loadSurveys() {
             label.append(input,text); wrap.append(label);
           });
           if (question.type==="multiple" && Number(question.required)===1) {
-            wrap.addEventListener("change",()=>{ const checked=wrap.querySelector('input[type="checkbox"]:checked'); wrap.querySelectorAll('input[type="checkbox"]').forEach(input=>input.required=!checked); });
-            wrap.querySelectorAll('input[type="checkbox"]').forEach(input=>input.required=true);
+            wrap.addEventListener("change",()=>{ const checked=Boolean(wrap.querySelector('input[type="checkbox"]:checked')); wrap.dataset.hasRequiredChoice=checked?"yes":"no"; });
           }
         }
         form.append(wrap);
@@ -2222,7 +2221,13 @@ async function loadSurveys() {
       const submit=document.createElement("button"); submit.type="submit"; submit.textContent="ثبت پاسخ"; form.append(submit);
       const status=document.createElement("p"); status.className="survey-public-status"; status.setAttribute("role","status"); form.append(status);
       form.addEventListener("submit",async event=>{
-        event.preventDefault(); submit.disabled=true; status.textContent="در حال ثبت پاسخ…";
+        event.preventDefault();
+        const missingRequiredMultiple = (survey.questions || []).some(question =>
+          question.type==="multiple" && Number(question.required)===1 &&
+          !form.querySelector('input[name="q-'+question.id+'"]:checked')
+        );
+        if (missingRequiredMultiple) { status.textContent="برای هر سؤال چندگزینه‌ای الزامی، دست‌کم یک گزینه انتخاب کنید."; return; }
+        submit.disabled=true; status.textContent="در حال ثبت پاسخ…";
         const answers=[];
         for (const question of survey.questions || []) {
           if (question.type==="text") {
