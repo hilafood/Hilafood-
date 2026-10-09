@@ -86,6 +86,67 @@
     const verified = user.phoneVerifiedAt ? "تأیید شده" : "تأیید نشده";
     $("accountUser").textContent =
       `شماره موبایل: ${user.phone || "—"} | وضعیت شماره: ${verified} | اعتبار نشست تا: ${expiresAt || "—"}`;
+    loadCourseOrders();
+    continueToNext();
+  }
+
+  function continueToNext() {
+    const next = new URLSearchParams(location.search).get("next");
+    if (!next || next.startsWith("//") || next.includes("\\\\")) return;
+    try {
+      const target = new URL(next, location.origin);
+      if (target.origin !== location.origin || target.pathname === "/account.html") return;
+      setTimeout(() => location.replace(target.pathname + target.search + target.hash), 250);
+    } catch {}
+  }
+
+  function money(value) {
+    const number = Number(value);
+    return Number.isFinite(number) && number > 0 ? new Intl.NumberFormat("fa-IR").format(number) + " تومان" : "—";
+  }
+
+  async function loadCourseOrders() {
+    const box = $("accountCourseOrders");
+    if (!box) return;
+    box.textContent = "در حال دریافت سفارش‌های دوره…";
+    try {
+      const data = await api("/api/course-orders");
+      const orders = Array.isArray(data.orders) ? data.orders : [];
+      if (!orders.length) {
+        box.textContent = "هنوز سفارشی برای دوره‌های آموزشی ثبت نشده است.";
+        return;
+      }
+      box.textContent = "";
+      orders.forEach(order => {
+        const card = document.createElement("article");
+        card.className = "account-course-order";
+        const title = document.createElement("strong");
+        title.textContent = order.course_title || "دوره آموزشی";
+        const status = document.createElement("p");
+        const labels = {
+          pending_gateway: "در انتظار آماده‌سازی درگاه",
+          pending_payment: "در انتظار پرداخت",
+          paid: "پرداخت تأیید شده",
+          failed: "پرداخت ناموفق",
+          cancelled: "لغوشده"
+        };
+        status.textContent = "وضعیت: " + (labels[order.status] || "نامشخص") +
+          " | مبلغ: " + money(order.amount_due_toman);
+        card.append(title, status);
+        if (order.status === "paid") {
+          const link = document.createElement("a");
+          link.href = "course.html?id=" + encodeURIComponent(String(order.course_id));
+          link.textContent = "ورود به دوره";
+          link.className = "account-primary";
+          card.append(link);
+        }
+        box.append(card);
+      });
+    } catch (error) {
+      box.textContent = error.status === 401
+        ? "برای دیدن سفارش‌ها باید وارد حساب شوید."
+        : "سفارش‌های دوره فعلاً در دسترس نیستند.";
+    }
   }
 
   async function refreshSession() {
