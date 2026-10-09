@@ -46,7 +46,7 @@ test("course API returns lesson titles to guests but strips paid lesson content"
   assert.equal("content_url" in paid, false);
 });
 
-test("course API returns paid content only for a server-verified entitlement", async () => {
+test("course API keeps paid content closed even when a mock entitlement exists while purchases are disabled", async () => {
   const session = {
     id: "user-1", phone: "09123456789", phone_verified_at: "2026-10-09T00:00:00.000Z",
     session_id: "session-1", expires_at: new Date(Date.now() + 60_000).toISOString(), revoked_at: null
@@ -61,9 +61,11 @@ test("course API returns paid content only for a server-verified entitlement", a
   assert.equal(response.status, 200);
   const data = await response.json();
   assert.equal(data.authenticated, true);
-  assert.equal(data.entitled, true);
-  assert.equal(data.lessons.find(lesson => lesson.id === 2).content_text, "محتوای محرمانه");
-  assert.equal(data.lessons.find(lesson => lesson.id === 2).content_url, "");
+  assert.equal(data.entitled, false);
+  const paid = data.lessons.find(lesson => lesson.id === 2);
+  assert.equal(paid.contentAvailable, false);
+  assert.equal("content_text" in paid, false);
+  assert.equal("content_url" in paid, false);
 });
 
 test("course API denies paid content to a signed-in user without ownership", async () => {
