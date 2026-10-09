@@ -22,6 +22,17 @@
   rel="stylesheet"
   href="style.css"
 >
+<style>
+.survey-public-card{border:1px solid #eadff0;border-radius:16px;padding:16px;margin:14px 0;background:#fff}
+.survey-public-card h3{margin-top:0}
+.survey-public-question{padding:10px 0;border-top:1px solid #f0e9f2}
+.survey-public-option{display:flex;gap:8px;align-items:flex-start;padding:7px 0}
+.survey-public-option input{width:auto;margin-top:5px}
+.survey-public-card textarea{width:100%;min-height:80px;border:1px solid #ddd;border-radius:10px;padding:10px;font:inherit}
+.survey-public-card button,.survey-public-card a{display:inline-block;padding:10px 16px;border:0;border-radius:10px;background:#7954a5;color:#fff;text-decoration:none;font:inherit;cursor:pointer}
+.survey-public-card button:disabled{opacity:.6;cursor:not-allowed}
+.survey-public-status{margin-top:10px;line-height:1.8}
+</style>
 </head>
 
 <body>
@@ -120,6 +131,7 @@
 <a href="#video">طرز آماده‌سازی</a>
 
 <a href="#course">دوره آموزشی</a>
+<a href="#surveys">نظرسنجی‌ها</a>
 
 <a href="account.html">حساب کاربری</a>
 
@@ -168,6 +180,7 @@
 <a href="#video">طرز آماده‌سازی</a>
 
 <a href="#course">دوره آموزشی</a>
+<a href="#surveys">نظرسنجی‌ها</a>
 
 <a href="account.html">حساب کاربری</a>
 
@@ -458,6 +471,13 @@
 
 </section>
 
+
+<!-- نظرسنجی‌های فعال -->
+<section id="surveys" class="container" style="padding:28px 0">
+  <div class="section-title"><div><span>صدای شما مهم است</span><h2>نظرسنجی‌های هیلا فود</h2></div></div>
+  <p>در نظرسنجی‌های فعال شرکت کنید. برای ثبت پاسخ، ورود با شماره موبایل تأییدشده لازم است و هر حساب برای هر نظرسنجی یک‌بار می‌تواند پاسخ دهد.</p>
+  <div id="publicSurveysList" aria-live="polite"><p>در حال دریافت نظرسنجی‌ها…</p></div>
+</section>
 
 <!-- BEGO -->
 

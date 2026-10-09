@@ -258,6 +258,13 @@ button{cursor:pointer}
   border-radius:12px;
 }
 
+.survey-card{border:1px solid #eadff0;border-radius:14px;padding:14px;margin:12px 0}
+.survey-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.survey-actions button{width:auto;flex:1 1 110px}
+.survey-question-editor{border:1px solid #eee;border-radius:12px;padding:12px;margin:10px 0}
+.survey-results{background:#f8f5f8;border-radius:12px;padding:12px;margin-top:12px;line-height:1.9}
+.survey-badge{display:inline-block;padding:4px 8px;border-radius:8px;background:#eee;margin-inline-start:6px;font-size:12px}
+@media(max-width:650px){.survey-actions{flex-direction:column}.survey-actions button{width:100%}}
 .order-badge{
   display:inline-block;
   padding:5px 9px;
@@ -525,7 +532,35 @@ button{cursor:pointer}
     </div>
 
 
-    <!-- =========================
+    <!-- مدیریت نظرسنجی‌ها -->
+<div class="card" id="surveyAdminCard">
+  <div class="topbar">
+    <div>
+      <h2>📊 مدیریت نظرسنجی‌ها</h2>
+      <p class="muted">ساخت، ویرایش، انتشار، بستن، بایگانی و مشاهده آمار نظرسنجی‌ها. هر حساب تأییدشده می‌تواند به هر نظرسنجی یک‌بار پاسخ دهد.</p>
+    </div>
+    <button style="width:auto" onclick="loadSurveysAdmin()">تازه‌سازی</button>
+  </div>
+  <div class="grid">
+    <input id="surveyTitle" class="full" maxlength="200" placeholder="عنوان نظرسنجی">
+    <textarea id="surveyDescription" class="full" maxlength="3000" placeholder="توضیحات نظرسنجی"></textarea>
+    <input id="surveyEditId" type="hidden">
+  </div>
+  <h3>سؤال‌ها</h3>
+  <div id="surveyQuestionsEditor"></div>
+  <div class="actions">
+    <button type="button" onclick="addSurveyQuestion()">+ افزودن سؤال</button>
+    <button type="button" class="primary" onclick="saveSurveyAdmin()">ذخیره پیش‌نویس</button>
+    <button type="button" onclick="clearSurveyForm()">نظرسنجی جدید</button>
+  </div>
+  <div id="surveyAdminStatus" class="status" role="status" aria-live="polite"></div>
+  <hr>
+  <h3>نظرسنجی‌های قبلی</h3>
+  <div id="surveyAdminList"><p class="muted">در حال دریافت فهرست نظرسنجی‌ها…</p></div>
+  <div id="surveyResults" class="survey-results" hidden></div>
+</div>
+
+<!-- =========================
          سفارش‌ها
     ========================== -->
 
@@ -1519,6 +1554,7 @@ async function login(){
       .remove("hidden");
 
     await loadStore();
+    await loadSurveysAdmin();
 
   }catch(error){
 
@@ -2964,6 +3000,7 @@ async function checkExistingLogin(){
       .remove("hidden");
 
     await loadStore();
+    await loadSurveysAdmin();
 
   }catch{
 
@@ -3215,10 +3252,162 @@ async function sendSmsTest(){
 
   }
 
+
+// =========================================
+// نظرسنجی‌ها
+// =========================================
+let surveyAdminItems = [];
+let surveyQuestionCounter = 0;
+const surveyEsc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+async function surveyApi(body) {
+  const response = await fetch("/api/surveys", {
+    method: "POST", cache: "no-store", credentials: "same-origin",
+    headers: { "Content-Type": "application/json", "Accept": "application/json", "x-admin-key": adminKey },
+    body: JSON.stringify(body)
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "عملیات نظرسنجی ناموفق بود.");
+  return data;
+}
+function surveyStatusLabel(status) {
+  return ({draft:"پیش‌نویس",published:"منتشرشده",closed:"بسته‌شده",archived:"بایگانی‌شده"})[status] || status;
+}
+function addSurveyQuestion(question = {}) {
+  const editor = $("surveyQuestionsEditor");
+  const id = ++surveyQuestionCounter;
+  const options = Array.isArray(question.options) ? question.options.map(o => typeof o === "string" ? o : o.label).join("\n") : "گزینه ۱\nگزینه ۲";
+  const block = document.createElement("div");
+  block.className = "survey-question-editor";
+  block.dataset.questionEditor = String(id);
+  block.innerHTML = `
+    <div class="topbar"><strong>سؤال</strong><button type="button" style="width:auto" onclick="this.closest('.survey-question-editor').remove()">حذف سؤال</button></div>
+    <input data-field="prompt" maxlength="500" placeholder="متن سؤال" value="${surveyEsc(question.prompt || "")}">
+    <label>نوع پاسخ
+      <select data-field="type">
+        <option value="single" ${(question.type || "single")==="single"?"selected":""}>انتخاب یک گزینه</option>
+        <option value="multiple" ${question.type==="multiple"?"selected":""}>انتخاب چند گزینه</option>
+        <option value="text" ${question.type==="text"?"selected":""}>پاسخ متنی</option>
+      </select>
+    </label>
+    <label><input data-field="required" type="checkbox" style="width:auto" ${question.required===false || Number(question.required)===0?"":"checked"}> پاسخ الزامی است</label>
+    <textarea data-field="options" placeholder="هر گزینه در یک خط؛ برای پاسخ متنی خالی بگذارید">${surveyEsc(question.type==="text"?"":options)}</textarea>
+  `;
+  const type = block.querySelector('[data-field="type"]');
+  const opts = block.querySelector('[data-field="options"]');
+  type.addEventListener("change", () => { opts.disabled = type.value === "text"; if (type.value === "text") opts.value = ""; });
+  editor.append(block);
+}
+function clearSurveyForm() {
+  $("surveyTitle").value = "";
+  $("surveyDescription").value = "";
+  $("surveyEditId").value = "";
+  $("surveyQuestionsEditor").textContent = "";
+  $("surveyResults").hidden = true;
+  $("surveyAdminStatus").textContent = "";
+  addSurveyQuestion();
+}
+function collectSurveyQuestions() {
+  return [...$("surveyQuestionsEditor").querySelectorAll(".survey-question-editor")].map(block => ({
+    prompt: block.querySelector('[data-field="prompt"]').value.trim(),
+    type: block.querySelector('[data-field="type"]').value,
+    required: block.querySelector('[data-field="required"]').checked,
+    options: block.querySelector('[data-field="type"]').value === "text" ? [] :
+      block.querySelector('[data-field="options"]').value.split("\n").map(x=>x.trim()).filter(Boolean)
+  }));
+}
+async function saveSurveyAdmin() {
+  const button = document.querySelector('#surveyAdminCard button[onclick="saveSurveyAdmin()"]');
+  if (button) button.disabled = true;
+  try {
+    const body = {
+      action: "admin-save",
+      id: $("surveyEditId").value || undefined,
+      title: $("surveyTitle").value,
+      description: $("surveyDescription").value,
+      questions: collectSurveyQuestions()
+    };
+    const result = await surveyApi(body);
+    $("surveyEditId").value = result.id;
+    $("surveyAdminStatus").textContent = "نظرسنجی به‌صورت پیش‌نویس ذخیره شد.";
+    await loadSurveysAdmin();
+  } catch (error) {
+    $("surveyAdminStatus").textContent = error.message;
+  } finally { if (button) button.disabled = false; }
+}
+async function loadSurveysAdmin() {
+  const list = $("surveyAdminList");
+  if (!list) return;
+  try {
+    const data = await surveyApi({action:"admin-list"});
+    surveyAdminItems = Array.isArray(data.surveys) ? data.surveys : [];
+    if (!surveyAdminItems.length) { list.textContent = "هنوز نظرسنجی‌ای ساخته نشده است."; return; }
+    list.textContent = "";
+    surveyAdminItems.forEach(survey => {
+      const card = document.createElement("article");
+      card.className = "survey-card";
+      const heading = document.createElement("h3");
+      heading.textContent = survey.title;
+      const details = document.createElement("p");
+      details.textContent = surveyStatusLabel(survey.status) + " · " + Number(survey.participants || 0) + " شرکت‌کننده";
+      const desc = document.createElement("p"); desc.textContent = survey.description || "";
+      const actions = document.createElement("div"); actions.className = "survey-actions";
+      const button = (label, action, disabled=false) => {
+        const b = document.createElement("button"); b.type="button"; b.textContent=label; b.disabled=disabled;
+        b.addEventListener("click", () => action(survey.id)); actions.append(b);
+      };
+      button("ویرایش", editSurveyAdmin, survey.status==="archived");
+      button("انتشار / بازگشایی", id=>changeSurveyStatus(id,"admin-publish"), survey.status==="archived" || survey.status==="published");
+      button("بستن", id=>changeSurveyStatus(id,"admin-close"), survey.status!=="published");
+      button("بایگانی", id=>changeSurveyStatus(id,"admin-archive"), survey.status==="archived");
+      button("مشاهده نتایج", showSurveyResults);
+      card.append(heading,details,desc,actions); list.append(card);
+    });
+  } catch (error) { list.textContent = "بارگذاری نظرسنجی‌ها ناموفق بود: " + error.message; }
+}
+async function editSurveyAdmin(id) {
+  const survey = surveyAdminItems.find(item => Number(item.id) === Number(id));
+  if (!survey) return;
+  $("surveyEditId").value = survey.id;
+  $("surveyTitle").value = survey.title || "";
+  $("surveyDescription").value = survey.description || "";
+  $("surveyQuestionsEditor").textContent = "";
+  (survey.questions || []).forEach(question => addSurveyQuestion(question));
+  $("surveyAdminStatus").textContent = "ویرایش نظرسنجی: " + survey.title;
+  $("surveyResults").hidden = true;
+  $("surveyTitle").scrollIntoView({behavior:"smooth",block:"center"});
+}
+async function changeSurveyStatus(id, action) {
+  const prompts = {"admin-publish":"نظرسنجی منتشر یا دوباره باز شود؟","admin-close":"نظرسنجی بسته شود؟","admin-archive":"نظرسنجی بایگانی شود؟"};
+  if (!confirm(prompts[action] || "ادامه می‌دهید؟")) return;
+  try { await surveyApi({action,id}); $("surveyAdminStatus").textContent = "وضعیت نظرسنجی تغییر کرد."; await loadSurveysAdmin(); }
+  catch(error) { $("surveyAdminStatus").textContent = error.message; }
+}
+async function showSurveyResults(id) {
+  const box = $("surveyResults"); box.hidden = false; box.textContent = "در حال دریافت نتایج…";
+  try {
+    const data = await surveyApi({action:"admin-results",id});
+    box.textContent = "";
+    const title = document.createElement("h3"); title.textContent = "نتایج: " + data.survey.title + " · تعداد شرکت‌کنندگان: " + data.participants; box.append(title);
+    (data.questions || []).forEach(question => {
+      const section = document.createElement("section");
+      const h = document.createElement("strong"); h.textContent = question.prompt; section.append(h);
+      if (question.type === "text") {
+        (question.answers || []).forEach(answer => { const p=document.createElement("p"); p.textContent=answer; section.append(p); });
+        if (!(question.answers || []).length) { const p=document.createElement("p"); p.textContent="هنوز پاسخی ثبت نشده است."; section.append(p); }
+      } else {
+        (question.options || []).forEach(option => { const p=document.createElement("p"); p.textContent=option.label + " — " + Number(option.votes || 0) + " رأی"; section.append(p); });
+      }
+      box.append(section);
+    });
+    box.scrollIntoView({behavior:"smooth",block:"start"});
+  } catch(error) { box.textContent = "دریافت نتایج ناموفق بود: " + error.message; }
+}
+
 /* =========================================
    شروع
 ========================================= */
 
+clearSurveyForm();
 checkExistingLogin();
 
 </script>

@@ -2174,3 +2174,82 @@ document.addEventListener(
   "DOMContentLoaded",
   load
 );
+
+
+/* ==================================================
+   نظرسنجی‌های فعال
+================================================== */
+async function loadSurveys() {
+  const root = document.getElementById("publicSurveysList");
+  if (!root) return;
+  try {
+    const response = await fetch("/api/surveys", {cache:"no-store",credentials:"same-origin"});
+    const data = await response.json().catch(()=>({}));
+    if (!response.ok) throw new Error(data.error || "نظرسنجی‌ها در دسترس نیستند.");
+    root.textContent = "";
+    const surveys = Array.isArray(data.surveys) ? data.surveys : [];
+    if (!surveys.length) { root.textContent = "در حال حاضر نظرسنجی فعالی وجود ندارد."; return; }
+    surveys.forEach(survey => {
+      const card = document.createElement("article"); card.className = "survey-public-card";
+      const title = document.createElement("h3"); title.textContent = survey.title || "نظرسنجی";
+      const description = document.createElement("p"); description.textContent = survey.description || "";
+      card.append(title,description);
+      if (survey.hasResponded) {
+        const status=document.createElement("p"); status.className="survey-public-status"; status.textContent="پاسخ شما قبلاً ثبت شده است. سپاس از همراهی شما."; card.append(status);
+        root.append(card); return;
+      }
+      const form=document.createElement("form");
+      (survey.questions || []).forEach(question => {
+        const wrap=document.createElement("fieldset"); wrap.className="survey-public-question";
+        const legend=document.createElement("legend"); legend.textContent=question.prompt + (Number(question.required) ? " *" : ""); wrap.append(legend);
+        if (question.type === "text") {
+          const textarea=document.createElement("textarea"); textarea.name="q-"+question.id; textarea.maxLength=2000; textarea.required=Number(question.required)===1; textarea.setAttribute("aria-label",question.prompt); wrap.append(textarea);
+        } else {
+          (question.options || []).forEach(option => {
+            const label=document.createElement("label"); label.className="survey-public-option";
+            const input=document.createElement("input"); input.type=question.type==="multiple"?"checkbox":"radio"; input.name="q-"+question.id; input.value=String(option.id);
+            input.required=Number(question.required)===1 && question.type==="single";
+            const text=document.createElement("span"); text.textContent=option.label;
+            label.append(input,text); wrap.append(label);
+          });
+          if (question.type==="multiple" && Number(question.required)===1) {
+            wrap.addEventListener("change",()=>{ const checked=wrap.querySelector('input[type="checkbox"]:checked'); wrap.querySelectorAll('input[type="checkbox"]').forEach(input=>input.required=!checked); });
+            wrap.querySelectorAll('input[type="checkbox"]').forEach(input=>input.required=true);
+          }
+        }
+        form.append(wrap);
+      });
+      const submit=document.createElement("button"); submit.type="submit"; submit.textContent="ثبت پاسخ"; form.append(submit);
+      const status=document.createElement("p"); status.className="survey-public-status"; status.setAttribute("role","status"); form.append(status);
+      form.addEventListener("submit",async event=>{
+        event.preventDefault(); submit.disabled=true; status.textContent="در حال ثبت پاسخ…";
+        const answers=[];
+        for (const question of survey.questions || []) {
+          if (question.type==="text") {
+            const value=form.elements["q-"+question.id].value.trim();
+            if (value || Number(question.required)) answers.push({question_id:question.id,answer_text:value});
+          } else if (question.type==="multiple") {
+            const values=[...form.querySelectorAll('input[name="q-'+question.id+'"]:checked')].map(input=>Number(input.value));
+            if (values.length || Number(question.required)) answers.push({question_id:question.id,option_ids:values});
+          } else {
+            const selected=form.querySelector('input[name="q-'+question.id+'"]:checked');
+            if (selected) answers.push({question_id:question.id,option_id:Number(selected.value)});
+          }
+        }
+        try {
+          const result=await fetch("/api/surveys",{method:"POST",cache:"no-store",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"vote",survey_id:survey.id,answers})});
+          const payload=await result.json().catch(()=>({}));
+          if (result.status===401) {
+            location.href="account.html?next="+encodeURIComponent("index.html#surveys");
+            return;
+          }
+          if (!result.ok) throw new Error(payload.error || "ثبت پاسخ ناموفق بود.");
+          status.textContent=payload.message || "پاسخ ثبت شد.";
+          await loadSurveys();
+        } catch(error) { status.textContent=error.message; submit.disabled=false; }
+      });
+      card.append(form); root.append(card);
+    });
+  } catch(error) { root.textContent="نظرسنجی‌ها بارگذاری نشدند: "+error.message; }
+}
+document.addEventListener("DOMContentLoaded", loadSurveys);
