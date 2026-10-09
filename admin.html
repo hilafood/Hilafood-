@@ -681,7 +681,15 @@ button{cursor:pointer}
     <input
       id="coursePrice"
       type="number"
-      placeholder="قیمت دوره"
+      min="0"
+      placeholder="قیمت اصلی دوره (تومان)"
+    >
+
+    <input
+      id="courseDiscountPrice"
+      type="number"
+      min="0"
+      placeholder="قیمت با تخفیف دوره (اختیاری)"
     >
 
     <input
@@ -984,6 +992,7 @@ async function loadCourses(){
             <div>
               <h3 style="margin:0 0 8px">${escapeHtml(course.title || "")}</h3>
               <div class="muted">قیمت: ${price.toLocaleString("fa-IR")} تومان</div>
+              ${Number(course.discount_price) > 0 && Number(course.discount_price) < price ? `<div class="muted">قیمت با تخفیف: ${Number(course.discount_price).toLocaleString("fa-IR")} تومان</div>` : ""}
               <div class="muted">وضعیت: ${active ? "فعال" : "غیرفعال"}</div>
             </div>
             ${course.image ? `<img src="${escapeHtml(course.image)}" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:12px">` : ""}
@@ -1017,6 +1026,16 @@ async function saveCourse(){
     Number(
       $("coursePrice")?.value || 0
     );
+
+  const discountRaw = $("courseDiscountPrice")?.value.trim() || "";
+  const discountPrice = discountRaw === "" ? null : Number(discountRaw);
+  if (discountPrice !== null &&
+      (!Number.isSafeInteger(price) || price < 1000 ||
+       !Number.isSafeInteger(discountPrice) || discountPrice < 1000 ||
+       discountPrice >= price)) {
+    alert("قیمت تخفیف باید عدد صحیح حداقل ۱۰۰۰ تومان و کمتر از قیمت اصلی باشد.");
+    return;
+  }
 
   const image =
     $("courseImage")?.value.trim() || "";
@@ -1055,6 +1074,8 @@ async function saveCourse(){
 
       price,
 
+      discountPrice,
+
       image,
 
       active
@@ -1067,10 +1088,11 @@ async function saveCourse(){
 
     }
 
-    await api(
+    const saveResult = await api(
       "POST",
       body
     );
+    if (saveResult.warning) alert(saveResult.warning);
 
     alert(
       editId
@@ -1110,6 +1132,10 @@ function clearCourseForm(){
 
   if($("coursePrice")){
     $("coursePrice").value = "";
+  }
+
+  if($("courseDiscountPrice")){
+    $("courseDiscountPrice").value = "";
   }
 
   if($("courseImage")){
@@ -1169,6 +1195,9 @@ async function editCourse(id){
 
     $("coursePrice").value =
       Number(course.price || 0);
+
+    $("courseDiscountPrice").value =
+      course.discount_price == null ? "" : Number(course.discount_price);
 
     $("courseImage").value =
       course.image || "";

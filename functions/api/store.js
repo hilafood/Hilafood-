@@ -1183,6 +1183,18 @@ const body =
             Number(body.price || 0)
           );
 
+        const discountPrice =
+          body.discountPrice === null || body.discountPrice === undefined || body.discountPrice === ""
+            ? null
+            : Number(body.discountPrice);
+
+        if (discountPrice !== null &&
+            (!Number.isSafeInteger(price) || price < 1000 ||
+             !Number.isSafeInteger(discountPrice) || discountPrice < 1000 ||
+             discountPrice >= price)) {
+          return json({ error: "قیمت تخفیف باید عدد صحیح حداقل ۱۰۰۰ تومان و کمتر از قیمت اصلی باشد." }, 400);
+        }
+
         const image =
           String(body.image || "");
 
@@ -1198,28 +1210,22 @@ while (
 ) {
   baseSlug = `${slug}-${suffix++}`;
 }
-        const result =
-          await db.prepare(`
+        let result;
+        try {
+          result = await db.prepare(`
             INSERT INTO courses
-            (
-              title,
-              slug,
-              description,
-              price,
-              image,
-              active
-            )
+            (title, slug, description, price, discount_price, image, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `).bind(title, baseSlug, description, price, discountPrice, image, active).run();
+        } catch (error) {
+          const message = String(error?.message || error).toLowerCase();
+          if (!message.includes("discount_price")) throw error;
+          result = await db.prepare(`
+            INSERT INTO courses (title, slug, description, price, image, active)
             VALUES (?, ?, ?, ?, ?, ?)
-          `)
-          .bind(
-            title,
-            baseSlug,
-            description,
-            price,
-            image,
-            active
-          )
-          .run();
+          `).bind(title, baseSlug, description, price, image, active).run();
+          if (discountPrice !== null) return json({ ok: true, id: result.meta?.last_row_id || null, warning: "برای ذخیره تخفیف دوره، مهاجرت 0002 باید روی پایگاه داده هدف اعمال شود." });
+        }
 
         return json({
           ok: true,
@@ -1265,34 +1271,42 @@ while (
             Number(body.price || 0)
           );
 
+        const discountPrice =
+          body.discountPrice === null || body.discountPrice === undefined || body.discountPrice === ""
+            ? null
+            : Number(body.discountPrice);
+
+        if (discountPrice !== null &&
+            (!Number.isSafeInteger(price) || price < 1000 ||
+             !Number.isSafeInteger(discountPrice) || discountPrice < 1000 ||
+             discountPrice >= price)) {
+          return json({ error: "قیمت تخفیف باید عدد صحیح حداقل ۱۰۰۰ تومان و کمتر از قیمت اصلی باشد." }, 400);
+        }
+
         const image =
           String(body.image || "");
 
         const active =
           body.active === false ? 0 : 1;
 
-        await db.prepare(`
-          UPDATE courses
-          SET
-            title = ?,
-            slug = ?,
-            description = ?,
-            price = ?,
-            image = ?,
-            active = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `)
-        .bind(
-          title,
-          slug,
-          description,
-          price,
-          image,
-          active,
-          id
-        )
-        .run();
+        try {
+          await db.prepare(`
+            UPDATE courses
+            SET title = ?, slug = ?, description = ?, price = ?, discount_price = ?,
+                image = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).bind(title, slug, description, price, discountPrice, image, active, id).run();
+        } catch (error) {
+          const message = String(error?.message || error).toLowerCase();
+          if (!message.includes("discount_price")) throw error;
+          await db.prepare(`
+            UPDATE courses
+            SET title = ?, slug = ?, description = ?, price = ?, image = ?,
+                active = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).bind(title, slug, description, price, image, active, id).run();
+          if (discountPrice !== null) return json({ ok: true, warning: "برای ذخیره تخفیف دوره، مهاجرت 0002 باید روی پایگاه داده هدف اعمال شود." });
+        }
 
         return json({
           ok: true
