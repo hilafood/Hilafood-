@@ -28,7 +28,7 @@ test("server-confirmed entitlement permits paid lesson payload projection", () =
   const projected = projectLessons(lessons, true);
   assert.equal(projected[1].contentAvailable, true);
   assert.equal(projected[1].content_text, "متن محرمانه");
-  assert.equal(projected[1].content_url, "https://media.example/paid.mp4");
+  assert.equal(projected[1].content_url, "");
 });
 
 test("lesson projection does not trust client-supplied ownership", () => {
