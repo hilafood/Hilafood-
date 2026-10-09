@@ -741,6 +741,13 @@ function renderCourses() {
                   ${course.description || ""}
                 </p>
 
+                <a
+                  class="btn purple"
+                  href="course.html?id=${encodeURIComponent(course.id)}"
+                >
+                  مشاهده دوره و درس‌ها
+                </a>
+
                 ${
                   STORE.settings.showPrices
                     ? `<div class="product-foot">
