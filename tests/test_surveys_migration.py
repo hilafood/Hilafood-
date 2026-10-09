@@ -42,10 +42,20 @@ def main():
     assert db.execute("SELECT price FROM products WHERE id='p1'").fetchone() == (120000,)
     assert db.execute("SELECT total,payment_status FROM orders WHERE id=1").fetchone() == (120000,'unpaid')
     assert db.execute("SELECT COUNT(*) FROM survey_answers a JOIN survey_responses r ON r.id=a.response_id WHERE r.survey_id=?", (survey_id,)).fetchone()[0] == 1
+    counts = db.execute("""
+      SELECT o.label, COUNT(a.id) AS votes
+      FROM survey_options o
+      LEFT JOIN survey_answers a ON a.option_id=o.id
+      LEFT JOIN survey_responses r ON r.id=a.response_id AND r.survey_id=?
+      WHERE o.question_id=?
+      GROUP BY o.id,o.label ORDER BY o.label
+    """, (survey_id, qid)).fetchall()
+    assert sorted(counts) == [('گزینه الف', 1), ('گزینه ب', 0)]
     print("PASS: additive survey migration applies locally")
     print("PASS: one response per verified-user identity is enforced by unique survey/user key")
     print("PASS: mismatched question/option answers are rejected")
     print("PASS: archived surveys retain response and answer history")
+    print("PASS: aggregate option counts match recorded answers")
     print("PASS: existing product/order fixtures remain unchanged")
     db.close()
 
