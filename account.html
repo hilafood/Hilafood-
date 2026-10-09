@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#73509f">
+  <title>حساب کاربری | هیلا فود</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .account-wrap{width:min(620px,calc(100% - 28px));margin:36px auto 64px}
+    .account-card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:clamp(18px,5vw,32px);box-shadow:0 16px 44px #73509f12}
+    .account-brand{text-align:center;margin-bottom:22px}
+    .account-brand img{width:112px;max-height:92px;object-fit:contain}
+    .account-card h1{font-size:clamp(24px,5vw,34px);margin:8px 0}
+    .account-help{color:var(--muted);font-size:14px}
+    .account-field{display:block;margin:18px 0}
+    .account-field span{display:block;font-weight:700;margin-bottom:7px}
+    .account-field input{width:100%;padding:14px;border:1px solid #ded6e3;border-radius:13px;font:inherit;background:#fff}
+    .account-field input:focus{outline:2px solid #73509f44;border-color:var(--purple)}
+    .account-actions{display:grid;gap:10px;margin-top:18px}
+    .account-actions button,.account-actions a{width:100%;border:0;border-radius:13px;padding:13px 16px;font:inherit;font-weight:700;text-align:center;cursor:pointer}
+    .account-primary{background:var(--purple);color:#fff}
+    .account-secondary{background:#f5eff9;color:var(--purple)}
+    .account-status{padding:12px 14px;border-radius:12px;margin:14px 0;font-size:14px;line-height:1.9;background:#f8f5fa;color:#4d3b5d}
+    .account-status.error{background:#fff0f1;color:#a21d3d}
+    .account-status.success{background:#edf9f1;color:#22663a}
+    .account-status[hidden],.account-step[hidden],#accountLoggedIn[hidden]{display:none!important}
+    .account-muted{font-size:12px;color:var(--muted);line-height:1.9;margin-top:12px}
+    .account-user{background:#f8f5fa;padding:14px;border-radius:14px;margin:18px 0;overflow-wrap:anywhere}
+    .account-back{display:inline-block;margin:0 0 18px;color:var(--purple);font-weight:700}
+    @media(max-width:480px){.account-wrap{margin-top:20px}.account-card{border-radius:18px}}
+  </style>
+</head>
+<body>
+  <div class="announcement">حساب کاربری هیلا فود <span>•</span> ورود امن با شماره موبایل</div>
+  <main class="account-wrap">
+    <a class="account-back" href="index.html">← بازگشت به فروشگاه</a>
+    <section class="account-card" aria-labelledby="accountTitle">
+      <div class="account-brand">
+        <a href="index.html"><img src="assets/logo.webp" alt="هیلا فود"></a>
+        <h1 id="accountTitle">حساب کاربری</h1>
+        <p class="account-help">برای ورود، شماره موبایل خود را وارد کنید. کد ورود فقط از طریق پیامک ارسال می‌شود.</p>
+      </div>
+
+      <div id="accountStatus" class="account-status" role="status" aria-live="polite" hidden></div>
+
+      <section id="accountLoggedOut">
+        <div id="phoneStep" class="account-step">
+          <label class="account-field" for="accountPhone">
+            <span>شماره موبایل</span>
+            <input id="accountPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="۰۹۱۲۳۴۵۶۷۸۹" aria-describedby="phoneHelp">
+          </label>
+          <p id="phoneHelp" class="account-muted">شماره موبایل ایران را با ۰۹ وارد کنید. اگر پیامک یا تنظیمات لازم در دسترس نباشد، ورود انجام نمی‌شود.</p>
+          <div class="account-actions">
+            <button id="requestOtpButton" class="account-primary" type="button">دریافت کد ورود</button>
+          </div>
+        </div>
+
+        <div id="codeStep" class="account-step" hidden>
+          <p class="account-help">کد شش‌رقمی ارسال‌شده را وارد کنید.</p>
+          <label class="account-field" for="accountCode">
+            <span>کد یک‌بارمصرف</span>
+            <input id="accountCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9۰-۹]{6}" placeholder="۱۲۳۴۵۶">
+          </label>
+          <div class="account-actions">
+            <button id="verifyOtpButton" class="account-primary" type="button">تأیید کد و ورود</button>
+            <button id="resendOtpButton" class="account-secondary" type="button" disabled>ارسال دوباره کد (۶۰)</button>
+            <button id="changePhoneButton" class="account-secondary" type="button">تغییر شماره موبایل</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="accountLoggedIn" hidden>
+        <h2>شما وارد حساب شده‌اید</h2>
+        <div id="accountUser" class="account-user"></div>
+        <p class="account-help">وضعیت ورود از نشست معتبر سمت سرور بررسی می‌شود. این صفحه به‌تنهایی دسترسی خرید یا مشاهده محتوای پولی ایجاد نمی‌کند.</p>
+        <div class="account-actions">
+          <a class="account-primary" href="index.html#course">مشاهده دوره‌ها</a>
+          <button id="logoutButton" class="account-secondary" type="button">خروج از حساب</button>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script src="account.js" defer></script>
+</body>
+</html>
