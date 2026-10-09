@@ -22,6 +22,6 @@ jobs:
         with:
           node-version: 22
       - name: Run Node security tests
-        run: node --test tests/course-payment.test.mjs tests/auth-security.test.mjs tests/course-access.test.mjs tests/course-access-api.test.mjs
+        run: node --test tests/course-payment.test.mjs tests/auth-security.test.mjs tests/course-access.test.mjs tests/course-access-api.test.mjs tests/auth-flow-stage4.test.mjs
       - name: Run local SQLite migration test
         run: python3 tests/test_course_migration.py
