@@ -7,6 +7,7 @@ import sqlite3
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "migrations" / "0002_course_purchase_foundation.sql"
+AUTH_MIGRATION = ROOT / "migrations" / "0003_auth_rate_limits.sql"
 
 
 def expect_integrity_error(db, sql):
@@ -42,6 +43,7 @@ def main():
         VALUES(1,'09000000000',120000,'unpaid');
     """)
     db.executescript(MIGRATION.read_text(encoding="utf-8"))
+    db.executescript(AUTH_MIGRATION.read_text(encoding="utf-8"))
 
     course_columns = {row[1] for row in db.execute("PRAGMA table_info(courses)")}
     assert "discount_price" in course_columns
@@ -49,6 +51,11 @@ def main():
     assert db.execute("SELECT total,payment_status FROM orders WHERE id=1").fetchone() == (120000, "unpaid")
 
     db.execute("INSERT INTO users(id,phone,phone_verified_at) VALUES('u1','09000000001',NULL)")
+    db.execute("INSERT INTO auth_otp_challenges(id,phone,code_hash,expires_at,attempts) VALUES('c1','09000000001','hash','2026-10-10T01:00:00.000Z',0)")
+    db.execute("UPDATE auth_otp_challenges SET attempts=5 WHERE id='c1'")
+    expect_integrity_error(db, "UPDATE auth_otp_challenges SET attempts=6 WHERE id='c1'")
+    db.execute("UPDATE auth_otp_challenges SET consumed_at=CURRENT_TIMESTAMP WHERE id='c1'")
+    expect_integrity_error(db, "UPDATE auth_otp_challenges SET consumed_at=NULL WHERE id='c1'")
     expect_integrity_error(db, "INSERT INTO course_orders(id,user_id,course_id,list_price_toman,amount_due_toman,status) VALUES('bad-paid','u1',1,500000,350000,'paid')")
     db.execute("INSERT INTO course_orders(id,user_id,course_id,list_price_toman,amount_due_toman) VALUES('o1','u1',1,500000,350000)")
     expect_integrity_error(db, "INSERT INTO course_entitlements(user_id,course_id,course_order_id) VALUES('u1',1,'o1')")
@@ -69,6 +76,7 @@ def main():
     print("PASS: unverified ownership and direct payment confirmation are rejected")
     print("PASS: verified paid order grants one full-course entitlement only")
     print("PASS: paid orders cannot be silently downgraded")
+    print("PASS: auth rate-limit migration and OTP database guards apply")
     db.close()
 
 
