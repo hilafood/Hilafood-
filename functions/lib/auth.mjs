@@ -85,7 +85,7 @@ export function makeSessionCookie(token, maxAge = SESSION_TTL_SECONDS) {
 }
 
 export function clearSessionCookie() {
-  return "hilafood_session=; Max-Age=0; Path=/api/auth; Secure; HttpOnly; SameSite=Lax";
+  return "hilafood_session=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Lax";
 }
 
 export function readSessionCookie(request) {
