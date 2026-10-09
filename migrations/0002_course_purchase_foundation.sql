@@ -72,6 +72,13 @@ CREATE TABLE IF NOT EXISTS course_entitlements (
   FOREIGN KEY (course_order_id) REFERENCES course_orders(id)
 );
 
+CREATE TRIGGER IF NOT EXISTS trg_course_order_cannot_insert_paid
+BEFORE INSERT ON course_orders
+WHEN NEW.status = 'paid'
+BEGIN
+  SELECT RAISE(ABORT, 'course order cannot be inserted as paid');
+END;
+
 -- Defense in depth: a course cannot become paid unless the account is verified
 -- and a server-verified gateway reference has been stored.
 CREATE TRIGGER IF NOT EXISTS trg_course_order_paid_requires_verified_user
@@ -114,4 +121,16 @@ BEGIN
       AND o.verified_at IS NOT NULL
       AND u.phone_verified_at IS NOT NULL
   ) THEN RAISE(ABORT, 'entitlement requires matching verified paid order') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_course_entitlement_immutable_update
+BEFORE UPDATE ON course_entitlements
+BEGIN
+  SELECT RAISE(ABORT, 'course entitlement is immutable');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_course_entitlement_immutable_delete
+BEFORE DELETE ON course_entitlements
+BEGIN
+  SELECT RAISE(ABORT, 'course entitlement deletion requires a separate process');
 END;
