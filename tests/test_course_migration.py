@@ -49,6 +49,7 @@ def main():
     assert db.execute("SELECT total,payment_status FROM orders WHERE id=1").fetchone() == (120000, "unpaid")
 
     db.execute("INSERT INTO users(id,phone,phone_verified_at) VALUES('u1','09000000001',NULL)")
+    expect_integrity_error(db, "INSERT INTO course_orders(id,user_id,course_id,list_price_toman,amount_due_toman,status) VALUES('bad-paid','u1',1,500000,350000,'paid')")
     db.execute("INSERT INTO course_orders(id,user_id,course_id,list_price_toman,amount_due_toman) VALUES('o1','u1',1,500000,350000)")
     expect_integrity_error(db, "INSERT INTO course_entitlements(user_id,course_id,course_order_id) VALUES('u1',1,'o1')")
     expect_integrity_error(db, "UPDATE course_orders SET status='paid',gateway_authority='A',gateway_ref_id='R',verified_at=CURRENT_TIMESTAMP WHERE id='o1'")
@@ -59,6 +60,8 @@ def main():
     db.execute("INSERT INTO course_entitlements(user_id,course_id,course_order_id) VALUES('u1',1,'o1')")
     expect_integrity_error(db, "INSERT INTO course_entitlements(user_id,course_id,course_order_id) VALUES('u1',1,'o1')")
     expect_integrity_error(db, "UPDATE course_orders SET status='failed' WHERE id='o1'")
+    expect_integrity_error(db, "UPDATE course_entitlements SET user_id='other' WHERE course_order_id='o1'")
+    expect_integrity_error(db, "DELETE FROM course_entitlements WHERE course_order_id='o1'")
 
     print("PASS: migration applies to a local SQLite fixture")
     print("PASS: existing product/order records remain unchanged")
