@@ -81,7 +81,7 @@ export function rateLimitAllowed(count, maximum) {
 }
 
 export function makeSessionCookie(token, maxAge = SESSION_TTL_SECONDS) {
-  return `hilafood_session=${token}; Max-Age=${maxAge}; Path=/api/auth; Secure; HttpOnly; SameSite=Lax`;
+  return `hilafood_session=${token}; Max-Age=${maxAge}; Path=/; Secure; HttpOnly; SameSite=Lax`;
 }
 
 export function clearSessionCookie() {
