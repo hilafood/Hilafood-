@@ -79,6 +79,16 @@ BEGIN
   SELECT RAISE(ABORT, 'course order cannot be inserted as paid');
 END;
 
+CREATE TRIGGER IF NOT EXISTS trg_course_order_pending_payment_requires_authority
+BEFORE UPDATE OF status ON course_orders
+WHEN NEW.status = 'pending_payment'
+BEGIN
+  SELECT CASE WHEN OLD.status <> 'pending_gateway'
+    THEN RAISE(ABORT, 'course order is not awaiting gateway setup') END;
+  SELECT CASE WHEN NEW.gateway_authority IS NULL OR length(NEW.gateway_authority) = 0
+    THEN RAISE(ABORT, 'course order requires gateway authority') END;
+END;
+
 -- Defense in depth: a course cannot become paid unless the account is verified
 -- and a server-verified gateway reference has been stored.
 CREATE TRIGGER IF NOT EXISTS trg_course_order_paid_requires_verified_user
@@ -92,6 +102,7 @@ BEGIN
     WHERE u.id = NEW.user_id AND u.phone_verified_at IS NOT NULL
   ) THEN RAISE(ABORT, 'course order requires verified user') END;
   SELECT CASE WHEN NEW.gateway_authority IS NULL
+    OR NEW.gateway_authority <> OLD.gateway_authority
     OR NEW.gateway_ref_id IS NULL
     OR NEW.verified_at IS NULL
     THEN RAISE(ABORT, 'course order requires verified gateway reference') END;
@@ -104,6 +115,13 @@ BEFORE UPDATE OF status ON course_orders
 WHEN OLD.status = 'paid' AND NEW.status <> 'paid'
 BEGIN
   SELECT RAISE(ABORT, 'paid course order is terminal');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_course_order_paid_immutable
+BEFORE UPDATE ON course_orders
+WHEN OLD.status = 'paid'
+BEGIN
+  SELECT RAISE(ABORT, 'paid course order is immutable');
 END;
 
 -- Entitlement can only be granted from the matching paid order and verified user.
