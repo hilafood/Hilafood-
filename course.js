@@ -17,6 +17,13 @@
     })[char]);
   }
 
+  function safeMediaUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (/^(https?:\/\/|\/|assets\/)/i.test(raw)) return raw;
+    return "";
+  }
+
   function render(data) {
     const course = data.course || {};
     const image = course.image ? `<img src="${escapeHtml(course.image)}" alt="${escapeHtml(course.title || "دوره آموزشی")}" loading="lazy">` : "";
@@ -56,7 +63,8 @@
                 </div>
                 ${lesson.description ? `<p class="course-subtitle">${escapeHtml(lesson.description)}</p>` : ""}
                 ${open && lesson.content_text ? `<div class="course-content">${escapeHtml(lesson.content_text)}</div>` : ""}
-                ${open && lesson.content_url ? `<p><a class="course-login" href="${escapeHtml(lesson.content_url)}" target="_blank" rel="noopener noreferrer">مشاهده محتوای درس</a></p>` : ""}
+                ${open && safeMediaUrl(lesson.content_url) ? `<p><a class="course-login" href="${escapeHtml(safeMediaUrl(lesson.content_url))}" target="_blank" rel="noopener noreferrer">مشاهده محتوای درس</a></p>` : ""}
+                ${open && !lesson.content_text && !safeMediaUrl(lesson.content_url) && lesson.content_type === "video" ? '<p class="course-subtitle">پخش امن ویدئوی این درس هنوز پیکربندی نشده است؛ ویدئوی پولی باز نمی‌شود.</p>' : ""}
                 ${!open && !free ? '<p class="course-subtitle">پس از اتصال و تأیید مالکیت معتبر، محتوای این درس از سرور ارائه می‌شود.</p>' : ""}
               </article>
             `;
