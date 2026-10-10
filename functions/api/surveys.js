@@ -114,12 +114,29 @@ async function saveSurvey(db, body) {
     return jsonResponse({ error: "عنوان، شناسه یا ساختار سؤال‌های نظرسنجی معتبر نیست." }, 400);
   }
   if (!surveyId) {
-    const inserted = await db.prepare(`
-      INSERT INTO surveys (title, description, status) VALUES (?, ?, 'draft')
-    `).bind(title, description).run();
-    const id = Number(inserted?.meta?.last_row_id);
+    // Create the survey and its question/option tree in one D1 batch so a
+    // failed question insert cannot leave an empty draft behind.
+    if (typeof db.batch !== "function") throw new Error("survey_atomic_save_unavailable");
+    const statements = [
+      db.prepare("INSERT INTO surveys (title, description, status) VALUES (?, ?, 'draft')").bind(title, description)
+    ];
+    for (const q of questions) {
+      statements.push(db.prepare(`
+        INSERT INTO survey_questions (survey_id, prompt, type, required, sort_order)
+        SELECT id, ?, ?, ?, ? FROM surveys ORDER BY id DESC LIMIT 1
+      `).bind(q.prompt, q.type, q.required, q.sortOrder));
+      for (let i = 0; i < q.options.length; i++) {
+        statements.push(db.prepare(`
+          INSERT INTO survey_options (question_id, label, sort_order)
+          SELECT id, ?, ? FROM survey_questions
+          WHERE survey_id = (SELECT id FROM surveys ORDER BY id DESC LIMIT 1)
+            AND sort_order = ?
+        `).bind(q.options[i], i, q.sortOrder));
+      }
+    }
+    const results = await db.batch(statements);
+    const id = Number(results?.[0]?.meta?.last_row_id);
     if (!Number.isSafeInteger(id) || id <= 0) throw new Error("survey_insert_failed");
-    await saveQuestions(db, id, questions);
     return jsonResponse({ ok: true, id, status: "draft" });
   }
   const existing = await db.prepare("SELECT id, status FROM surveys WHERE id = ?").bind(surveyId).first();
