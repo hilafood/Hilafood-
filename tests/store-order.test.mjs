@@ -14,10 +14,10 @@ function makeDb() {
         if (sql.includes("FROM products") && sql.includes("discount_price") && sql.includes("WHERE id = ?")) {
           return String(stmt.args[0]) === String(state.product.id) ? state.product : null;
         }
-        if (sql.includes("SELECT value FROM settings WHERE key = 'shippingMethods'")) {
+        if (sql.includes("FROM settings") && sql.includes("shippingMethods")) {
           return { value: JSON.stringify([{ id: "post-pishtaz", name: "پست پیشتاز", price: 25000, active: true }]) };
         }
-        if (sql.includes("SELECT value FROM settings WHERE key = 'smsEnabled'")) return { value: "false" };
+        if (sql.includes("FROM settings") && sql.includes("smsEnabled")) return { value: "false" };
         return null;
       };
       stmt.all = async () => ({ results: [] });
