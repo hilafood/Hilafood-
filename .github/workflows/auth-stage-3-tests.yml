@@ -21,6 +21,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Check JavaScript syntax
+        run: for file in app.js account.js course.js category.js functions/api/store.js functions/api/surveys.js functions/api/auth/logout.js functions/api/auth/me.js functions/api/auth/request-otp.js functions/api/auth/verify-otp.js functions/api/course-checkout.js functions/api/course-content.js functions/api/course-orders.js functions/api/course-payment.js functions/lib/auth.mjs functions/lib/course-access.mjs functions/lib/course-payment-flow.mjs functions/lib/course-payment.mjs; do node --check "$file" || exit 1; done
       - name: Run Node security tests
         run: node --test tests/course-payment.test.mjs tests/auth-security.test.mjs tests/course-access.test.mjs tests/course-access-api.test.mjs tests/auth-flow-stage4.test.mjs tests/course-payment-flow.test.mjs tests/surveys-api.test.mjs tests/surveys-validation.test.mjs tests/store-order.test.mjs
       - name: Run local SQLite migration tests
