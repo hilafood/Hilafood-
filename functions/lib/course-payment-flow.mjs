@@ -32,7 +32,7 @@ export async function startCourseCheckout({ request, env, getUser = requireAuthe
   let orderId = null;
   try {
     const course = await env.DB.prepare("SELECT id, title, price, discount_price, active FROM courses WHERE id = ? LIMIT 1").bind(courseId).first();
-    if (!course) return json({ error: "دوره پیدا نشد." }, 404);
+    if (!course || Number(course.active) !== 1) return json({ error: "دوره پیدا نشد یا غیرفعال است." }, 404);
     const owned = await env.DB.prepare("SELECT id FROM course_entitlements WHERE user_id = ? AND course_id = ? LIMIT 1").bind(user.id, courseId).first();
     if (owned) return json({ error: "این دوره قبلاً برای حساب شما فعال شده است.", alreadyOwned: true }, 409);
 
