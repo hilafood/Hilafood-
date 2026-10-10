@@ -1808,15 +1808,18 @@ while (
           );
 
 
-        const quantity =
-          Math.max(
-            1,
-            Math.floor(
-              Number(
-                item.qty || 1
-              )
-            )
-          );
+        const rawQuantity =
+          item?.qty == null || item.qty === ""
+            ? 1
+            : Number(item.qty);
+
+        if (!Number.isSafeInteger(rawQuantity) || rawQuantity < 1) {
+          return json({
+            error: "تعداد محصول معتبر نیست"
+          }, 400);
+        }
+
+        const quantity = rawQuantity;
 
 
         if (!productId) {
@@ -1869,8 +1872,17 @@ while (
         }
 
 
-        subtotal +=
-          price * quantity;
+        const lineTotal = price * quantity;
+
+        if (!Number.isSafeInteger(price) ||
+            !Number.isSafeInteger(lineTotal) ||
+            !Number.isSafeInteger(subtotal + lineTotal)) {
+          return json({
+            error: "مبلغ سفارش خارج از محدوده معتبر است"
+          }, 400);
+        }
+
+        subtotal += lineTotal;
 
 
         cleanItems.push({

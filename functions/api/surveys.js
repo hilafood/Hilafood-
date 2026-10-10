@@ -284,7 +284,7 @@ export async function onRequestPost({ request, env }) {
   try {
     if (action === "vote") return vote(env.DB, request, env, body);
     if (action === "admin-list") return jsonResponse({ surveys: await adminList(env.DB) });
-    if (action === "admin-save") return saveSurvey(env.DB, body);
+    if (action === "admin-save") return await saveSurvey(env.DB, body);
     if (action === "admin-publish" || action === "admin-close" || action === "admin-archive") {
       const id = idOf(body.id);
       if (!id) return jsonResponse({ error: "شناسه نظرسنجی معتبر نیست." }, 400);
