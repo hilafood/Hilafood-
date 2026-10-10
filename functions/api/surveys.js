@@ -80,21 +80,30 @@ async function adminList(db) {
   for (const survey of surveys) survey.questions = await getQuestions(db, survey.id);
   return surveys;
 }
-async function saveQuestions(db, surveyId, questions) {
-  await db.prepare("DELETE FROM survey_questions WHERE survey_id = ?").bind(surveyId).run();
+async function saveQuestions(db, surveyId, questions, finalStatements = []) {
+  // D1 batch is transactional: replacing the question/option tree must either
+  // complete in full or roll back, rather than deleting old questions first.
+  if (typeof db.batch !== "function") throw new Error("survey_atomic_save_unavailable");
+  const statements = [
+    db.prepare("DELETE FROM survey_questions WHERE survey_id = ?").bind(surveyId)
+  ];
   for (const q of questions) {
-    const inserted = await db.prepare(`
+    statements.push(db.prepare(`
       INSERT INTO survey_questions (survey_id, prompt, type, required, sort_order)
       VALUES (?, ?, ?, ?, ?)
-    `).bind(surveyId, q.prompt, q.type, q.required, q.sortOrder).run();
-    const questionId = Number(inserted?.meta?.last_row_id);
-    if (!Number.isSafeInteger(questionId) || questionId <= 0) throw new Error("survey_question_insert_failed");
+    `).bind(surveyId, q.prompt, q.type, q.required, q.sortOrder));
     for (let i = 0; i < q.options.length; i++) {
-      await db.prepare(`
-        INSERT INTO survey_options (question_id, label, sort_order) VALUES (?, ?, ?)
-      `).bind(questionId, q.options[i], i).run();
+      // Each question's sort_order is its unique position in this replacement.
+      // Resolve its ID inside the same batch instead of relying on client IDs.
+      statements.push(db.prepare(`
+        INSERT INTO survey_options (question_id, label, sort_order)
+        SELECT id, ?, ? FROM survey_questions
+        WHERE survey_id = ? AND sort_order = ?
+      `).bind(q.options[i], i, surveyId, q.sortOrder));
     }
   }
+  statements.push(...finalStatements);
+  await db.batch(statements);
 }
 async function saveSurvey(db, body) {
   const title = cleanText(body.title, 200);
@@ -123,7 +132,10 @@ async function saveSurvey(db, body) {
       return jsonResponse({ error: "پس از ثبت پاسخ، ساختار سؤال‌ها و گزینه‌ها قابل تغییر نیست؛ فقط عنوان و توضیحات را ویرایش کنید." }, 409);
     }
   } else {
-    await saveQuestions(db, surveyId, questions);
+    const updateSurvey = db.prepare("UPDATE surveys SET title = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+      .bind(title, description, surveyId);
+    await saveQuestions(db, surveyId, questions, [updateSurvey]);
+    return jsonResponse({ ok: true, id: surveyId, status: existing.status });
   }
   await db.prepare("UPDATE surveys SET title = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
     .bind(title, description, surveyId).run();

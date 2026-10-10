@@ -16,7 +16,7 @@ function post(body, headers = {}) {
 }
 function adminEnv(db) { return { ADMIN_KEY: "secret", DB: db }; }
 function makeDb(initialStatus = "published") {
-  const state = { status: initialStatus, responses: new Set(), answers: [], batches: 0 };
+  const state = { status: initialStatus, responses: new Set(), answers: [], batches: 0, questionBatches: 0, questionBatchSql: [], failQuestionBatch: false };
   const db = {
     state,
     prepare(sql) {
@@ -52,12 +52,18 @@ function makeDb(initialStatus = "published") {
     async batch(statements) {
       state.batches++;
       const first = statements[0];
+      if (first?.sql?.startsWith("DELETE FROM survey_questions")) {
+        state.questionBatches++;
+        state.questionBatchSql = statements.map(statement => statement.sql.replace(/\s+/g, " ").trim());
+        if (state.failQuestionBatch) throw new Error("simulated atomic batch failure");
+        return statements.map(() => ({ meta: { changes: 1 } }));
+      }
       if (state.status !== "published") return [{ meta: { changes: 0 } }];
       const responseKey = first.args[1] + ":" + first.args[2];
       if (state.responses.has(responseKey)) throw new Error("UNIQUE constraint failed: survey_responses.survey_id, survey_responses.user_id");
       state.responses.add(responseKey);
       for (const statement of statements.slice(1)) state.answers.push(statement.args);
-      return statements.map((_, index) => ({ meta: { changes: index === 0 ? 1 : 1 } }));
+      return statements.map(() => ({ meta: { changes: 1 } }));
     }
   };
   return db;
@@ -99,6 +105,31 @@ test("admin can create a draft with questions and options", async () => {
   assert.equal(data.status, "draft");
   assert.equal(data.id, 1);
 });
+test("survey question and option replacement is submitted as one atomic batch", async () => {
+  const db = makeDb("draft");
+  const response = await onRequestPost({ request: post({
+    action: "admin-save", id: 1, title: "ویرایش‌شده", description: "توضیح",
+    questions: [{ prompt: "سؤال جدید", type: "single", required: true, options: ["الف", "ب"] }]
+  }, { "x-admin-key": "secret" }), env: adminEnv(db) });
+  assert.equal(response.status, 200);
+  assert.equal(db.state.questionBatches, 1);
+  assert.match(db.state.questionBatchSql[0], /^DELETE FROM survey_questions/);
+  assert.ok(db.state.questionBatchSql.some(sql => sql.includes("INSERT INTO survey_questions")));
+  assert.equal(db.state.questionBatchSql.filter(sql => sql.includes("INSERT INTO survey_options")).length, 2);
+  assert.ok(db.state.questionBatchSql.at(-1).includes("UPDATE surveys SET title"));
+});
+
+test("survey edit fails closed when the atomic question batch fails", async () => {
+  const db = makeDb("draft");
+  db.state.failQuestionBatch = true;
+  const response = await onRequestPost({ request: post({
+    action: "admin-save", id: 1, title: "ویرایش‌شده", description: "توضیح",
+    questions: [{ prompt: "سؤال جدید", type: "single", required: true, options: ["الف", "ب"] }]
+  }, { "x-admin-key": "secret" }), env: adminEnv(db) });
+  assert.equal(response.status, 503);
+  assert.equal(db.state.questionBatches, 1);
+});
+
 test("admin can close a published survey", async () => {
   const db = makeDb("published");
   const response = await onRequestPost({ request: post({action:"admin-close",id:1},{"x-admin-key":"secret"}), env:adminEnv(db) });
