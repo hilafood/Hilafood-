@@ -36,6 +36,9 @@ function makeDb({ hasDiscount = true, courses = [] } = {}) {
         },
         async first() {
           if (sql.includes("SELECT COUNT(*) AS total FROM products")) return { total: 1 };
+          if (sql.includes("SELECT id FROM courses WHERE slug = ? AND id != ?")) {
+            return state.courses.find(course => course.slug === args[0] && Number(course.id) !== Number(args[1])) || null;
+          }
           if (sql.includes("SELECT id FROM courses WHERE slug = ?")) return state.courses.find(course => course.slug === args[0]) || null;
           return null;
         },
@@ -145,4 +148,42 @@ test("legacy schema can still save a course without a discount", async () => {
   const response = await save(db, { action: "admin-course-create", ...baseCourse, discountPrice: null });
   assert.equal(response.status, 200);
   assert.equal(db.state.courses[0].discount_price, null);
+});
+
+test("creating a course with an existing slug is rejected clearly without creating another course", async () => {
+  const existing = { id: 7, ...baseCourse, title: "دوره موجود" };
+  const db = makeDb({ courses: [existing] });
+  const response = await save(db, { action: "admin-course-create", ...baseCourse, title: "دوره دوم" });
+  assert.equal(response.status, 409);
+  const body = await response.json();
+  assert.match(body.error, /نشانی.*قبلاً/);
+  assert.equal(db.state.courses.length, 1);
+  assert.equal(db.state.courses[0].title, "دوره موجود");
+});
+
+test("updating a course to another course's slug is rejected and leaves both courses unchanged", async () => {
+  const first = { id: 7, ...baseCourse, title: "دوره اول", slug: "first-course", price: 500000 };
+  const second = { id: 8, ...baseCourse, title: "دوره دوم", slug: "second-course", price: 600000, discount_price: 450000 };
+  const db = makeDb({ courses: [first, second] });
+  const response = await save(db, {
+    action: "admin-course-update", id: 7, ...baseCourse,
+    title: "تغییر نباید ذخیره شود", slug: "second-course", price: 700000, discountPrice: null
+  });
+  assert.equal(response.status, 409);
+  const body = await response.json();
+  assert.match(body.error, /نشانی.*قبلاً/);
+  assert.deepEqual(db.state.courses, [first, second]);
+});
+
+test("updating a course while keeping its own slug is allowed", async () => {
+  const existing = { id: 7, ...baseCourse, title: "دوره قبل", slug: "sample-course", discount_price: null };
+  const db = makeDb({ courses: [existing] });
+  const response = await save(db, {
+    action: "admin-course-update", id: 7, ...baseCourse,
+    title: "دوره جدید", slug: "sample-course", discountPrice: null
+  });
+  assert.equal(response.status, 200);
+  assert.equal(db.state.courses.length, 1);
+  assert.equal(db.state.courses[0].title, "دوره جدید");
+  assert.equal(db.state.courses[0].slug, "sample-course");
 });

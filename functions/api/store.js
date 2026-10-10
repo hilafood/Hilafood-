@@ -257,6 +257,19 @@ async function courseDiscountColumnAvailable(db) {
   }
 }
 
+function isCourseSlugConflict(error) {
+  const message = String(error?.message || error).toLowerCase();
+  return message.includes("unique constraint failed") ||
+    message.includes("courses.slug") ||
+    message.includes("duplicate key");
+}
+
+function courseSlugConflictResponse() {
+  return json({
+    error: "این نشانی قبلاً برای دوره دیگری ثبت شده است. لطفاً نشانی یکتایی انتخاب کنید."
+  }, 409);
+}
+
 /* ==================================================
    ساخت جدول‌های D1
 ================================================== */
@@ -1224,30 +1237,31 @@ const body =
 
         const active =
           body.active === false ? 0 : 1;
-let baseSlug = slug;
-let suffix = 2;
+const existingSlug = await db.prepare(
+          "SELECT id FROM courses WHERE slug = ?"
+        ).bind(slug).first();
+        if (existingSlug) return courseSlugConflictResponse();
 
-while (
-  await db.prepare(
-    "SELECT id FROM courses WHERE slug = ?"
-  ).bind(baseSlug).first()
-) {
-  baseSlug = `${slug}-${suffix++}`;
-}
         let result;
         try {
           result = await db.prepare(`
             INSERT INTO courses
             (title, slug, description, price, discount_price, image, active)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-          `).bind(title, baseSlug, description, price, discountPrice, image, active).run();
+          `).bind(title, slug, description, price, discountPrice, image, active).run();
         } catch (error) {
+          if (isCourseSlugConflict(error)) return courseSlugConflictResponse();
           const message = String(error?.message || error).toLowerCase();
           if (!message.includes("discount_price")) throw error;
-          result = await db.prepare(`
-            INSERT INTO courses (title, slug, description, price, image, active)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `).bind(title, baseSlug, description, price, image, active).run();
+          try {
+            result = await db.prepare(`
+              INSERT INTO courses (title, slug, description, price, image, active)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `).bind(title, slug, description, price, image, active).run();
+          } catch (fallbackError) {
+            if (isCourseSlugConflict(fallbackError)) return courseSlugConflictResponse();
+            throw fallbackError;
+          }
           if (discountPrice !== null) return json({ ok: true, id: result.meta?.last_row_id || null, warning: "برای ذخیره تخفیف دوره، مهاجرت 0002 باید روی پایگاه داده هدف اعمال شود." });
         }
 
@@ -1289,6 +1303,11 @@ while (
         const description =
           String(body.description || "");
 
+        const conflictingSlug = await db.prepare(
+          "SELECT id FROM courses WHERE slug = ? AND id != ?"
+        ).bind(slug, id).first();
+        if (conflictingSlug) return courseSlugConflictResponse();
+
         const pricing = normalizeCoursePricing(body);
         if (!pricing.ok) return json({ error: pricing.error }, 400);
         const { price, discountPrice } = pricing;
@@ -1313,14 +1332,20 @@ while (
             WHERE id = ?
           `).bind(title, slug, description, price, discountPrice, image, active, id).run();
         } catch (error) {
+          if (isCourseSlugConflict(error)) return courseSlugConflictResponse();
           const message = String(error?.message || error).toLowerCase();
           if (!message.includes("discount_price")) throw error;
-          await db.prepare(`
-            UPDATE courses
-            SET title = ?, slug = ?, description = ?, price = ?, image = ?,
-                active = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-          `).bind(title, slug, description, price, image, active, id).run();
+          try {
+            await db.prepare(`
+              UPDATE courses
+              SET title = ?, slug = ?, description = ?, price = ?, image = ?,
+                  active = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(title, slug, description, price, image, active, id).run();
+          } catch (fallbackError) {
+            if (isCourseSlugConflict(fallbackError)) return courseSlugConflictResponse();
+            throw fallbackError;
+          }
           if (discountPrice !== null) return json({ ok: true, warning: "برای ذخیره تخفیف دوره، مهاجرت 0002 باید روی پایگاه داده هدف اعمال شود." });
         }
 
