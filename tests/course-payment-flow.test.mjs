@@ -60,6 +60,20 @@ test("guest cannot start course checkout", async () => {
   const result = await startCourseCheckout({ request: checkoutRequest({ courseId: 7 }), env: { ...envBase, DB: db }, getUser: async () => null, fetchImpl: async () => { gatewayCalls++; return response({}); } });
   assert.equal(result.status, 401); assert.equal(gatewayCalls, 0);
 });
+test("checkout rejects inactive courses before creating an order or calling the gateway", async () => {
+  const { db, state } = fakeDb({ course: { ...course, active: 0 } });
+  let gatewayCalls = 0;
+  const result = await startCourseCheckout({
+    request: checkoutRequest({ courseId: 7 }),
+    env: { ...envBase, DB: db },
+    getUser: async () => user,
+    fetchImpl: async () => { gatewayCalls++; return response({ data: { code: 100, authority: "auth-123" } }); }
+  });
+  assert.equal(result.status, 404);
+  assert.equal(state.order, null);
+  assert.equal(gatewayCalls, 0);
+});
+
 test("checkout uses server course price and ignores a forged browser amount", async () => {
   const { db, state } = fakeDb(); let sentPayload = null;
   const result = await startCourseCheckout({ request: checkoutRequest({ courseId: 7, amount: 1, amountDueToman: 1 }), env: { ...envBase, DB: db }, getUser: async () => user, fetchImpl: async (_url, options) => { sentPayload = JSON.parse(options.body); return response({ data: { code: 100, authority: "auth-123" } }); } });
