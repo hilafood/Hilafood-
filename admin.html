@@ -1057,18 +1057,17 @@ async function saveCourse(){
   const description =
     $("courseDescription")?.value || "";
 
-  const price =
-    Number(
-      $("coursePrice")?.value || 0
-    );
-
+  const priceRaw = $("coursePrice")?.value.trim() || "";
+  const price = priceRaw === "" ? NaN : Number(priceRaw);
   const discountRaw = $("courseDiscountPrice")?.value.trim() || "";
   const discountPrice = discountRaw === "" ? null : Number(discountRaw);
+  if (!Number.isSafeInteger(price) || price < 1000) {
+    alert("قیمت اصلی دوره باید عدد صحیح و حداقل ۱۰۰۰ تومان باشد.");
+    return;
+  }
   if (discountPrice !== null &&
-      (!Number.isSafeInteger(price) || price < 1000 ||
-       !Number.isSafeInteger(discountPrice) || discountPrice < 1000 ||
-       discountPrice >= price)) {
-    alert("قیمت تخفیف باید عدد صحیح حداقل ۱۰۰۰ تومان و کمتر از قیمت اصلی باشد.");
+      (!Number.isSafeInteger(discountPrice) || discountPrice < 1000 || discountPrice >= price)) {
+    alert("قیمت تخفیف باید عدد صحیح، حداقل ۱۰۰۰ تومان و کمتر از قیمت اصلی باشد.");
     return;
   }
 
@@ -1127,7 +1126,11 @@ async function saveCourse(){
       "POST",
       body
     );
-    if (saveResult.warning) alert(saveResult.warning);
+    if (saveResult.warning) {
+      alert(saveResult.warning);
+      await loadCourses();
+      return;
+    }
 
     alert(
       editId
@@ -1243,9 +1246,9 @@ async function editCourse(id){
     $("courseEditId").value =
       course.id;
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
+    $("courseTitle").scrollIntoView({
+      behavior: "smooth",
+      block: "center"
     });
 
   }catch(error){

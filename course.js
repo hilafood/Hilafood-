@@ -35,7 +35,7 @@
     const image = course.image ? '<img src="' + escapeHtml(course.image) + '" alt="' + escapeHtml(course.title || "دوره آموزشی") + '" loading="lazy">' : "";
     const price = Number(course.price), discount = Number(course.discount_price);
     let priceHtml = '<p class="course-price">قیمت: <strong>' + escapeHtml(money(price)) + '</strong></p>';
-    if (Number.isSafeInteger(discount) && discount > 0 && Number.isSafeInteger(price) && discount < price) priceHtml = '<p class="course-price"><del>' + escapeHtml(money(price)) + '</del> <strong>' + escapeHtml(money(discount)) + '</strong> <span class="course-discount">تخفیف</span></p>';
+    if (Number.isSafeInteger(price) && price >= 1000 && Number.isSafeInteger(discount) && discount >= 1000 && discount < price) priceHtml = '<p class="course-price"><del>' + escapeHtml(money(price)) + '</del> <strong>' + escapeHtml(money(discount)) + '</strong> <span class="course-discount">تخفیف</span></p>';
     let purchaseUi = "";
     if (data.entitled) purchaseUi = '<p class="course-purchase-state success">این دوره برای حساب شما خریداری شده است؛ دسترسی از سمت سرور بررسی می‌شود.</p>';
     else if (!data.authenticated) {

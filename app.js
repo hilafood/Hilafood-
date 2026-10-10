@@ -705,8 +705,12 @@ function renderCourses() {
           const image =
             img(course.image || "");
 
-          const price =
-            Number(course.price || 0);
+          const price = Number(course.price);
+          const discount = Number(course.discount_price);
+          const hasDiscount =
+            Number.isSafeInteger(price) && price >= 1000 &&
+            Number.isSafeInteger(discount) && discount >= 1000 &&
+            discount < price;
 
           return `
             <article class="product">
@@ -751,9 +755,11 @@ function renderCourses() {
                 ${
                   STORE.settings.showPrices
                     ? `<div class="product-foot">
-                        <strong>
-                          ${money(price)}
-                        </strong>
+                        ${hasDiscount
+                          ? `<del class="course-original-price">${money(price)}</del>
+                             <strong class="course-discount-price">${money(discount)}</strong>
+                             <span class="course-discount-badge">تخفیف</span>`
+                          : `<strong>${money(price)}</strong>`}
                       </div>`
                     : ""
                 }

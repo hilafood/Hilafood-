@@ -229,6 +229,35 @@ function json(data, status = 200) {
 
 
 /* ==================================================
+   اعتبارسنجی قیمت دوره و سازگاری طرح‌واره
+================================================== */
+
+function normalizeCoursePricing(body) {
+  const price = Number(body?.price);
+  if (!Number.isSafeInteger(price) || price < 1000) {
+    return { ok: false, error: "قیمت اصلی دوره باید عدد صحیح و حداقل ۱۰۰۰ تومان باشد." };
+  }
+  const rawDiscount = body?.discountPrice;
+  const discountPrice = rawDiscount === null || rawDiscount === undefined || rawDiscount === ""
+    ? null
+    : Number(rawDiscount);
+  if (discountPrice !== null &&
+      (!Number.isSafeInteger(discountPrice) || discountPrice < 1000 || discountPrice >= price)) {
+    return { ok: false, error: "قیمت تخفیف باید عدد صحیح، حداقل ۱۰۰۰ تومان و کمتر از قیمت اصلی باشد." };
+  }
+  return { ok: true, price, discountPrice };
+}
+
+async function courseDiscountColumnAvailable(db) {
+  try {
+    const result = await db.prepare("PRAGMA table_info(courses)").all();
+    return (result?.results || []).some(column => column.name === "discount_price");
+  } catch {
+    return false;
+  }
+}
+
+/* ==================================================
    ساخت جدول‌های D1
 ================================================== */
 
@@ -309,6 +338,7 @@ async function createTables(db) {
       slug TEXT NOT NULL UNIQUE,
       description TEXT DEFAULT '',
       price INTEGER DEFAULT 0,
+      discount_price INTEGER,
       image TEXT DEFAULT '',
       active INTEGER DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -1013,6 +1043,7 @@ async function getStore(db) {
 
     }));
 
+const hasCourseDiscount = await courseDiscountColumnAvailable(db);
 const coursesResult =
   await db.prepare(`
     SELECT
@@ -1021,6 +1052,7 @@ const coursesResult =
       slug,
       description,
       price,
+      ${hasCourseDiscount ? "discount_price" : "NULL AS discount_price"},
       image,
       active
     FROM courses
@@ -1177,22 +1209,14 @@ const body =
         const description =
           String(body.description || "");
 
-        const price =
-          Math.max(
-            0,
-            Number(body.price || 0)
-          );
-
-        const discountPrice =
-          body.discountPrice === null || body.discountPrice === undefined || body.discountPrice === ""
-            ? null
-            : Number(body.discountPrice);
-
-        if (discountPrice !== null &&
-            (!Number.isSafeInteger(price) || price < 1000 ||
-             !Number.isSafeInteger(discountPrice) || discountPrice < 1000 ||
-             discountPrice >= price)) {
-          return json({ error: "قیمت تخفیف باید عدد صحیح حداقل ۱۰۰۰ تومان و کمتر از قیمت اصلی باشد." }, 400);
+        const pricing = normalizeCoursePricing(body);
+        if (!pricing.ok) return json({ error: pricing.error }, 400);
+        const { price, discountPrice } = pricing;
+        if (discountPrice !== null && !(await courseDiscountColumnAvailable(db))) {
+          return json({
+            error: "ستون تخفیف دوره در پایگاه داده وجود ندارد؛ هیچ دوره‌ای ذخیره نشد. ابتدا وضعیت مهاجرت موجود 0002 را بررسی و در محیط هدف به‌صورت کنترل‌شده اعمال کنید.",
+            migrationRequired: true
+          }, 503);
         }
 
         const image =
@@ -1260,27 +1284,19 @@ while (
         }
 
         const slug =
-          String(body.slug || "").trim();
+          String(body.slug || title.toLowerCase().replace(/\s+/g, "-")).trim();
 
         const description =
           String(body.description || "");
 
-        const price =
-          Math.max(
-            0,
-            Number(body.price || 0)
-          );
-
-        const discountPrice =
-          body.discountPrice === null || body.discountPrice === undefined || body.discountPrice === ""
-            ? null
-            : Number(body.discountPrice);
-
-        if (discountPrice !== null &&
-            (!Number.isSafeInteger(price) || price < 1000 ||
-             !Number.isSafeInteger(discountPrice) || discountPrice < 1000 ||
-             discountPrice >= price)) {
-          return json({ error: "قیمت تخفیف باید عدد صحیح حداقل ۱۰۰۰ تومان و کمتر از قیمت اصلی باشد." }, 400);
+        const pricing = normalizeCoursePricing(body);
+        if (!pricing.ok) return json({ error: pricing.error }, 400);
+        const { price, discountPrice } = pricing;
+        if (discountPrice !== null && !(await courseDiscountColumnAvailable(db))) {
+          return json({
+            error: "ستون تخفیف دوره در پایگاه داده وجود ندارد؛ هیچ تغییری ذخیره نشد. ابتدا وضعیت مهاجرت موجود 0002 را بررسی و در محیط هدف به‌صورت کنترل‌شده اعمال کنید.",
+            migrationRequired: true
+          }, 503);
         }
 
         const image =
