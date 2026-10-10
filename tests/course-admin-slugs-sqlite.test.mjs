@@ -138,7 +138,8 @@ test("real SQLite: updating a course while keeping its own slug succeeds", async
     });
     assert.equal(updated.status, 200);
     const row = database.prepare("SELECT title, slug FROM courses WHERE id = ?").get(createdBody.id);
-    assert.deepEqual(row, { title: "Updated title", slug: "sqlite-stable-slug" });
+    assert.equal(row.title, "Updated title");
+    assert.equal(row.slug, "sqlite-stable-slug");
   } finally {
     database.close();
   }
