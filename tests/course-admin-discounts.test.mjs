@@ -36,6 +36,9 @@ function makeDb({ hasDiscount = true, courses = [] } = {}) {
         },
         async first() {
           if (sql.includes("SELECT COUNT(*) AS total FROM products")) return { total: 1 };
+          if (sql.includes("SELECT id FROM courses WHERE slug = ? AND id <> ?")) {
+            return state.courses.find(course => course.slug === args[0] && Number(course.id) !== Number(args[1])) || null;
+          }
           if (sql.includes("SELECT id FROM courses WHERE slug = ?")) return state.courses.find(course => course.slug === args[0]) || null;
           return null;
         },
@@ -92,6 +95,47 @@ test("creates a course with a valid discount", async () => {
   assert.equal(response.status, 200);
   assert.equal(db.state.courses[0].price, 500000);
   assert.equal(db.state.courses[0].discount_price, 350000);
+});
+
+test("rejects a duplicate slug on create with a clear error and no extra course", async () => {
+  const existing = { id: 8, ...baseCourse, title: "دوره موجود" };
+  const db = makeDb({ courses: [existing] });
+  const response = await save(db, { action: "admin-course-create", ...baseCourse, title: "دوره دوم", discountPrice: null });
+  const body = await response.json();
+  assert.equal(response.status, 409);
+  assert.match(body.error, /نشانی/);
+  assert.equal(db.state.courses.length, 1);
+  assert.equal(db.state.courses[0].id, 8);
+  assert.equal(db.state.courses[0].title, "دوره موجود");
+});
+
+test("rejects editing a course to another course's slug without mutating either course", async () => {
+  const first = { id: 4, ...baseCourse, title: "دوره اول", slug: "first-course", price: 500000, discount_price: 300000 };
+  const second = { id: 5, ...baseCourse, title: "دوره دوم", slug: "second-course", price: 600000, discount_price: 400000 };
+  const db = makeDb({ courses: [first, second] });
+  const response = await save(db, {
+    action: "admin-course-update",
+    id: 4,
+    ...baseCourse,
+    title: "تغییر نباید ذخیره شود",
+    slug: "second-course",
+    price: 700000,
+    discountPrice: 450000
+  });
+  const body = await response.json();
+  assert.equal(response.status, 409);
+  assert.match(body.error, /نشانی/);
+  assert.deepEqual(db.state.courses, [first, second]);
+});
+
+test("allows a course to keep its own existing slug during an update", async () => {
+  const course = { id: 4, ...baseCourse, slug: "sample-course", discount_price: 350000 };
+  const db = makeDb({ courses: [course] });
+  const response = await save(db, { action: "admin-course-update", id: 4, ...baseCourse, title: "عنوان جدید", slug: "sample-course", discountPrice: 350000 });
+  assert.equal(response.status, 200);
+  assert.equal(db.state.courses.length, 1);
+  assert.equal(db.state.courses[0].title, "عنوان جدید");
+  assert.equal(db.state.courses[0].slug, "sample-course");
 });
 test("updates the original and discounted prices together", async () => {
   const db = makeDb({ courses: [{ id: 4, ...baseCourse, discount_price: 350000 }] });
