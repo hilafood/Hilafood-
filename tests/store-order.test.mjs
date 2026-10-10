@@ -11,7 +11,7 @@ function makeDb() {
       const stmt = { sql, args: [], bind(...args) { stmt.args = args; return stmt; } };
       stmt.first = async () => {
         if (sql.includes("SELECT COUNT(*) AS total FROM products")) return { total: 1 };
-        if (sql.includes("SELECT id, name, price, discount_price, active FROM products WHERE id = ?")) {
+        if (sql.includes("FROM products") && sql.includes("discount_price") && sql.includes("WHERE id = ?")) {
           return String(stmt.args[0]) === String(state.product.id) ? state.product : null;
         }
         if (sql.includes("SELECT value FROM settings WHERE key = 'shippingMethods'")) {
