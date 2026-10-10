@@ -16,7 +16,7 @@ function post(body, headers = {}) {
 }
 function adminEnv(db) { return { ADMIN_KEY: "secret", DB: db }; }
 function makeDb(initialStatus = "published") {
-  const state = { status: initialStatus, responses: new Set(), answers: [], batches: 0, questionBatches: 0, questionBatchSql: [], failQuestionBatch: false };
+  const state = { status: initialStatus, responses: new Set(), answers: [], batches: 0, createBatches: 0, questionBatches: 0, questionBatchSql: [], failQuestionBatch: false };
   const db = {
     state,
     prepare(sql) {
@@ -52,6 +52,11 @@ function makeDb(initialStatus = "published") {
     async batch(statements) {
       state.batches++;
       const first = statements[0];
+      if (first?.sql?.startsWith("INSERT INTO surveys")) {
+        state.createBatches++;
+        if (state.failQuestionBatch) throw new Error("simulated atomic create failure");
+        return statements.map((statement, index) => ({ meta: { last_row_id: index === 0 ? 1 : undefined, changes: 1 } }));
+      }
       if (first?.sql?.startsWith("DELETE FROM survey_questions")) {
         state.questionBatches++;
         state.questionBatchSql = statements.map(statement => statement.sql.replace(/\s+/g, " ").trim());
@@ -104,6 +109,18 @@ test("admin can create a draft with questions and options", async () => {
   const data = await response.json();
   assert.equal(data.status, "draft");
   assert.equal(data.id, 1);
+  assert.equal(db.state.createBatches, 1);
+});
+
+test("new survey and its questions fail as one atomic batch", async () => {
+  const db = makeDb("draft");
+  db.state.failQuestionBatch = true;
+  const response = await onRequestPost({ request: post({
+    action: "admin-save", title: "نظرسنجی ناموفق", description: "",
+    questions: [{ prompt: "سؤال", type: "single", required: true, options: ["الف", "ب"] }]
+  }, { "x-admin-key": "secret" }), env: adminEnv(db) });
+  assert.equal(response.status, 503);
+  assert.equal(db.state.createBatches, 1);
 });
 test("survey question and option replacement is submitted as one atomic batch", async () => {
   const db = makeDb("draft");
