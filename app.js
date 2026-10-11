@@ -154,6 +154,10 @@ function parseProductWeightGrams(name) {
   return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;
 }
 
+function displayProductName(name) {
+  return String(name || "").replace(/\s*[|،·-]?\s*[0-9۰-۹٠-٩]+\s*(?:گرم|g\b)/gi, "").replace(/\s{2,}/g, " ").trim();
+}
+
 function productWeightGrams(product) {
   const configured = Number(STORE.settings.productWeights?.[String(product.id)]);
   if (Number.isSafeInteger(configured) && configured > 0) return configured;
@@ -537,7 +541,7 @@ function card(product) {
         <img
           src="${img(product.img)}"
           loading="lazy"
-          alt="${product.name}"
+          alt="${displayProductName(product.name)}"
         >
 
       `
@@ -611,7 +615,7 @@ function card(product) {
 
 
         <h3>
-          ${product.name}
+          ${displayProductName(product.name)}
         </h3>
 
 
@@ -642,13 +646,12 @@ function card(product) {
           ${
             productWeightGrams(product) > 0
               ? `
-                <p>وزن بسته تست: ${(productWeightGrams(product) / 4).toLocaleString("fa-IR")} گرم</p>
                 <p>قیمت بسته تست: ${money(Math.round(finalPrice(product) / 4))}</p>
                 <button class="test-order-button" type="button" onclick="addToCart('${product.id}', 'test')">سفارش تست</button>
               `
               : `
-                <p>برای فعال‌شدن سفارش تست، وزن بسته اصلی باید در پنل مدیریت ثبت شود.</p>
-                <button class="test-order-button" type="button" disabled>وزن محصول ثبت نشده</button>
+                <p>سفارش تست این محصول فعلاً فعال نیست.</p>
+                <button class="test-order-button" type="button" disabled>فعلاً در دسترس نیست</button>
               `
           }
         </section>
@@ -894,7 +897,7 @@ function renderVideo() {
     <div>
 
       <h3>
-        ${product.name}
+        ${displayProductName(product.name)}
       </h3>
 
       <p>
@@ -1001,10 +1004,10 @@ function updateCart() {
 
               <div class="cart-row">
                 <b>
-                  ${product.name}
+                  ${displayProductName(product.name)}
                   <small>
                     ${(item.orderType || "full") === "test" ? "سفارش تست محصول" : "محصول کامل"}
-                    ${(item.orderType || "full") === "test" ? " · " + (productWeightGrams(product) / 4).toLocaleString("fa-IR") + " گرم" : ""}
+                    
                     · ${money(cartItemPrice(product, item))}
                   </small>
                 </b>
@@ -2020,10 +2023,7 @@ async function submitOrder() {
 
     const orderItemsSummary = (data.items || []).map(item => {
       const typeLabel = item.orderType === "test" ? "سفارش تست محصول" : "محصول کامل";
-      const weightLabel = Number(item.weightGrams) > 0
-        ? "، وزن بسته " + Number(item.weightGrams).toLocaleString("fa-IR") + " گرم"
-        : "";
-      return item.name + " — " + typeLabel + weightLabel +
+      return displayProductName(item.name) + " — " + typeLabel +
         " × " + Number(item.qty || 1).toLocaleString("fa-IR") +
         " — " + money(item.price) + " برای هر بسته";
     }).join("\n");
