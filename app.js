@@ -139,6 +139,30 @@ function finalPrice(product) {
 
   return price;
 }
+function normalizeWeightDigits(value) {
+  return String(value || "").replace(/[۰-۹٠-٩]/g, digit =>
+    "۰۱۲۳۴۵۶۷۸۹".includes(digit)
+      ? String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
+      : String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))
+  );
+}
+
+function parseProductWeightGrams(name) {
+  const normalized = normalizeWeightDigits(name);
+  const match = normalized.match(new RegExp("(?:^|[^0-9])([0-9]+)\\s*(?:گرم|g\\b)", "i"));
+  const grams = match ? Number(match[1]) : 0;
+  return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;
+}
+
+function productWeightGrams(product) {
+  const configured = Number(STORE.settings.productWeights?.[String(product.id)]);
+  if (Number.isSafeInteger(configured) && configured > 0) return configured;
+  return parseProductWeightGrams(product.name);
+}
+
+function cartItemPrice(product, item) {
+  return item.orderType === "test" ? Math.round(finalPrice(product) / 4) : finalPrice(product);
+}
 
 
 /* ==================================================
@@ -163,7 +187,7 @@ function cartSubtotal() {
 
       return (
         sum +
-        finalPrice(product) *
+        cartItemPrice(product, item) *
         Number(item.qty || 0)
       );
 
@@ -606,12 +630,28 @@ function card(product) {
           <button
             class="details"
             type="button"
-            onclick="addToCart('${product.id}')"
+            onclick="addToCart('${product.id}', 'full')"
           >
-            افزودن
+            خرید محصول کامل
           </button>
 
         </div>
+
+        <section class="test-order-panel" aria-label="سفارش تست محصول">
+          <strong>سفارش تست محصول</strong>
+          ${
+            productWeightGrams(product) > 0
+              ? `
+                <p>وزن بسته تست: ${(productWeightGrams(product) / 4).toLocaleString("fa-IR")} گرم</p>
+                <p>قیمت بسته تست: ${money(Math.round(finalPrice(product) / 4))}</p>
+                <button class="test-order-button" type="button" onclick="addToCart('${product.id}', 'test')">سفارش تست</button>
+              `
+              : `
+                <p>برای فعال‌شدن سفارش تست، وزن بسته اصلی باید در پنل مدیریت ثبت شود.</p>
+                <button class="test-order-button" type="button" disabled>وزن محصول ثبت نشده</button>
+              `
+          }
+        </section>
 
       </div>
 
@@ -881,90 +921,23 @@ function renderVideo() {
    افزودن به سبد
 ================================================== */
 
-function addToCart(id) {
-
-  const product =
-    STORE.products.find(
-      x =>
-        String(x.id) ===
-        String(id)
-    );
-
-
-  if (!product) {
-
-    alert(
-      "محصول پیدا نشد."
-    );
-
+function addToCart(id, orderType = "full") {
+  const product = STORE.products.find(x => String(x.id) === String(id));
+  if (!product) { alert("محصول پیدا نشد."); return; }
+  if (!STORE.settings.showPrices) { alert("قیمت محصولات فعلاً فعال نیست."); return; }
+  if (finalPrice(product) <= 0) { alert("قیمت این محصول هنوز ثبت نشده است."); return; }
+  if (!["full", "test"].includes(orderType)) { alert("نوع سفارش نامعتبر است."); return; }
+  if (orderType === "test" && productWeightGrams(product) <= 0) {
+    alert("برای سفارش تست، ابتدا باید وزن بسته اصلی در پنل مدیریت ثبت شود.");
     return;
   }
-
-
-  if (
-    !STORE.settings.showPrices
-  ) {
-
-    alert(
-      "قیمت محصولات فعلاً فعال نیست."
-    );
-
-    return;
-  }
-
-
-  const price =
-    finalPrice(product);
-
-
-  if (price <= 0) {
-
-    alert(
-      "قیمت این محصول هنوز ثبت نشده است."
-    );
-
-    return;
-  }
-
-
-  const existing =
-    cart.find(
-      item =>
-        String(item.id) ===
-        String(id)
-    );
-
-
-  if (existing) {
-
-    existing.qty =
-      Number(existing.qty || 0) + 1;
-
-  } else {
-
-    cart.push({
-
-      id:
-        product.id,
-
-      qty: 1
-
-    });
-
-  }
-
-
-  localStorage.setItem(
-    "hilaCart",
-    JSON.stringify(cart)
-  );
-
-
+  const existing = cart.find(item => String(item.id) === String(id) && (item.orderType || "full") === orderType);
+  if (existing) existing.qty = Number(existing.qty || 0) + 1;
+  else cart.push({ id: product.id, qty: 1, orderType });
+  localStorage.setItem("hilaCart", JSON.stringify(cart));
   updateCart();
-
   openCart();
 }
-
 
 /* ==================================================
    بروزرسانی سبد
@@ -1027,40 +1000,19 @@ function updateCart() {
             return `
 
               <div class="cart-row">
-
                 <b>
-
                   ${product.name}
-
                   <small>
-                    ${money(
-                      finalPrice(product)
-                    )}
+                    ${(item.orderType || "full") === "test" ? "سفارش تست محصول" : "محصول کامل"}
+                    ${(item.orderType || "full") === "test" ? " · " + (productWeightGrams(product) / 4).toLocaleString("fa-IR") + " گرم" : ""}
+                    · ${money(cartItemPrice(product, item))}
                   </small>
-
                 </b>
-
-
                 <div class="qty">
-
-                  <button
-                    type="button"
-                    onclick="qty('${product.id}', -1)"
-                  >
-                    −
-                  </button>
-
+                  <button type="button" onclick="qty('${product.id}', -1, '${item.orderType || "full"}')">−</button>
                   ${Number(item.qty || 0)}
-
-                  <button
-                    type="button"
-                    onclick="qty('${product.id}', 1)"
-                  >
-                    +
-                  </button>
-
+                  <button type="button" onclick="qty('${product.id}', 1, '${item.orderType || "full"}')">+</button>
                 </div>
-
               </div>
 
             `;
@@ -1098,47 +1050,16 @@ function updateCart() {
    تغییر تعداد
 ================================================== */
 
-function qty(id, change) {
-
-  const item =
-    cart.find(
-      x =>
-        String(x.id) ===
-        String(id)
-    );
-
-
-  if (!item) {
-    return;
-  }
-
-
-  item.qty =
-    Number(item.qty || 0) +
-    Number(change || 0);
-
-
+function qty(id, change, orderType = "full") {
+  const item = cart.find(x => String(x.id) === String(id) && (x.orderType || "full") === orderType);
+  if (!item) return;
+  item.qty = Number(item.qty || 0) + Number(change || 0);
   if (item.qty < 1) {
-
-    cart =
-      cart.filter(
-        x =>
-          String(x.id) !==
-          String(id)
-      );
-
+    cart = cart.filter(x => !(String(x.id) === String(id) && (x.orderType || "full") === orderType));
   }
-
-
-  localStorage.setItem(
-    "hilaCart",
-    JSON.stringify(cart)
-  );
-
-
+  localStorage.setItem("hilaCart", JSON.stringify(cart));
   updateCart();
 }
-
 
 /* ==================================================
    سبد خرید
@@ -1991,7 +1912,10 @@ async function submitOrder() {
           String(item.id),
 
         qty:
-          Number(item.qty || 1)
+          Number(item.qty || 1),
+
+        orderType:
+          item.orderType || "full"
 
       }));
 
@@ -2175,7 +2099,9 @@ async function checkout() {
    شروع برنامه
 ================================================== */
 
-document.addEventListener(
-  "DOMContentLoaded",
-  load
-);
+document.addEventListener("DOMContentLoaded", async () => {
+  await load();
+  if (new URLSearchParams(location.search).get("openCart") === "1") {
+    openCart();
+  }
+});
