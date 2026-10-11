@@ -2937,6 +2937,10 @@ export async function onRequestPut({
     const p =
       body.product || {};
 
+    const pricing = normalizeProductPricing(p);
+    if (!pricing.ok) return json({ error: pricing.error }, 400);
+    const { price, discountPrice } = pricing;
+
     const hasWeight = Object.prototype.hasOwnProperty.call(p, "weightGrams");
     const normalizedWeight = normalizeAdminWeight(p.weightGrams);
     if (hasWeight && !normalizedWeight.ok) {
