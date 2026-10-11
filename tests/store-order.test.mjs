@@ -20,11 +20,41 @@ function makeDb() {
         if (sql.includes("FROM settings") && sql.includes("smsEnabled")) return { value: "false" };
         return null;
       };
-      stmt.all = async () => ({ results: [] });
+      stmt.all = async () => {
+        if (sql.includes("FROM orders")) {
+          return {
+            results: state.orders.map((args, index) => ({
+              id: 41 + index,
+              customer_name: args[0],
+              customer_phone: args[1],
+              customer_address: args[2],
+              items: args[3],
+              subtotal: args[4],
+              shipping_id: args[5],
+              shipping_name: args[6],
+              shipping_price: args[7],
+              total: args[8],
+              status: args[9],
+              payment_status: args[10],
+              created_at: "2026-10-11 12:00:00"
+            }))
+          };
+        }
+        return { results: [] };
+      };
       stmt.run = async () => {
         if (sql.includes("INSERT INTO orders")) {
           state.orders.push(stmt.args);
           return { meta: { last_row_id: 41, changes: 1 } };
+        }
+        if (sql.includes("UPDATE orders")) {
+          const row = state.orders[stmt.args[2] - 41];
+          if (row) {
+            row[9] = stmt.args[0];
+            row[10] = stmt.args[1];
+            return { meta: { changes: 1 } };
+          }
+          return { meta: { changes: 0 } };
         }
         return { meta: { changes: 1 } };
       };
@@ -42,6 +72,18 @@ function request(qty) {
       shippingId: "post-pishtaz",
       items: [{ id: "p1", qty, price: 1, name: "قیمت جعلی مرورگر" }]
     })
+  });
+}
+
+function adminRequest(action, body = {}) {
+  return new Request(origin + "/api/store", {
+    method: "POST",
+    headers: {
+      Origin: origin,
+      "Content-Type": "application/json",
+      "x-admin-key": "test-admin-key"
+    },
+    body: JSON.stringify({ action, ...body })
   });
 }
 
@@ -87,4 +129,50 @@ test("invalid product quantities return HTTP 400 without recording an order", as
     assert.equal(response.status, 400, "quantity " + String(qty));
     assert.equal(db.state.orders.length, 0, "quantity " + String(qty));
   }
+});
+
+test("order list requires admin access and retains paid orders for follow-up", async () => {
+  const db = makeDb();
+  const created = await onRequestPost({
+    request: request(1),
+    env: { DB: db }
+  });
+  assert.equal(created.status, 200);
+  assert.equal(db.state.orders.length, 1);
+
+  const denied = await onRequestPost({
+    request: new Request(origin + "/api/store", {
+      method: "POST",
+      headers: { Origin: origin, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get-orders" })
+    }),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(denied.status, 401);
+
+  const listed = await onRequestPost({
+    request: adminRequest("get-orders"),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(listed.status, 200);
+  assert.equal((await listed.json()).orders.length, 1);
+
+  const updated = await onRequestPost({
+    request: adminRequest("update-order", {
+      orderId: 41,
+      status: "completed",
+      paymentStatus: "paid"
+    }),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(updated.status, 200);
+
+  const listedAgain = await onRequestPost({
+    request: adminRequest("get-orders"),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  const orders = (await listedAgain.json()).orders;
+  assert.equal(orders.length, 1);
+  assert.equal(orders[0].paymentStatus, "paid");
+  assert.equal(orders[0].status, "completed");
 });
