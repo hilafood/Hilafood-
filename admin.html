@@ -600,6 +600,14 @@ button{cursor:pointer}
         >
 
         <input
+          id="packageWeightGrams"
+          type="number"
+          min="1"
+          step="1"
+          placeholder="وزن بسته اصلی به گرم"
+        >
+
+        <input
           id="stage"
           placeholder="دوره / نیاز، مثال: کودک ۶ ماه"
         >
@@ -1922,16 +1930,24 @@ function renderOrders(orders){
 
                   const price =
                     Number(item.price || 0);
+                  const isTestOrder = item.orderType === "test";
+                  const orderTypeLabel = isTestOrder
+                    ? "سفارش تست محصول"
+                    : "محصول کامل";
+                  const weightLabel = Number(item.weightGrams) > 0
+                    ? " · وزن بسته: " + Number(item.weightGrams).toLocaleString("fa-IR") + " گرم"
+                    : "";
 
                   return `
                     <div class="order-item">
 
                       <span>
-                        ${escapeHtml(
-                          item.name || ""
-                        )}
+                        ${escapeHtml(item.name || "")}
                         ×
                         ${qty.toLocaleString("fa-IR")}
+                        <small class="order-item-meta">
+                          ${orderTypeLabel}${weightLabel}
+                        </small>
                       </span>
 
                       <span>
@@ -2461,6 +2477,21 @@ function escapeAttr(value){
 
 
 /* =========================================
+   وزن محصول برای سفارش تست
+========================================= */
+
+function parseProductWeightGrams(name){
+  const normalized = String(name || "").replace(/[۰-۹٠-٩]/g, digit =>
+    "۰۱۲۳۴۵۶۷۸۹".includes(digit)
+      ? String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
+      : String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))
+  );
+  const match = normalized.match(new RegExp("(?:^|[^0-9])([0-9]+)\\s*(?:گرم|g\\b)", "i"));
+  const grams = match ? Number(match[1]) : 0;
+  return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;
+}
+
+/* =========================================
    ویرایش محصول
 ========================================= */
 
@@ -2497,6 +2528,11 @@ function editProduct(id){
   $("discountPrice").value =
     product.discountPrice || "";
 
+  $("packageWeightGrams").value =
+    data.settings?.productWeights?.[String(product.id)] ||
+    parseProductWeightGrams(product.name) ||
+    "";
+
   $("stage").value =
     product.stage || "";
 
@@ -2532,6 +2568,8 @@ function clearForm(){
   $("price").value = "";
 
   $("discountPrice").value = "";
+
+  $("packageWeightGrams").value = "";
 
   $("stage").value = "";
 
@@ -2601,6 +2639,11 @@ async function saveProduct(){
           : Number(
               $("discountPrice").value
             ),
+
+      weightGrams:
+        $("packageWeightGrams").value === ""
+          ? null
+          : Number($("packageWeightGrams").value),
 
       stage:
         $("stage")
