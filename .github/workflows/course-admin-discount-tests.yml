@@ -44,6 +44,7 @@ jobs:
         run: |
           node --check --experimental-default-type=module functions/api/store.js
           node --check --experimental-default-type=module app.js
+          node --check --experimental-default-type=module category.js
           python3 - <<'PY'
           import pathlib, re, subprocess, tempfile
           html = pathlib.Path("admin.html").read_text(encoding="utf-8")
