@@ -5,6 +5,7 @@ on:
     branches:
       - permission-check-no-code-20261009
       - course-discount-edit-20261010
+      - course-slug-duplicate-check-20261011
   workflow_dispatch:
 
 permissions:
