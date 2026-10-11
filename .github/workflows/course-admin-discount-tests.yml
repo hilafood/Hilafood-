@@ -1,6 +1,7 @@
 name: Course discount and slug checks
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - course-admin-discount-release-20261011
