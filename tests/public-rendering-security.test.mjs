@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 
 const app = await readFile(new URL("../app.js", import.meta.url), "utf8");
+const category = await readFile(new URL("../category.js", import.meta.url), "utf8");
 
 test("public HTML escaping neutralizes markup and attribute injection", () => {
   const context = {
@@ -37,4 +38,18 @@ test("dynamic public store fields are escaped before HTML interpolation", () => 
   assert.ok(app.includes('escapeHtml(course.description || "")'));
   assert.ok(app.includes('escapeHtml(item.src)'));
   assert.ok(app.includes('const title = escapeHtml(item.title);'));
+});
+
+test("category page escapes product fields and blocks unsafe video protocols", () => {
+  assert.ok(category.includes("function escapeHtml(value)"));
+  assert.ok(category.includes("function safeVideoUrl(value)"));
+  assert.ok(category.includes("escapeHtml(path(p.img))"));
+  assert.ok(category.includes("escapeHtml(p.cat || '')"));
+  assert.ok(category.includes("escapeHtml(p.stage || '')"));
+  assert.ok(category.includes("escapeHtml(displayProductName(p.name || ''))"));
+  assert.ok(category.includes("escapeHtml(p.desc || '')"));
+  assert.ok(category.includes("const videoUrl = safeVideoUrl(p.video);"));
+  assert.ok(category.includes('href="${videoUrl}"'));
+  assert.ok(!category.includes('href="${p.video}"'));
+  assert.ok(category.includes('escapeHtml(JSON.stringify(String(p.id || "")))'));
 });
