@@ -1841,15 +1841,21 @@ const body =
           );
 
 
+        // Missing quantity keeps the historical default of one. Explicit
+        // values must be safe positive integers before they enter any totals.
+        const rawQuantity = item.qty;
         const quantity =
-          Math.max(
-            1,
-            Math.floor(
-              Number(
-                item.qty || 1
-              )
-            )
-          );
+          rawQuantity === undefined || rawQuantity === null
+            ? 1
+            : (typeof rawQuantity === "string" && rawQuantity.trim() === ""
+                ? NaN
+                : Number(rawQuantity));
+
+        if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+          return json({
+            error: "تعداد هر محصول باید عدد صحیح و مثبت باشد"
+          }, 400);
+        }
 
 
         if (!productId) {
