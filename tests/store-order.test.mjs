@@ -59,8 +59,29 @@ test("product order total uses database price and discount, not browser price", 
   assert.equal(JSON.parse(db.state.orders[0][3])[0].price, 90000);
 });
 
-test("invalid product quantity is rejected without recording an order", async () => {
-  for (const qty of ["not-a-number", 1.5, 0, -2, Number.MAX_SAFE_INTEGER + 1]) {
+test("valid positive integer product quantities are accepted", async () => {
+  for (const qty of [1, 2, "3"]) {
+    const db = makeDb();
+    const response = await onRequestPost({ request: request(qty), env: { DB: db } });
+    assert.equal(response.status, 200, "quantity " + String(qty));
+    assert.equal(db.state.orders.length, 1, "quantity " + String(qty));
+    const items = JSON.parse(db.state.orders[0][3]);
+    assert.equal(items[0].qty, Number(qty));
+    assert.ok(Number.isSafeInteger(items[0].qty));
+    assert.ok(items[0].qty > 0);
+  }
+});
+
+test("missing product quantity retains the default of one", async () => {
+  const db = makeDb();
+  const response = await onRequestPost({ request: request(undefined), env: { DB: db } });
+  assert.equal(response.status, 200);
+  assert.equal(db.state.orders.length, 1);
+  assert.equal(JSON.parse(db.state.orders[0][3])[0].qty, 1);
+});
+
+test("invalid product quantities return HTTP 400 without recording an order", async () => {
+  for (const qty of ["not-a-number", "NaN", 1.5, 0, -2, Number.MAX_SAFE_INTEGER + 1, "", " ", "2.2"]) {
     const db = makeDb();
     const response = await onRequestPost({ request: request(qty), env: { DB: db } });
     assert.equal(response.status, 400, "quantity " + String(qty));
