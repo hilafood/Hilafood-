@@ -27,11 +27,49 @@ function money(n) {
 }
 
 function price(p) {
-  return Number(
-    p.discountPrice > 0
-      ? p.discountPrice
-      : p.price || 0
+  const original = Number(p.price || 0);
+  const discount = Number(p.discountPrice || 0);
+  return discount > 0 && discount < original ? discount : original;
+}
+function normalizeWeightDigits(value) {
+  return String(value || "").replace(/[۰-۹٠-٩]/g, digit =>
+    "۰۱۲۳۴۵۶۷۸۹".includes(digit)
+      ? String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
+      : String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))
   );
+}
+
+function parseProductWeightGrams(name) {
+  const normalized = normalizeWeightDigits(name);
+  const match = normalized.match(new RegExp("(?:^|[^0-9])([0-9]+)\\s*(?:گرم|g\\b)", "i"));
+  const grams = match ? Number(match[1]) : 0;
+  return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;
+}
+
+function productWeightGrams(product) {
+  const configured = Number(DATA.settings?.productWeights?.[String(product.id)]);
+  if (Number.isSafeInteger(configured) && configured > 0) return configured;
+  return parseProductWeightGrams(product.name);
+}
+
+function addCategoryToCart(id, orderType = "full") {
+  const product = (DATA.products || []).find(item => String(item.id) === String(id));
+  if (!product) { alert("محصول پیدا نشد."); return; }
+  if (!DATA.settings.showPrices || price(product) <= 0) { alert("قیمت این محصول فعلاً در دسترس نیست."); return; }
+  if (orderType === "test" && productWeightGrams(product) <= 0) {
+    alert("برای سفارش تست، ابتدا باید وزن بسته اصلی در پنل مدیریت ثبت شود.");
+    return;
+  }
+  let cart = [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem("hilaCart") || "[]");
+    cart = Array.isArray(parsed) ? parsed : [];
+  } catch { cart = []; }
+  const existing = cart.find(item => String(item.id) === String(id) && (item.orderType || "full") === orderType);
+  if (existing) existing.qty = Number(existing.qty || 0) + 1;
+  else cart.push({ id: product.id, qty: 1, orderType });
+  localStorage.setItem("hilaCart", JSON.stringify(cart));
+  location.href = "index.html?openCart=1";
 }
 
 async function init() {
@@ -202,6 +240,25 @@ let list = (DATA.products || []).filter(p =>
                   `
                   : ''
               }
+
+              <div class="vertical-order-actions">
+                <button type="button" class="details" onclick="addCategoryToCart('${p.id}', 'full')">خرید محصول کامل</button>
+              </div>
+
+              <section class="test-order-panel" aria-label="سفارش تست محصول">
+                <strong>سفارش تست محصول</strong>
+                ${productWeightGrams(p) > 0
+                  ? `
+                    <p>وزن بسته تست: ${(productWeightGrams(p) / 4).toLocaleString('fa-IR')} گرم</p>
+                    <p>قیمت بسته تست: ${money(Math.round(price(p) / 4))}</p>
+                    <button type="button" class="test-order-button" onclick="addCategoryToCart('${p.id}', 'test')">سفارش تست</button>
+                  `
+                  : `
+                    <p>برای فعال‌شدن سفارش تست، وزن بسته اصلی باید در پنل مدیریت ثبت شود.</p>
+                    <button type="button" class="test-order-button" disabled>وزن محصول ثبت نشده</button>
+                  `
+                }
+              </section>
 
             </div>
 
