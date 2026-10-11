@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { onRequestPost } from "../functions/api/store.js";
 
 const origin = "https://hilafood.pages.dev";
 function makeDb() {
-  const state = { orders: [], product: { id: "p1", name: "محصول آزمایشی", price: 120000, discount_price: 90000, active: 1 } };
+  const state = { orders: [], productWeights: { p1: 400 }, product: { id: "p1", name: "محصول آزمایشی", price: 120000, discount_price: 90000, active: 1 } };
   return {
     state,
     prepare(sql) {
@@ -13,6 +14,9 @@ function makeDb() {
         if (sql.includes("SELECT COUNT(*) AS total FROM products")) return { total: 1 };
         if (sql.includes("FROM products") && sql.includes("discount_price") && sql.includes("WHERE id = ?")) {
           return String(stmt.args[0]) === String(state.product.id) ? state.product : null;
+        }
+        if (sql.includes("FROM settings") && sql.includes("productWeights")) {
+          return { value: JSON.stringify(state.productWeights) };
         }
         if (sql.includes("FROM settings") && sql.includes("shippingMethods")) {
           return { value: JSON.stringify([{ id: "post-pishtaz", name: "پست پیشتاز", price: 25000, active: true }]) };
@@ -62,7 +66,7 @@ function makeDb() {
     }
   };
 }
-function request(qty) {
+function request(qty, itemOverrides = {}) {
   return new Request(origin + "/api/store", {
     method: "POST",
     headers: { Origin: origin, "Content-Type": "application/json" },
@@ -70,7 +74,7 @@ function request(qty) {
       action: "create-order",
       customer: { name: "مشتری آزمایشی", phone: "09000000000", address: "نشانی آزمایشی" },
       shippingId: "post-pishtaz",
-      items: [{ id: "p1", qty, price: 1, name: "قیمت جعلی مرورگر" }]
+      items: [{ id: "p1", qty, price: 1, name: "قیمت جعلی مرورگر", ...itemOverrides }]
     })
   });
 }
@@ -129,6 +133,78 @@ test("invalid product quantities return HTTP 400 without recording an order", as
     assert.equal(response.status, 400, "quantity " + String(qty));
     assert.equal(db.state.orders.length, 0, "quantity " + String(qty));
   }
+});
+
+test("test order uses one quarter of the currently payable discounted price and package weight", async () => {
+  const db = makeDb();
+  const response = await onRequestPost({
+    request: request(2, { orderType: "test", price: 1, weightGrams: 99999 }),
+    env: { DB: db }
+  });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.subtotal, 45000);
+  assert.equal(body.total, 70000);
+  const item = JSON.parse(db.state.orders[0][3])[0];
+  assert.equal(item.price, 22500);
+  assert.equal(item.weightGrams, 100);
+  assert.equal(item.orderType, "test");
+  assert.equal(item.orderTypeLabel, "سفارش تست محصول");
+});
+
+test("test price and weight update automatically when product price and weight change", async () => {
+  const db = makeDb();
+  db.state.product.price = 280000;
+  db.state.product.discount_price = null;
+  db.state.productWeights.p1 = 600;
+  const response = await onRequestPost({
+    request: request(1, { orderType: "test" }),
+    env: { DB: db }
+  });
+  assert.equal(response.status, 200);
+  const item = JSON.parse(db.state.orders[0][3])[0];
+  assert.equal(item.price, 70000);
+  assert.equal(item.weightGrams, 150);
+});
+
+test("test order rejects missing or invalid server-side package weight", async () => {
+  for (const weight of [undefined, 0, -10, 1.5, "invalid"]) {
+    const db = makeDb();
+    db.state.productWeights.p1 = weight;
+    const response = await onRequestPost({
+      request: request(1, { orderType: "test", weightGrams: 400 }),
+      env: { DB: db }
+    });
+    assert.equal(response.status, 400, String(weight));
+    assert.equal(db.state.orders.length, 0);
+  }
+});
+
+test("ordinary product orders retain the full current payable price and legacy defaults", async () => {
+  const db = makeDb();
+  const response = await onRequestPost({
+    request: request(1, { orderType: "full", price: 1, weightGrams: 1 }),
+    env: { DB: db }
+  });
+  assert.equal(response.status, 200);
+  const item = JSON.parse(db.state.orders[0][3])[0];
+  assert.equal(item.price, 90000);
+  assert.equal(item.orderType, "full");
+  assert.equal(item.weightGrams, 400);
+});
+
+test("cart, category page, admin form, and order list expose test-order metadata", async () => {
+  const [app, category, admin] = await Promise.all([
+    readFile(new URL("../app.js", import.meta.url), "utf8"),
+    readFile(new URL("../category.js", import.meta.url), "utf8"),
+    readFile(new URL("../admin.html", import.meta.url), "utf8")
+  ]);
+  assert.match(app, /سفارش تست محصول/);
+  assert.match(app, /cartItemPrice\(product, item\)/);
+  assert.match(category, /addCategoryToCart/);
+  assert.match(admin, /id="packageWeightGrams"/);
+  assert.match(admin, /orderTypeLabel/);
+  assert.match(admin, /order-item-meta/);
 });
 
 test("order list requires admin access and retains paid orders for follow-up", async () => {
