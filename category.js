@@ -61,7 +61,7 @@ function addCategoryToCart(id, orderType = "full") {
   if (!product) { alert("محصول پیدا نشد."); return; }
   if (!DATA.settings.showPrices || price(product) <= 0) { alert("قیمت این محصول فعلاً در دسترس نیست."); return; }
   if (orderType === "test" && productWeightGrams(product) <= 0) {
-    alert("برای سفارش تست، ابتدا باید وزن بسته اصلی در پنل مدیریت ثبت شود.");
+    alert("سفارش تست این محصول فعلاً فعال نیست.");
     return;
   }
   let cart = [];
@@ -257,8 +257,8 @@ let list = (DATA.products || []).filter(p =>
                     <button type="button" class="test-order-button" onclick="addCategoryToCart('${p.id}', 'test')">سفارش تست</button>
                   `
                   : `
-                    <p>برای فعال‌شدن سفارش تست، وزن بسته اصلی باید در پنل مدیریت ثبت شود.</p>
-                    <button type="button" class="test-order-button" disabled>وزن محصول ثبت نشده</button>
+                    <p>سفارش تست این محصول فعلاً فعال نیست.</p>
+                    <button type="button" class="test-order-button" disabled>فعلاً در دسترس نیست</button>
                   `
                 }
               </section>
