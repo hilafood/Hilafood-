@@ -1224,16 +1224,18 @@ const body =
 
         const active =
           body.active === false ? 0 : 1;
-let baseSlug = slug;
-let suffix = 2;
+const duplicateSlug = await db.prepare(
+          "SELECT id FROM courses WHERE slug = ?"
+        ).bind(slug).first();
 
-while (
-  await db.prepare(
-    "SELECT id FROM courses WHERE slug = ?"
-  ).bind(baseSlug).first()
-) {
-  baseSlug = `${slug}-${suffix++}`;
-}
+        if (duplicateSlug) {
+          return json({
+            error: "این نشانی قبلاً برای دوره دیگری ثبت شده است؛ لطفاً نشانی یکتایی وارد کنید.",
+            code: "COURSE_SLUG_TAKEN"
+          }, 409);
+        }
+
+        const baseSlug = slug;
         let result;
         try {
           result = await db.prepare(`
@@ -1243,6 +1245,12 @@ while (
           `).bind(title, baseSlug, description, price, discountPrice, image, active).run();
         } catch (error) {
           const message = String(error?.message || error).toLowerCase();
+          if (message.includes("unique constraint") || message.includes("courses.slug")) {
+            return json({
+              error: "این نشانی هم‌اکنون برای دوره دیگری ثبت شده است؛ لطفاً نشانی یکتایی وارد کنید.",
+              code: "COURSE_SLUG_TAKEN"
+            }, 409);
+          }
           if (!message.includes("discount_price")) throw error;
           result = await db.prepare(`
             INSERT INTO courses (title, slug, description, price, image, active)
@@ -1299,6 +1307,17 @@ while (
           }, 503);
         }
 
+        const duplicateSlug = await db.prepare(
+          "SELECT id FROM courses WHERE slug = ? AND id != ?"
+        ).bind(slug, id).first();
+
+        if (duplicateSlug) {
+          return json({
+            error: "این نشانی قبلاً برای دوره دیگری ثبت شده است؛ لطفاً نشانی یکتایی وارد کنید.",
+            code: "COURSE_SLUG_TAKEN"
+          }, 409);
+        }
+
         const image =
           String(body.image || "");
 
@@ -1314,6 +1333,12 @@ while (
           `).bind(title, slug, description, price, discountPrice, image, active, id).run();
         } catch (error) {
           const message = String(error?.message || error).toLowerCase();
+          if (message.includes("unique constraint") || message.includes("courses.slug")) {
+            return json({
+              error: "این نشانی هم‌اکنون برای دوره دیگری ثبت شده است؛ لطفاً نشانی یکتایی وارد کنید.",
+              code: "COURSE_SLUG_TAKEN"
+            }, 409);
+          }
           if (!message.includes("discount_price")) throw error;
           await db.prepare(`
             UPDATE courses
