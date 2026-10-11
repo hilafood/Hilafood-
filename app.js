@@ -994,9 +994,7 @@ function updateCart() {
 
   if (checkoutButton) {
     checkoutButton.textContent =
-      STORE.settings.paymentEnabled
-        ? "ادامه و پرداخت"
-        : "ادامه برای ثبت سفارش";
+      "ادامه برای ثبت سفارش";
   }
 
   const cartItems =
@@ -2091,17 +2089,13 @@ async function submitOrder() {
         "block";
 
       checkoutButton.textContent =
-        STORE.settings.paymentEnabled
-          ? "ادامه و پرداخت"
-          : "ادامه برای ثبت سفارش";
+        "ادامه برای ثبت سفارش";
 
     }
 
 
     const paymentFollowUp =
-      STORE.settings.paymentEnabled
-        ? ""
-        : "\n\nپرداخت آنلاین در حال حاضر فعال نیست. سفارش ثبت شده است؛ برای هماهنگی پرداخت و ارسال، از راه‌های تماس درج‌شده در سایت پیگیری کنید.";
+      "\n\nپرداخت آنلاین از طریق این صفحه انجام نمی‌شود. سفارش ثبت شده است؛ برای هماهنگی پرداخت و ارسال، از راه‌های تماس درج‌شده در سایت پیگیری کنید.";
 
     alert(
       "سفارش با موفقیت ثبت شد.\n\n" +
