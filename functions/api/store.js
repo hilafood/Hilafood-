@@ -1224,16 +1224,15 @@ const body =
 
         const active =
           body.active === false ? 0 : 1;
-let baseSlug = slug;
-let suffix = 2;
+const duplicateSlug = await db.prepare(
+          "SELECT id FROM courses WHERE slug = ?"
+        ).bind(slug).first();
+        if (duplicateSlug) {
+          return json({
+            error: "این نشانی برای دوره دیگری ثبت شده است؛ لطفاً نشانی یکتایی وارد کنید."
+          }, 409);
+        }
 
-while (
-  await db.prepare(
-    "SELECT id FROM courses WHERE slug = ?"
-  ).bind(baseSlug).first()
-) {
-  baseSlug = `${slug}-${suffix++}`;
-}
         let result;
         try {
           result = await db.prepare(`
@@ -1285,6 +1284,15 @@ while (
 
         const slug =
           String(body.slug || title.toLowerCase().replace(/\s+/g, "-")).trim();
+
+        const duplicateSlug = await db.prepare(
+          "SELECT id FROM courses WHERE slug = ? AND id != ?"
+        ).bind(slug, id).first();
+        if (duplicateSlug) {
+          return json({
+            error: "این نشانی برای دوره دیگری ثبت شده است؛ لطفاً نشانی یکتایی وارد کنید."
+          }, 409);
+        }
 
         const description =
           String(body.description || "");

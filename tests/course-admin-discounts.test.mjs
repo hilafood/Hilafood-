@@ -36,6 +36,9 @@ function makeDb({ hasDiscount = true, courses = [] } = {}) {
         },
         async first() {
           if (sql.includes("SELECT COUNT(*) AS total FROM products")) return { total: 1 };
+          if (sql.includes("SELECT id FROM courses WHERE slug = ? AND id != ?")) {
+            return state.courses.find(course => course.slug === args[0] && Number(course.id) !== Number(args[1])) || null;
+          }
           if (sql.includes("SELECT id FROM courses WHERE slug = ?")) return state.courses.find(course => course.slug === args[0]) || null;
           return null;
         },
@@ -86,6 +89,30 @@ test("creates a course at its original price without a discount", async () => {
   assert.equal(db.state.courses[0].price, 500000);
   assert.equal(db.state.courses[0].discount_price, null);
 });
+test("rejects a duplicate slug on course creation with a clear message", async () => {
+  const db = makeDb({ courses: [{ id: 2, ...baseCourse }] });
+  const response = await save(db, { action: "admin-course-create", ...baseCourse, title: "دوره دیگر" });
+  assert.equal(response.status, 409);
+  assert.match((await response.json()).error, /نشانی.*دوره دیگری/);
+  assert.equal(db.state.courses.length, 1);
+  assert.equal(db.state.courses[0].title, baseCourse.title);
+});
+
+test("rejects a duplicate slug on update without changing either course", async () => {
+  const other = { ...baseCourse, id: 8, title: "دوره دیگر", slug: "other-course", price: 250000, discount_price: null };
+  const current = { ...baseCourse, id: 4, title: "دوره قابل ویرایش", slug: "editable-course", discount_price: 350000 };
+  const db = makeDb({ courses: [current, other] });
+  const response = await save(db, { action: "admin-course-update", id: 4, ...baseCourse, slug: "other-course", title: "عنوان تغییرکرده", price: 700000, discountPrice: 450000 });
+  assert.equal(response.status, 409);
+  assert.match((await response.json()).error, /نشانی.*دوره دیگری/);
+  assert.equal(db.state.courses.find(course => course.id === 4).title, "دوره قابل ویرایش");
+  assert.equal(db.state.courses.find(course => course.id === 4).slug, "editable-course");
+  assert.equal(db.state.courses.find(course => course.id === 4).price, 500000);
+  assert.equal(db.state.courses.find(course => course.id === 4).discount_price, 350000);
+  assert.equal(db.state.courses.find(course => course.id === 8).title, "دوره دیگر");
+  assert.equal(db.state.courses.find(course => course.id === 8).slug, "other-course");
+});
+
 test("creates a course with a valid discount", async () => {
   const db = makeDb();
   const response = await save(db, { action: "admin-course-create", ...baseCourse, discountPrice: 350000 });
