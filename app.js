@@ -158,10 +158,6 @@ function displayProductName(name) {
   return String(name || "").replace(/\s*[|،·-]?\s*[0-9۰-۹٠-٩]+\s*(?:گرم|g\b)/gi, "").replace(/\s{2,}/g, " ").trim();
 }
 
-function displayProductName(name) {
-  return String(name || "").replace(/\s*[|،·-]?\s*[0-9۰-۹٠-٩]+\s*(?:گرم|g\b)/gi, "").replace(/\s{2,}/g, " ").trim();
-}
-
 function productWeightGrams(product) {
   const configured = Number(STORE.settings.productWeights?.[String(product.id)]);
   if (Number.isSafeInteger(configured) && configured > 0) return configured;
@@ -935,7 +931,7 @@ function addToCart(id, orderType = "full") {
   if (finalPrice(product) <= 0) { alert("قیمت این محصول هنوز ثبت نشده است."); return; }
   if (!["full", "test"].includes(orderType)) { alert("نوع سفارش نامعتبر است."); return; }
   if (orderType === "test" && productWeightGrams(product) <= 0) {
-    alert("برای سفارش تست، ابتدا باید وزن بسته اصلی در پنل مدیریت ثبت شود.");
+    alert("سفارش تست این محصول فعلاً فعال نیست.");
     return;
   }
   const existing = cart.find(item => String(item.id) === String(id) && (item.orderType || "full") === orderType);
