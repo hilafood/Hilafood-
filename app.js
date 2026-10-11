@@ -39,6 +39,7 @@ function img(path) {
   }
 
   if (
+    v === "farni-tokhm-kharbeze.jpg" ||
     v.startsWith("assets/") ||
     v.startsWith("category/") ||
     v.startsWith("http://") ||
@@ -871,54 +872,51 @@ function filterProducts(q) {
    ویدئو
 ================================================== */
 
-function renderVideo() {
+const PRODUCT_INTRO_VIDEOS = [
+  { title: "فرنی به‌سیب", src: "assets/01-ferni-be-sib.mp4", poster: "assets/farni-beh-sib.webp" },
+  { title: "سویلاک کودک", src: "assets/02-soylak-koodak.mp4" },
+  { title: "فرنی تخم خربزه", src: "assets/03-ferni-tokhm-kharboze.mp4", poster: "farni-tokhm-kharbeze.jpg" },
+  { title: "اُمیلا", src: "assets/04-omila.mp4", poster: "assets/chasni-omega.webp" },
+  { title: "کاچی بزرک", src: "assets/05-kachi-bozorg.mp4", poster: "assets/kachi-bozorg.webp" }
+];
 
-  const videoBox =
-    $("videoBox");
+const PRODUCT_PREPARATION_VIDEOS = [
+  { title: "آماده‌سازی فرنی به‌سیب", src: "assets/06-amade-sazi-ferni-be-sib.mp4", poster: "assets/farni-beh-sib.webp" },
+  { title: "آماده‌سازی فرنی تخم خربزه", src: "assets/07-amade-sazi-ferni-tokhm-kharboze.mp4", poster: "farni-tokhm-kharbeze.jpg" },
+  { title: "آماده‌سازی اُمیلا", src: "assets/08-amade-sazi-omila.mp4", poster: "assets/chasni-omega.webp" },
+  { title: "آماده‌سازی کاچی بزرک", src: "assets/09-amade-sazi-kachi-bozorg.mp4", poster: "assets/kachi-bozorg.webp" }
+];
 
-  if (!videoBox) {
-    return;
-  }
-
-
-  const product =
-    STORE.products.find(
-      x => x.video
-    );
-
-
-  if (!product) {
-    return;
-  }
-
-
-  videoBox.innerHTML = `
-
-    <div>
-
-      <h3>
-        ${displayProductName(product.name)}
-      </h3>
-
-      <p>
-        برای مشاهده طرز آماده‌سازی،
-        ویدئوی محصول را ببینید.
-      </p>
-
-      <a
-        class="btn purple"
-        href="${product.video}"
-        target="_blank"
-        rel="noopener"
-      >
-        ▶ مشاهده ویدئو
-      </a>
-
-    </div>
-
-  `;
+function videoCard(item, kind) {
+  const poster = item.poster ? " poster=\"" + img(item.poster) + "\"" : "";
+  return '<article class="media-video-card ' + kind + '">' +
+    '<h3>' + item.title + '</h3>' +
+    '<video controls playsinline preload="none"' + poster + ' aria-label="' + item.title + '">' +
+    '<source src="' + item.src + '" type="video/mp4">' +
+    'مرورگر شما از پخش ویدئو پشتیبانی نمی‌کند.' +
+    '</video></article>';
 }
 
+function renderProductIntroVideos() {
+  const grid = $("productVideoGrid");
+  if (!grid) return;
+  grid.innerHTML = PRODUCT_INTRO_VIDEOS.map(item => videoCard(item, "product-intro-card")).join("");
+}
+
+function renderVideo() {
+  renderProductIntroVideos();
+  const videoBox = $("preparationVideoGrid");
+  if (!videoBox) return;
+  const fixedSources = new Set(PRODUCT_PREPARATION_VIDEOS.map(item => item.src));
+  const preparedCards = PRODUCT_PREPARATION_VIDEOS.map(item => videoCard(item, "preparation-card"));
+  // Keep videos entered from the admin panel visible without duplicating fixed preparation videos.
+  const extraVideos = (Array.isArray(STORE.products) ? STORE.products : [])
+    .filter(product => product && product.video && !fixedSources.has(String(product.video)))
+    .map(product => '<article class="media-video-card preparation-card"><h3>' +
+      displayProductName(product.name) + '</h3><p>ویدئوی ثبت‌شده در مدیریت</p>' +
+      '<a class="video-link" href="' + product.video + '" target="_blank" rel="noopener">▶ مشاهده ویدئو</a></article>');
+  videoBox.innerHTML = [...preparedCards, ...extraVideos].join("");
+}
 
 /* ==================================================
    افزودن به سبد

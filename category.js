@@ -14,7 +14,7 @@ const $ = id => document.getElementById(id);
 const path = x => {
   const v = String(x || '');
   return v
-    ? (v.startsWith('assets/') || v.startsWith('category/')
+    ? (v === 'farni-tokhm-kharbeze.jpg' || v.startsWith('assets/') || v.startsWith('category/') || v.startsWith('http://') || v.startsWith('https://')
         ? v
         : 'assets/' + v)
     : '';
