@@ -228,6 +228,49 @@ function json(data, status = 200) {
 }
 
 
+/* اعتبارسنجی قیمت دوره و تشخیص طرح‌واره تخفیف */
+function normalizeCoursePricing(body) {
+  const price = Number(body?.price);
+  if (!Number.isSafeInteger(price) || price < 1000) {
+    return { ok: false, error: "قیمت اصلی دوره باید عدد صحیح و حداقل ۱۰۰۰ تومان باشد." };
+  }
+
+  const rawDiscount = body?.discountPrice;
+  const discountPrice = rawDiscount === null || rawDiscount === undefined || rawDiscount === ""
+    ? null
+    : Number(rawDiscount);
+
+  if (discountPrice !== null &&
+      (!Number.isSafeInteger(discountPrice) || discountPrice <= 0 || discountPrice >= price)) {
+    return { ok: false, error: "قیمت تخفیف باید عدد صحیح، مثبت و کمتر از قیمت اصلی باشد." };
+  }
+
+  return { ok: true, price, discountPrice };
+}
+
+async function courseDiscountColumnAvailable(db) {
+  try {
+    const result = await db.prepare("PRAGMA table_info(courses)").all();
+    return (result?.results || []).some(column => column.name === "discount_price");
+  } catch {
+    return false;
+  }
+}
+
+function isDuplicateCourseSlugError(error) {
+  const message = String(error?.message || error).toLowerCase();
+  return message.includes("unique constraint") ||
+    message.includes("courses.slug") ||
+    message.includes("unique failed");
+}
+
+function duplicateCourseSlugResponse() {
+  return json({
+    error: "این نشانی قبلاً برای دوره دیگری ثبت شده است؛ لطفاً نشانی یکتایی وارد کنید.",
+    code: "COURSE_SLUG_TAKEN"
+  }, 409);
+}
+
 /* ==================================================
    ساخت جدول‌های D1
 ================================================== */
@@ -1013,6 +1056,7 @@ async function getStore(db) {
 
     }));
 
+const hasCourseDiscount = await courseDiscountColumnAvailable(db);
 const coursesResult =
   await db.prepare(`
     SELECT
@@ -1021,6 +1065,7 @@ const coursesResult =
       slug,
       description,
       price,
+      ${hasCourseDiscount ? "discount_price" : "NULL AS discount_price"},
       image,
       active
     FROM courses
@@ -1139,9 +1184,11 @@ const body =
       // لیست دوره‌ها
       if (action === "admin-courses-list") {
 
+        const hasDiscountColumn = await courseDiscountColumnAvailable(db);
         const result =
           await db.prepare(`
-            SELECT *
+            SELECT *,
+              ${hasDiscountColumn ? "discount_price" : "NULL AS discount_price"}
             FROM courses
             ORDER BY id DESC
           `).all();
@@ -1177,49 +1224,48 @@ const body =
         const description =
           String(body.description || "");
 
-        const price =
-          Math.max(
-            0,
-            Number(body.price || 0)
-          );
+        const pricing = normalizeCoursePricing(body);
+        if (!pricing.ok) return json({ error: pricing.error }, 400);
+        const { price, discountPrice } = pricing;
+        const hasDiscountColumn = await courseDiscountColumnAvailable(db);
+        if (discountPrice !== null && !hasDiscountColumn) {
+          return json({
+            error: "ستون تخفیف دوره در پایگاه داده وجود ندارد؛ تخفیف ذخیره نشد و دوره‌ای ثبت نشد. ابتدا طرح‌واره محیط هدف را بررسی کنید.",
+            code: "COURSE_DISCOUNT_SCHEMA_MISSING",
+            migrationRequired: true
+          }, 503);
+        }
 
         const image =
           String(body.image || "");
 
         const active =
           body.active === false ? 0 : 1;
-let baseSlug = slug;
-let suffix = 2;
 
-while (
-  await db.prepare(
-    "SELECT id FROM courses WHERE slug = ?"
-  ).bind(baseSlug).first()
-) {
-  baseSlug = `${slug}-${suffix++}`;
-}
-        const result =
-          await db.prepare(`
-            INSERT INTO courses
-            (
-              title,
-              slug,
-              description,
-              price,
-              image,
-              active
-            )
-            VALUES (?, ?, ?, ?, ?, ?)
-          `)
-          .bind(
-            title,
-            baseSlug,
-            description,
-            price,
-            image,
-            active
-          )
-          .run();
+        const duplicate = await db.prepare(
+          "SELECT id FROM courses WHERE slug = ?"
+        ).bind(slug).first();
+        if (duplicate) return duplicateCourseSlugResponse();
+
+        let result;
+        try {
+          if (hasDiscountColumn) {
+            result = await db.prepare(`
+              INSERT INTO courses
+                (title, slug, description, price, discount_price, image, active)
+              VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).bind(title, slug, description, price, discountPrice, image, active).run();
+          } else {
+            result = await db.prepare(`
+              INSERT INTO courses
+                (title, slug, description, price, image, active)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `).bind(title, slug, description, price, image, active).run();
+          }
+        } catch (error) {
+          if (isDuplicateCourseSlugError(error)) return duplicateCourseSlugResponse();
+          throw error;
+        }
 
         return json({
           ok: true,
@@ -1254,16 +1300,27 @@ while (
         }
 
         const slug =
-          String(body.slug || "").trim();
+          String(body.slug || title.toLowerCase().replace(/\\s+/g, "-")).trim();
 
         const description =
           String(body.description || "");
 
-        const price =
-          Math.max(
-            0,
-            Number(body.price || 0)
-          );
+        const pricing = normalizeCoursePricing(body);
+        if (!pricing.ok) return json({ error: pricing.error }, 400);
+        const { price, discountPrice } = pricing;
+        const hasDiscountColumn = await courseDiscountColumnAvailable(db);
+        if (discountPrice !== null && !hasDiscountColumn) {
+          return json({
+            error: "ستون تخفیف دوره در پایگاه داده وجود ندارد؛ تخفیف ذخیره نشد و هیچ تغییری در دوره انجام نشد. ابتدا طرح‌واره محیط هدف را بررسی کنید.",
+            code: "COURSE_DISCOUNT_SCHEMA_MISSING",
+            migrationRequired: true
+          }, 503);
+        }
+
+        const duplicate = await db.prepare(
+          "SELECT id FROM courses WHERE slug = ? AND id != ?"
+        ).bind(slug, id).first();
+        if (duplicate) return duplicateCourseSlugResponse();
 
         const image =
           String(body.image || "");
@@ -1271,28 +1328,26 @@ while (
         const active =
           body.active === false ? 0 : 1;
 
-        await db.prepare(`
-          UPDATE courses
-          SET
-            title = ?,
-            slug = ?,
-            description = ?,
-            price = ?,
-            image = ?,
-            active = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `)
-        .bind(
-          title,
-          slug,
-          description,
-          price,
-          image,
-          active,
-          id
-        )
-        .run();
+        try {
+          if (hasDiscountColumn) {
+            await db.prepare(`
+              UPDATE courses
+              SET title = ?, slug = ?, description = ?, price = ?, discount_price = ?,
+                  image = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(title, slug, description, price, discountPrice, image, active, id).run();
+          } else {
+            await db.prepare(`
+              UPDATE courses
+              SET title = ?, slug = ?, description = ?, price = ?,
+                  image = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(title, slug, description, price, image, active, id).run();
+          }
+        } catch (error) {
+          if (isDuplicateCourseSlugError(error)) return duplicateCourseSlugResponse();
+          throw error;
+        }
 
         return json({
           ok: true
