@@ -228,6 +228,38 @@ function json(data, status = 200) {
 }
 
 
+/* Validate product prices before they are persisted. */
+function normalizeProductPricing(product) {
+  const rawPrice = product?.price;
+  if (rawPrice === null || rawPrice === undefined ||
+      (typeof rawPrice === "string" && rawPrice.trim() === "") ||
+      typeof rawPrice === "boolean") {
+    return { ok: false, error: "قیمت محصول باید عدد صحیح و نامنفی باشد." };
+  }
+
+  const price = Number(rawPrice);
+  if (!Number.isSafeInteger(price) || price < 0) {
+    return { ok: false, error: "قیمت محصول باید عدد صحیح و نامنفی باشد." };
+  }
+
+  const rawDiscount = product?.discountPrice;
+  if (typeof rawDiscount === "boolean") {
+    return { ok: false, error: "قیمت تخفیف باید عدد صحیح و کمتر از قیمت اصلی باشد." };
+  }
+  const discountIsBlank = rawDiscount === null || rawDiscount === undefined ||
+    rawDiscount === 0 || rawDiscount === "0" ||
+    (typeof rawDiscount === "string" && rawDiscount.trim() === "");
+  const discountPrice = discountIsBlank ? null : Number(rawDiscount);
+
+  if (discountPrice !== null &&
+      (!Number.isSafeInteger(discountPrice) || discountPrice <= 0 ||
+       price <= 0 || discountPrice >= price)) {
+    return { ok: false, error: "قیمت تخفیف باید عدد صحیح، مثبت و کمتر از قیمت اصلی باشد." };
+  }
+
+  return { ok: true, price, discountPrice };
+}
+
 /* اعتبارسنجی قیمت دوره و تشخیص طرح‌واره تخفیف */
 function normalizeCoursePricing(body) {
   const price = Number(body?.price);
@@ -2405,6 +2437,10 @@ const body =
           Date.now()
         );
 
+      const pricing = normalizeProductPricing(p);
+      if (!pricing.ok) return json({ error: pricing.error }, 400);
+      const { price, discountPrice } = pricing;
+
       const hasWeight = Object.prototype.hasOwnProperty.call(p, "weightGrams");
       const normalizedWeight = normalizeAdminWeight(p.weightGrams);
       if (hasWeight && !normalizedWeight.ok) {
@@ -2444,16 +2480,9 @@ const body =
           p.desc || ""
         ),
 
-        Number(
-          p.price || 0
-        ),
+        price,
 
-        p.discountPrice == null ||
-        p.discountPrice === ""
-          ? null
-          : Number(
-              p.discountPrice
-            ),
+        discountPrice,
 
         String(
           p.stage || ""
@@ -2977,16 +3006,9 @@ export async function onRequestPut({
         p.desc || ""
       ),
 
-      Number(
-        p.price || 0
-      ),
+      price,
 
-      p.discountPrice == null ||
-      p.discountPrice === ""
-        ? null
-        : Number(
-            p.discountPrice
-          ),
+      discountPrice,
 
       String(
         p.stage || ""
