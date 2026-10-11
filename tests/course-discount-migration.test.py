@@ -44,6 +44,7 @@ class CourseDiscountMigrationTest(unittest.TestCase):
             connection.execute(
                 "INSERT INTO courses (id, title, slug, price) VALUES (1, 'Existing', 'existing', 500000)"
             )
+            connection.commit()
 
             self.assertTrue(apply_tracked_migration(connection, MIGRATION))
             columns = [
