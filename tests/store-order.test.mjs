@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { onRequestPost } from "../functions/api/store.js";
+import { onRequestPost, onRequestPut } from "../functions/api/store.js";
 
 const origin = "https://hilafood.pages.dev";
 function makeDb() {
@@ -12,6 +12,9 @@ function makeDb() {
       const stmt = { sql, args: [], bind(...args) { stmt.args = args; return stmt; } };
       stmt.first = async () => {
         if (sql.includes("SELECT COUNT(*) AS total FROM products")) return { total: 1 };
+        if (sql.includes("SELECT id FROM products WHERE id = ?")) {
+          return String(stmt.args[0]) === String(state.product.id) ? { id: state.product.id } : null;
+        }
         if (sql.includes("FROM products") && sql.includes("discount_price") && sql.includes("WHERE id = ?")) {
           return String(stmt.args[0]) === String(state.product.id) ? state.product : null;
         }
@@ -47,6 +50,20 @@ function makeDb() {
         return { results: [] };
       };
       stmt.run = async () => {
+        if (sql.includes("UPDATE products")) {
+          state.product = {
+            id: stmt.args[9],
+            name: stmt.args[0],
+            price: stmt.args[3],
+            discount_price: stmt.args[4],
+            active: stmt.args[8]
+          };
+          return { meta: { changes: 1 } };
+        }
+        if (sql.includes("INSERT INTO settings") && sql.includes("productWeights")) {
+          state.productWeights = JSON.parse(stmt.args[0]);
+          return { meta: { changes: 1 } };
+        }
         if (sql.includes("INSERT INTO orders")) {
           state.orders.push(stmt.args);
           return { meta: { last_row_id: 41, changes: 1 } };
@@ -152,11 +169,34 @@ test("test order uses one quarter of the currently payable discounted price and 
   assert.equal(item.orderTypeLabel, "سفارش تست محصول");
 });
 
-test("test price and weight update automatically when product price and weight change", async () => {
+test("test price and weight update automatically after an admin product edit", async () => {
   const db = makeDb();
-  db.state.product.price = 280000;
-  db.state.product.discount_price = null;
-  db.state.productWeights.p1 = 600;
+  const updateResponse = await onRequestPut({
+    request: new Request(origin + "/api/store", {
+      method: "PUT",
+      headers: { Origin: origin, "Content-Type": "application/json", "x-admin-key": "test-admin-key" },
+      body: JSON.stringify({
+        product: {
+          id: "p1",
+          name: "محصول آزمایشی",
+          cat: "",
+          desc: "",
+          price: 280000,
+          discountPrice: null,
+          weightGrams: 600,
+          stage: "",
+          video: "",
+          img: "",
+          active: true
+        }
+      })
+    }),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(updateResponse.status, 200);
+  assert.equal(db.state.product.price, 280000);
+  assert.equal(db.state.productWeights.p1, 600);
+
   const response = await onRequestPost({
     request: request(1, { orderType: "test" }),
     env: { DB: db }
