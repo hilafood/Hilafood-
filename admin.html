@@ -681,7 +681,17 @@ button{cursor:pointer}
     <input
       id="coursePrice"
       type="number"
-      placeholder="قیمت دوره"
+      min="1000"
+      step="1"
+      placeholder="قیمت اصلی دوره (تومان)"
+    >
+
+    <input
+      id="courseDiscountPrice"
+      type="number"
+      min="1"
+      step="1"
+      placeholder="قیمت با تخفیف (اختیاری)"
     >
 
     <input
@@ -928,6 +938,12 @@ async function loadCourses(){
 
         const price =
           Number(course.price || 0);
+        const discount =
+          Number(course.discount_price);
+        const hasDiscount =
+          Number.isSafeInteger(price) && price >= 1000 &&
+          Number.isSafeInteger(discount) && discount > 0 &&
+          discount < price;
 
         return `
           <div
@@ -953,10 +969,11 @@ async function loadCourses(){
 
                 <div class="muted">
                   قیمت:
-                  ${
-                    price.toLocaleString("fa-IR")
-                  }
+                  ${hasDiscount
+                    ? `<del>${price.toLocaleString("fa-IR")}</del> <strong>${discount.toLocaleString("fa-IR")}</strong>`
+                    : price.toLocaleString("fa-IR")}
                   تومان
+                  ${hasDiscount ? " (با تخفیف)" : ""}
                 </div>
 
                 <div class="muted">
@@ -1049,10 +1066,25 @@ async function saveCourse(){
   const description =
     $("courseDescription")?.value || "";
 
+  const priceRaw =
+    $("coursePrice")?.value.trim() || "";
   const price =
-    Number(
-      $("coursePrice")?.value || 0
-    );
+    priceRaw === "" ? NaN : Number(priceRaw);
+  const discountRaw =
+    $("courseDiscountPrice")?.value.trim() || "";
+  const discountPrice =
+    discountRaw === "" ? null : Number(discountRaw);
+
+  if (!Number.isSafeInteger(price) || price < 1000) {
+    alert("قیمت اصلی دوره باید عدد صحیح و حداقل ۱۰۰۰ تومان باشد.");
+    return;
+  }
+
+  if (discountPrice !== null &&
+      (!Number.isSafeInteger(discountPrice) || discountPrice <= 0 || discountPrice >= price)) {
+    alert("قیمت تخفیف باید عدد صحیح، مثبت و کمتر از قیمت اصلی باشد.");
+    return;
+  }
 
   const image =
     $("courseImage")?.value.trim() || "";
@@ -1091,6 +1123,8 @@ async function saveCourse(){
 
       price,
 
+      discountPrice,
+
       image,
 
       active
@@ -1120,9 +1154,11 @@ async function saveCourse(){
 
   }catch(error){
 
+    const message = String(error.message || "");
     alert(
-      "خطا در ذخیره دوره:\n" +
-      error.message
+      message.includes("نشانی")
+        ? "نشانی دوره تکراری است. لطفاً یک نشانی یکتا وارد کنید."
+        : "خطا در ذخیره دوره:\n" + message
     );
 
   }
@@ -1146,6 +1182,10 @@ function clearCourseForm(){
 
   if($("coursePrice")){
     $("coursePrice").value = "";
+  }
+
+  if($("courseDiscountPrice")){
+    $("courseDiscountPrice").value = "";
   }
 
   if($("courseImage")){
@@ -1205,6 +1245,9 @@ async function editCourse(id){
 
     $("coursePrice").value =
       Number(course.price || 0);
+
+    $("courseDiscountPrice").value =
+      course.discount_price == null ? "" : Number(course.discount_price);
 
     $("courseImage").value =
       course.image || "";
