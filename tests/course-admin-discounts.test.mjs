@@ -5,11 +5,13 @@ import { onRequestGet, onRequestPost } from "../functions/api/store.js";
 const origin = "https://hilafood.pages.dev";
 const adminKey = "test-admin-key";
 
-function makeDb({ hasDiscount = true, courses = [], simulateSlugRace = false } = {}) {
+function makeDb({ hasDiscount = true, courses = [], simulateSlugRace = false, simulateUpdateSlugRace = false } = {}) {
   const state = {
     hasDiscount,
     simulateSlugRace,
+    simulateUpdateSlugRace,
     slugPrecheckSeen: false,
+    updateSlugPrecheckSeen: false,
     courses: courses.map(course => ({ ...course })),
     nextId: Math.max(0, ...courses.map(course => Number(course.id) || 0)) + 1
   };
@@ -39,6 +41,10 @@ function makeDb({ hasDiscount = true, courses = [], simulateSlugRace = false } =
         async first() {
           if (sql.includes("SELECT COUNT(*) AS total FROM products")) return { total: 1 };
           if (sql.includes("SELECT id FROM courses WHERE slug = ? AND id != ?")) {
+            if (state.simulateUpdateSlugRace && !state.updateSlugPrecheckSeen) {
+              state.updateSlugPrecheckSeen = true;
+              return null;
+            }
             return state.courses.find(course =>
               course.slug === args[0] && Number(course.id) !== Number(args[1])
             ) || null;
@@ -67,6 +73,14 @@ function makeDb({ hasDiscount = true, courses = [], simulateSlugRace = false } =
             return { meta: { last_row_id: row.id, changes: 1 } };
           }
           if (sql.includes("UPDATE courses")) {
+            if (state.simulateUpdateSlugRace && state.updateSlugPrecheckSeen) {
+              state.courses.push({
+                id: state.nextId++, title: "دوره درخواست هم‌زمان", slug: args[1],
+                price: 500000, discount_price: null, active: 1
+              });
+              state.simulateUpdateSlugRace = false;
+              throw new Error("UNIQUE constraint failed: courses.slug");
+            }
             if (sql.includes("discount_price") && !state.hasDiscount) throw new Error("no such column: discount_price");
             const withDiscount = sql.includes("discount_price");
             const id = Number(args[withDiscount ? 7 : 6]);
@@ -76,6 +90,12 @@ function makeDb({ hasDiscount = true, courses = [], simulateSlugRace = false } =
               ? { title: args[0], slug: args[1], description: args[2], price: args[3], discount_price: args[4], image: args[5], active: args[6] }
               : { title: args[0], slug: args[1], description: args[2], price: args[3], image: args[4], active: args[5] });
             return { meta: { changes: 1 } };
+          }
+          if (sql.includes("DELETE FROM courses")) {
+            const id = Number(args[0]);
+            const before = state.courses.length;
+            state.courses = state.courses.filter(course => Number(course.id) !== id);
+            return { meta: { changes: before - state.courses.length } };
           }
           return { meta: { changes: 1 } };
         }
@@ -243,4 +263,35 @@ test("admin course list includes discount_price when the column exists", async (
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.courses[0].discount_price, 350000);
+});
+
+test("maps a database unique-slug race during update to a conflict and preserves both courses", async () => {
+  const first = { id: 7, ...baseCourse, title: "دوره اول", slug: "first-course", discount_price: null };
+  const db = makeDb({ courses: [first], simulateUpdateSlugRace: true });
+  const response = await save(db, {
+    action: "admin-course-update", id: 7, ...baseCourse,
+    title: "عنوان نباید ذخیره شود", slug: "concurrent-course", discountPrice: null
+  });
+  assert.equal(response.status, 409);
+  const body = await response.json();
+  assert.equal(body.code, "COURSE_SLUG_TAKEN");
+  assert.equal(db.state.courses.length, 2);
+  assert.equal(db.state.courses[0].title, "دوره اول");
+  assert.equal(db.state.courses[0].slug, "first-course");
+  assert.equal(db.state.courses[1].title, "دوره درخواست هم‌زمان");
+  assert.equal(db.state.courses[1].slug, "concurrent-course");
+});
+
+test("deleting a course remains supported", async () => {
+  const db = makeDb({ courses: [{ id: 4, ...baseCourse, discount_price: 350000 }] });
+  const response = await save(db, { action: "admin-course-delete", id: 4 });
+  assert.equal(response.status, 200);
+  assert.equal(db.state.courses.length, 0);
+});
+
+test("whitespace-only discount is treated as no discount", async () => {
+  const db = makeDb();
+  const response = await save(db, { action: "admin-course-create", ...baseCourse, discountPrice: "   " });
+  assert.equal(response.status, 200);
+  assert.equal(db.state.courses[0].discount_price, null);
 });
