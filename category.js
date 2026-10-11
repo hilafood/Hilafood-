@@ -11,6 +11,23 @@ let cat = new URLSearchParams(location.search).get('cat') || '';
 
 const $ = id => document.getElementById(id);
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
+}
+
+function safeVideoUrl(value) {
+  const url = String(value || "").trim();
+  if (/^https?:\/\//i.test(url)) return escapeHtml(url);
+  if (/^(?!\/\/)[A-Za-z0-9._/-]+(?:\?[A-Za-z0-9._=&%-]*)?$/.test(url)) return escapeHtml(url);
+  return "";
+}
+
 const path = x => {
   const v = String(x || '');
   return v
@@ -177,6 +194,7 @@ let list = (DATA.products || []).filter(p =>
         const d =
           Number(p.discountPrice) > 0 &&
           Number(p.discountPrice) < Number(p.price);
+        const videoUrl = safeVideoUrl(p.video);
 
         return `
           <article class="vertical-product">
@@ -185,9 +203,9 @@ let list = (DATA.products || []).filter(p =>
               p.img
                 ? `
                   <img
-                    src="${path(p.img)}"
+                    src="${escapeHtml(path(p.img))}"
                     loading="lazy"
-                    alt="${displayProductName(p.name || 'محصول')}"
+                    alt="${escapeHtml(displayProductName(p.name || 'محصول'))}"
                   >
                 `
                 : `
@@ -202,14 +220,14 @@ let list = (DATA.products || []).filter(p =>
             <div>
 
               <small>
-                ${p.cat || ''}
+                ${escapeHtml(p.cat || '')}
                 ${p.cat && p.stage ? ' | ' : ''}
-                ${p.stage || ''}
+                ${escapeHtml(p.stage || '')}
               </small>
 
-              <h2>${displayProductName(p.name || '')}</h2>
+              <h2>${escapeHtml(displayProductName(p.name || ''))}</h2>
 
-              <p>${p.desc || ''}</p>
+              <p>${escapeHtml(p.desc || '')}</p>
 
               ${
                 DATA.settings.showPrices
@@ -233,11 +251,11 @@ let list = (DATA.products || []).filter(p =>
               }
 
               ${
-                p.video
+                videoUrl
                   ? `
                     <a
                       class="video-link"
-                      href="${p.video}"
+                      href="${videoUrl}"
                       target="_blank"
                       rel="noopener"
                     >
@@ -248,7 +266,7 @@ let list = (DATA.products || []).filter(p =>
               }
 
               <div class="vertical-order-actions">
-                <button type="button" class="details" onclick="addCategoryToCart('${p.id}', 'full')">خرید محصول کامل</button>
+                <button type="button" class="details" onclick="addCategoryToCart(${escapeHtml(JSON.stringify(String(p.id || "")))}, 'full')">خرید محصول کامل</button>
               </div>
 
               <section class="test-order-panel" aria-label="سفارش تست محصول">
@@ -256,7 +274,7 @@ let list = (DATA.products || []).filter(p =>
                 ${productWeightGrams(p) > 0
                   ? `
                     <p>قیمت بسته تست: ${money(Math.round(price(p) / 4))}</p>
-                    <button type="button" class="test-order-button" onclick="addCategoryToCart('${p.id}', 'test')">سفارش تست</button>
+                    <button type="button" class="test-order-button" onclick="addCategoryToCart(${escapeHtml(JSON.stringify(String(p.id || "")))}, 'test')">سفارش تست</button>
                   `
                   : `
                     <p>سفارش تست این محصول فعلاً فعال نیست.</p>
