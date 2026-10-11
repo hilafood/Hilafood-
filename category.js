@@ -46,6 +46,10 @@ function parseProductWeightGrams(name) {
   return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;
 }
 
+function displayProductName(name) {
+  return String(name || "").replace(/\s*[|،·-]?\s*[0-9۰-۹٠-٩]+\s*(?:گرم|g\b)/gi, "").replace(/\s{2,}/g, " ").trim();
+}
+
 function productWeightGrams(product) {
   const configured = Number(DATA.settings?.productWeights?.[String(product.id)]);
   if (Number.isSafeInteger(configured) && configured > 0) return configured;
@@ -181,7 +185,7 @@ let list = (DATA.products || []).filter(p =>
                   <img
                     src="${path(p.img)}"
                     loading="lazy"
-                    alt="${p.name || 'محصول'}"
+                    alt="${displayProductName(p.name || 'محصول')}"
                   >
                 `
                 : `
@@ -201,7 +205,7 @@ let list = (DATA.products || []).filter(p =>
                 ${p.stage || ''}
               </small>
 
-              <h2>${p.name || ''}</h2>
+              <h2>${displayProductName(p.name || '')}</h2>
 
               <p>${p.desc || ''}</p>
 
@@ -249,7 +253,6 @@ let list = (DATA.products || []).filter(p =>
                 <strong>سفارش تست محصول</strong>
                 ${productWeightGrams(p) > 0
                   ? `
-                    <p>وزن بسته تست: ${(productWeightGrams(p) / 4).toLocaleString('fa-IR')} گرم</p>
                     <p>قیمت بسته تست: ${money(Math.round(price(p) / 4))}</p>
                     <button type="button" class="test-order-button" onclick="addCategoryToCart('${p.id}', 'test')">سفارش تست</button>
                   `
