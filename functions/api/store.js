@@ -1845,11 +1845,13 @@ const body =
         // values must be safe positive integers before they enter any totals.
         const rawQuantity = item.qty;
         const quantity =
-          rawQuantity === undefined || rawQuantity === null
+          rawQuantity === undefined
             ? 1
-            : (typeof rawQuantity === "string" && rawQuantity.trim() === ""
-                ? NaN
-                : Number(rawQuantity));
+            : (typeof rawQuantity === "number"
+                ? rawQuantity
+                : (typeof rawQuantity === "string" && rawQuantity.trim() !== ""
+                    ? Number(rawQuantity)
+                    : NaN));
 
         if (!Number.isSafeInteger(quantity) || quantity <= 0) {
           return json({
