@@ -209,3 +209,38 @@ test("accepts a positive discount below the original price even when below 1000"
   assert.equal(response.status, 200);
   assert.equal(db.state.courses[0].discount_price, 1);
 });
+
+test("rejects an invalid original price during edit and preserves the stored course", async () => {
+  const existing = { id: 4, ...baseCourse, price: 500000, discount_price: 350000 };
+  const db = makeDb({ courses: [existing] });
+  const response = await save(db, {
+    action: "admin-course-update", id: 4, ...baseCourse,
+    title: "عنوان نباید ذخیره شود", price: 0, discountPrice: null
+  });
+  assert.equal(response.status, 400);
+  assert.equal(db.state.courses.length, 1);
+  assert.equal(db.state.courses[0].title, baseCourse.title);
+  assert.equal(db.state.courses[0].price, 500000);
+  assert.equal(db.state.courses[0].discount_price, 350000);
+});
+
+test("rejects discounted edit on legacy schema without partially updating the course", async () => {
+  const existing = { id: 4, ...baseCourse, price: 500000, discount_price: null };
+  const db = makeDb({ hasDiscount: false, courses: [existing] });
+  const response = await save(db, {
+    action: "admin-course-update", id: 4, ...baseCourse,
+    title: "عنوان نباید ذخیره شود", price: 600000, discountPrice: 300000
+  });
+  assert.equal(response.status, 503);
+  assert.equal(db.state.courses.length, 1);
+  assert.equal(db.state.courses[0].title, baseCourse.title);
+  assert.equal(db.state.courses[0].price, 500000);
+});
+
+test("admin course list includes discount_price when the column exists", async () => {
+  const db = makeDb({ courses: [{ id: 4, ...baseCourse, discount_price: 350000 }] });
+  const response = await save(db, { action: "admin-courses-list" });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.courses[0].discount_price, 350000);
+});
