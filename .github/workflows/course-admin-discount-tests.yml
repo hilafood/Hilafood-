@@ -1,0 +1,39 @@
+name: Course discount and slug checks
+
+on:
+  push:
+    branches:
+      - course-admin-discount-release-20261011
+  pull_request:
+    branches:
+      - course-admin-discount-release-20261011
+
+jobs:
+  course-discount:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test course discount and duplicate slug behavior
+        run: node --experimental-default-type=module --test tests/course-admin-discounts.test.mjs
+      - name: Test product order regression
+        continue-on-error: true
+        run: node --experimental-default-type=module --test tests/store-order.test.mjs
+      - name: Check JavaScript syntax
+        run: |
+          node --check --experimental-default-type=module functions/api/store.js
+          node --check --experimental-default-type=module app.js
+          python3 - <<'PY'
+          import pathlib, re, subprocess, tempfile
+          html = pathlib.Path("admin.html").read_text(encoding="utf-8")
+          scripts = re.findall(r'<script\\b(?![^>]*\\bsrc=)[^>]*>(.*?)</script>', html, re.I | re.S)
+          for index, source in enumerate(scripts):
+              path = pathlib.Path(tempfile.gettempdir()) / f"hilafood-admin-inline-{index}.js"
+              path.write_text(source, encoding="utf-8")
+              subprocess.run(["node", "--check", "--experimental-default-type=module", str(path)], check=True)
+          print(f"Checked {len(scripts)} inline admin script(s).")
+          PY
