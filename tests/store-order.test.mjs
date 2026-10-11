@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { onRequestPost, onRequestPut } from "../functions/api/store.js";
+import { onRequestDelete, onRequestPost, onRequestPut } from "../functions/api/store.js";
 
 const origin = "https://hilafood.pages.dev";
 function makeDb() {
@@ -13,10 +13,10 @@ function makeDb() {
       stmt.first = async () => {
         if (sql.includes("SELECT COUNT(*) AS total FROM products")) return { total: 1 };
         if (sql.includes("FROM products") && sql.includes("WHERE id = ?") && !sql.includes("discount_price")) {
-          return String(stmt.args[0]) === String(state.product.id) ? { id: state.product.id } : null;
+          return state.product && String(stmt.args[0]) === String(state.product.id) ? { id: state.product.id } : null;
         }
         if (sql.includes("FROM products") && sql.includes("discount_price") && sql.includes("WHERE id = ?")) {
-          return String(stmt.args[0]) === String(state.product.id) ? state.product : null;
+          return state.product && String(stmt.args[0]) === String(state.product.id) ? state.product : null;
         }
         if (sql.includes("FROM settings") && sql.includes("productWeights")) {
           return { value: JSON.stringify(state.productWeights) };
@@ -50,6 +50,11 @@ function makeDb() {
         return { results: [] };
       };
       stmt.run = async () => {
+        if (sql.includes("DELETE FROM products")) {
+          const found = state.product && String(state.product.id) === String(stmt.args[0]);
+          if (found) state.product = null;
+          return { meta: { changes: found ? 1 : 0 } };
+        }
         if (sql.includes("UPDATE products")) {
           state.product = {
             id: stmt.args[9],
@@ -291,4 +296,65 @@ test("order list requires admin access and retains paid orders for follow-up", a
   assert.equal(orders.length, 1);
   assert.equal(orders[0].paymentStatus, "paid");
   assert.equal(orders[0].status, "completed");
+});
+
+
+test("product deletion requires admin access and preserves historical orders", async () => {
+  const db = makeDb();
+  const created = await onRequestPost({
+    request: request(1),
+    env: { DB: db }
+  });
+  assert.equal(created.status, 200);
+  assert.equal(db.state.orders.length, 1);
+
+  const denied = await onRequestDelete({
+    request: new Request(origin + "/api/store", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: "p1" })
+    }),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(denied.status, 401);
+  assert.ok(db.state.product);
+
+  const removed = await onRequestDelete({
+    request: new Request(origin + "/api/store", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": "test-admin-key"
+      },
+      body: JSON.stringify({ id: "p1" })
+    }),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(removed.status, 200);
+  assert.deepEqual(await removed.json(), { success: true, id: "p1" });
+  assert.equal(db.state.product, null);
+  assert.equal(db.state.orders.length, 1);
+});
+
+test("product deletion rejects missing and unknown IDs", async () => {
+  const db = makeDb();
+  const missingId = await onRequestDelete({
+    request: new Request(origin + "/api/store", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", "x-admin-key": "test-admin-key" },
+      body: JSON.stringify({})
+    }),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(missingId.status, 400);
+
+  const unknown = await onRequestDelete({
+    request: new Request(origin + "/api/store", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", "x-admin-key": "test-admin-key" },
+      body: JSON.stringify({ id: "missing-product" })
+    }),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(unknown.status, 404);
 });
