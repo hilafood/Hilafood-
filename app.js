@@ -158,6 +158,10 @@ function displayProductName(name) {
   return String(name || "").replace(/\s*[|،·-]?\s*[0-9۰-۹٠-٩]+\s*(?:گرم|g\b)/gi, "").replace(/\s{2,}/g, " ").trim();
 }
 
+function displayProductName(name) {
+  return String(name || "").replace(/\s*[|،·-]?\s*[0-9۰-۹٠-٩]+\s*(?:گرم|g\b)/gi, "").replace(/\s{2,}/g, " ").trim();
+}
+
 function productWeightGrams(product) {
   const configured = Number(STORE.settings.productWeights?.[String(product.id)]);
   if (Number.isSafeInteger(configured) && configured > 0) return configured;
