@@ -989,6 +989,16 @@ function updateCart() {
     });
 
 
+  const checkoutButton =
+    document.querySelector(".checkout");
+
+  if (checkoutButton) {
+    checkoutButton.textContent =
+      STORE.settings.paymentEnabled
+        ? "ادامه و پرداخت"
+        : "ادامه برای ثبت سفارش";
+  }
+
   const cartItems =
     $("cartItems");
 
@@ -2081,25 +2091,27 @@ async function submitOrder() {
         "block";
 
       checkoutButton.textContent =
-        "ادامه و پرداخت";
+        STORE.settings.paymentEnabled
+          ? "ادامه و پرداخت"
+          : "ادامه برای ثبت سفارش";
 
     }
 
 
+    const paymentFollowUp =
+      STORE.settings.paymentEnabled
+        ? ""
+        : "\\n\\nپرداخت آنلاین در حال حاضر فعال نیست. سفارش ثبت شده است؛ برای هماهنگی پرداخت و ارسال، از راه‌های تماس درج‌شده در سایت پیگیری کنید.";
+
     alert(
-
-      "سفارش با موفقیت ثبت شد.\n\n" +
-
+      "سفارش با موفقیت ثبت شد.\\n\\n" +
       "شماره سفارش: " +
       data.orderId +
-
-      "\n\n" +
-
+      "\\n\\n" +
       "مبلغ نهایی: " +
-      money(data.total)
-
+      money(data.total) +
+      paymentFollowUp
     );
-
 
   } catch (error) {
 
