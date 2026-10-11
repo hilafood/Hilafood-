@@ -274,6 +274,52 @@ function duplicateCourseSlugResponse() {
   }, 409);
 }
 
+function normalizeWeightDigits(value) {
+  return String(value || "").replace(/[۰-۹٠-٩]/g, digit =>
+    "۰۱۲۳۴۵۶۷۸۹".includes(digit)
+      ? String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
+      : String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))
+  );
+}
+
+function parseProductWeightGrams(name) {
+  const normalized = normalizeWeightDigits(name);
+  const match = normalized.match(new RegExp("(?:^|[^0-9])([0-9]+)\\\\s*(?:گرم|g\\\\b)", "i"));
+  if (!match) return 0;
+  const grams = Number(match[1]);
+  return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;
+}
+
+async function readProductWeightMap(db) {
+  const result = await db.prepare("SELECT value FROM settings WHERE key = 'productWeights'").first();
+  if (!result?.value) return {};
+  try {
+    const parsed = JSON.parse(result.value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch { return {}; }
+}
+
+function normalizeAdminWeight(raw) {
+  if (raw === null || raw === undefined || (typeof raw === "string" && raw.trim() === "")) return { ok: true, value: null };
+  if (typeof raw === "boolean") return { ok: false };
+  const value = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isSafeInteger(value) || value <= 0 || value > 1000000) return { ok: false };
+  return { ok: true, value };
+}
+
+async function saveProductWeight(db, productId, weightGrams) {
+  const weights = await readProductWeightMap(db);
+  if (weightGrams === null) delete weights[String(productId)];
+  else weights[String(productId)] = weightGrams;
+  await db.prepare("INSERT INTO settings (key, value) VALUES ('productWeights', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(JSON.stringify(weights)).run();
+}
+
+function resolveProductWeight(productId, productName, weights) {
+  const configured = Number(weights?.[String(productId)]);
+  if (Number.isSafeInteger(configured) && configured > 0) return configured;
+  return parseProductWeightGrams(productName);
+}
+
 /* ==================================================
    ساخت جدول‌های D1
 ================================================== */
@@ -1831,6 +1877,7 @@ const body =
       let subtotal = 0;
 
       const cleanItems = [];
+      const productWeights = await readProductWeightMap(db);
 
 
       for (const item of items) {
@@ -1892,41 +1939,47 @@ const body =
         }
 
 
-        const price =
+        const payablePrice =
           Number(
             product.discount_price != null &&
             Number(product.discount_price) > 0 &&
-            Number(product.discount_price) <
-              Number(product.price || 0)
-
+            Number(product.discount_price) < Number(product.price || 0)
               ? product.discount_price
-
               : product.price || 0
           );
 
+        if (payablePrice <= 0) continue;
 
-        if (price <= 0) {
-          continue;
+        const orderType = item.orderType === undefined ? "full" : String(item.orderType);
+        if (!["full", "test"].includes(orderType)) {
+          return json({ error: "نوع سفارش نامعتبر است" }, 400);
         }
 
+        const originalWeightGrams = resolveProductWeight(product.id, product.name, productWeights);
+        if (orderType === "test" && (!Number.isSafeInteger(originalWeightGrams) || originalWeightGrams <= 0)) {
+          return json({ error: "وزن بسته اصلی این محصول ثبت نشده است؛ سفارش تست فعلاً قابل ثبت نیست." }, 400);
+        }
 
-        subtotal +=
-          price * quantity;
+        // Price and weight come from server-side product data, never from client item fields.
+        const unitPrice = orderType === "test" ? Math.round(payablePrice / 4) : payablePrice;
+        const itemWeightGrams = originalWeightGrams > 0
+          ? (orderType === "test" ? originalWeightGrams / 4 : originalWeightGrams)
+          : null;
 
+        if (!Number.isSafeInteger(unitPrice) || unitPrice <= 0) {
+          return json({ error: "قیمت قابل پرداخت این محصول برای سفارش معتبر نیست" }, 400);
+        }
+
+        subtotal += unitPrice * quantity;
 
         cleanItems.push({
-
-          id:
-            product.id,
-
-          name:
-            product.name,
-
-          qty:
-            quantity,
-
-          price
-
+          id: product.id,
+          name: product.name,
+          qty: quantity,
+          price: unitPrice,
+          orderType,
+          orderTypeLabel: orderType === "test" ? "سفارش تست محصول" : "محصول کامل",
+          weightGrams: itemWeightGrams
         });
       }
 
@@ -2352,6 +2405,12 @@ const body =
           Date.now()
         );
 
+      const hasWeight = Object.prototype.hasOwnProperty.call(p, "weightGrams");
+      const normalizedWeight = normalizeAdminWeight(p.weightGrams);
+      if (hasWeight && !normalizedWeight.ok) {
+        return json({ error: "وزن بسته اصلی باید عدد صحیح و مثبت برحسب گرم باشد." }, 400);
+      }
+
 
       await db.prepare(`
         INSERT INTO products
@@ -2415,6 +2474,7 @@ const body =
       )
       .run();
 
+      if (hasWeight) await saveProductWeight(db, id, normalizedWeight.value);
 
       return json({
         success: true,
@@ -2848,6 +2908,11 @@ export async function onRequestPut({
     const p =
       body.product || {};
 
+    const hasWeight = Object.prototype.hasOwnProperty.call(p, "weightGrams");
+    const normalizedWeight = normalizeAdminWeight(p.weightGrams);
+    if (hasWeight && !normalizedWeight.ok) {
+      return json({ error: "وزن بسته اصلی باید عدد صحیح و مثبت برحسب گرم باشد." }, 400);
+    }
 
     const id =
       String(
@@ -2944,6 +3009,7 @@ export async function onRequestPut({
     )
     .run();
 
+    if (hasWeight) await saveProductWeight(db, id, normalizedWeight.value);
 
     return json({
 
