@@ -869,7 +869,7 @@ async function sendEitaaOrderNotification(
   const itemsText =
     items
       .map(item =>
-        `• ${item.name} × ${item.qty} — ${Number(
+        `• ${item.name} — ${item.orderType === "test" ? `سفارش تست، ${item.weightGrams} گرم` : "محصول کامل"} × ${item.qty} — ${Number(
           item.price * item.qty
         ).toLocaleString("fa-IR")} تومان`
       )

@@ -2018,6 +2018,16 @@ async function submitOrder() {
     }
 
 
+    const orderItemsSummary = (data.items || []).map(item => {
+      const typeLabel = item.orderType === "test" ? "سفارش تست محصول" : "محصول کامل";
+      const weightLabel = Number(item.weightGrams) > 0
+        ? "، وزن بسته " + Number(item.weightGrams).toLocaleString("fa-IR") + " گرم"
+        : "";
+      return item.name + " — " + typeLabel + weightLabel +
+        " × " + Number(item.qty || 1).toLocaleString("fa-IR") +
+        " — " + money(item.price) + " برای هر بسته";
+    }).join("\n");
+
     const paymentFollowUp =
       "\n\nپرداخت آنلاین از طریق این صفحه انجام نمی‌شود. سفارش ثبت شده است؛ برای هماهنگی پرداخت و ارسال، از راه‌های تماس درج‌شده در سایت پیگیری کنید.";
 
@@ -2025,8 +2035,9 @@ async function submitOrder() {
       "سفارش با موفقیت ثبت شد.\n\n" +
       "شماره سفارش: " +
       data.orderId +
-      "\n\n" +
-      "مبلغ نهایی: " +
+      "\n\nاقلام سفارش:\n" +
+      orderItemsSummary +
+      "\n\nمبلغ نهایی: " +
       money(data.total) +
       paymentFollowUp
     );
