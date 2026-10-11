@@ -1187,8 +1187,7 @@ const body =
         const hasDiscountColumn = await courseDiscountColumnAvailable(db);
         const result =
           await db.prepare(`
-            SELECT *,
-              ${hasDiscountColumn ? "discount_price" : "NULL AS discount_price"}
+            SELECT ${hasDiscountColumn ? "*" : "*, NULL AS discount_price"}
             FROM courses
             ORDER BY id DESC
           `).all();
