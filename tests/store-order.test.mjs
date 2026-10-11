@@ -5,7 +5,7 @@ import { onRequestDelete, onRequestPost, onRequestPut } from "../functions/api/s
 
 const origin = "https://hilafood.pages.dev";
 function makeDb() {
-  const state = { orders: [], productWeights: { p1: 400 }, product: { id: "p1", name: "محصول آزمایشی", price: 120000, discount_price: 90000, active: 1 } };
+  const state = { orders: [], createdProducts: [], productWeights: { p1: 400 }, product: { id: "p1", name: "محصول آزمایشی", price: 120000, discount_price: 90000, active: 1 } };
   return {
     state,
     prepare(sql) {
@@ -50,6 +50,10 @@ function makeDb() {
         return { results: [] };
       };
       stmt.run = async () => {
+        if (sql.includes("INSERT INTO products")) {
+          state.createdProducts.push(stmt.args);
+          return { meta: { last_row_id: stmt.args[0], changes: 1 } };
+        }
         if (sql.includes("DELETE FROM products")) {
           const found = state.product && String(state.product.id) === String(stmt.args[0]);
           if (found) state.product = null;
@@ -357,4 +361,56 @@ test("product deletion rejects missing and unknown IDs", async () => {
     env: { DB: db, ADMIN_KEY: "test-admin-key" }
   });
   assert.equal(unknown.status, 404);
+});
+
+
+test("product create validates integer nonnegative prices and discount ranges", async () => {
+  for (const product of [
+    { name: "محصول", price: -1, discountPrice: null },
+    { name: "محصول", price: 12.5, discountPrice: null },
+    { name: "محصول", price: "", discountPrice: null },
+    { name: "محصول", price: 10000, discountPrice: 10000 },
+    { name: "محصول", price: 10000, discountPrice: 11000 },
+    { name: "محصول", price: 10000, discountPrice: -10 },
+    { name: "محصول", price: 10000, discountPrice: 2500.5 }
+  ]) {
+    const db = makeDb();
+    const response = await onRequestPost({
+      request: adminRequest("create-product", { product }),
+      env: { DB: db, ADMIN_KEY: "test-admin-key" }
+    });
+    assert.equal(response.status, 400, JSON.stringify(product));
+    assert.equal(db.state.createdProducts.length, 0);
+  }
+
+  const db = makeDb();
+  const response = await onRequestPost({
+    request: adminRequest("create-product", {
+      product: { name: "محصول معتبر", price: 10000, discountPrice: 8000 }
+    }),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(response.status, 200);
+  assert.equal(db.state.createdProducts.length, 1);
+  assert.equal(db.state.createdProducts[0][4], 10000);
+  assert.equal(db.state.createdProducts[0][5], 8000);
+});
+
+test("product edit rejects invalid prices before updating the stored product", async () => {
+  const db = makeDb();
+  const response = await onRequestPut({
+    request: new Request(origin + "/api/store", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": "test-admin-key"
+      },
+      body: JSON.stringify({
+        product: { id: "p1", name: "محصول آزمایشی", price: -1, discountPrice: null }
+      })
+    }),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(response.status, 400);
+  assert.equal(db.state.product.price, 120000);
 });
