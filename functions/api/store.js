@@ -1300,7 +1300,7 @@ const body =
         }
 
         const slug =
-          String(body.slug || title.toLowerCase().replace(/\\s+/g, "-")).trim();
+          String(body.slug || title.toLowerCase().replace(/\s+/g, "-")).trim();
 
         const description =
           String(body.description || "");
