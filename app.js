@@ -38,6 +38,10 @@ function img(path) {
     return "";
   }
 
+  if (v === "farni-tokhm-kharboze.webp" || v === "farni-tokhm-kharbeze.webp") {
+    return "farni-tokhm-kharbeze.jpg";
+  }
+
   if (
     v === "farni-tokhm-kharbeze.jpg" ||
     v.startsWith("assets/") ||
