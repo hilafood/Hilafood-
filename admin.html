@@ -599,13 +599,7 @@ button{cursor:pointer}
           placeholder="قیمت با تخفیف - اختیاری"
         >
 
-        <input
-          id="packageWeightGrams"
-          type="number"
-          min="1"
-          step="1"
-          placeholder="وزن بسته اصلی به گرم"
-        >
+        <input id="packageWeightGrams" type="hidden">
 
         <input
           id="stage"
@@ -1934,19 +1928,16 @@ function renderOrders(orders){
                   const orderTypeLabel = isTestOrder
                     ? "سفارش تست محصول"
                     : "محصول کامل";
-                  const weightLabel = Number(item.weightGrams) > 0
-                    ? " · وزن بسته: " + Number(item.weightGrams).toLocaleString("fa-IR") + " گرم"
-                    : "";
 
                   return `
                     <div class="order-item">
 
                       <span>
-                        ${escapeHtml(item.name || "")}
+                        ${escapeHtml(displayProductName(item.name || ""))}
                         ×
                         ${qty.toLocaleString("fa-IR")}
                         <small class="order-item-meta">
-                          ${orderTypeLabel}${weightLabel}
+                          ${orderTypeLabel}
                         </small>
                       </span>
 
@@ -2480,6 +2471,10 @@ function escapeAttr(value){
    وزن محصول برای سفارش تست
 ========================================= */
 
+function displayProductName(name){
+  return String(name || "").replace(/\s*[|،·-]?\s*[0-9۰-۹٠-٩]+\s*(?:گرم|g\b)/gi, "").replace(/\s{2,}/g, " ").trim();
+}
+
 function parseProductWeightGrams(name){
   const normalized = String(name || "").replace(/[۰-۹٠-٩]/g, digit =>
     "۰۱۲۳۴۵۶۷۸۹".includes(digit)
@@ -2514,7 +2509,7 @@ function editProduct(id){
   }
 
   $("name").value =
-    product.name || "";
+    displayProductName(product.name || "");
 
   $("cat").value =
     product.cat || "";
@@ -2729,7 +2724,7 @@ async function deleteProduct(id){
 
   const name =
     product
-      ? product.name
+      ? displayProductName(product.name)
       : "این محصول";
 
 
