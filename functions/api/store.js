@@ -3036,3 +3036,55 @@ export async function onRequestPut({
     }, 500);
   }
           }
+
+
+/* ==================================================
+   DELETE product (admin only)
+================================================== */
+export async function onRequestDelete({ request, env }) {
+  if (!env.DB) {
+    return json({ error: "D1 database is not configured" }, 500);
+  }
+
+  if (!isAdmin(request, env)) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "اطلاعات حذف محصول نامعتبر است" }, 400);
+  }
+
+  const id = String(body?.id || "").trim();
+  if (!id) {
+    return json({ error: "شناسه محصول الزامی است" }, 400);
+  }
+
+  try {
+    const db = env.DB;
+    const existing = await db.prepare(
+      "SELECT id FROM products WHERE id = ?"
+    ).bind(id).first();
+
+    if (!existing) {
+      return json({ error: "محصول پیدا نشد" }, 404);
+    }
+
+    const result = await db.prepare(
+      "DELETE FROM products WHERE id = ?"
+    ).bind(id).run();
+
+    if (!result.meta?.changes) {
+      return json({ error: "محصول پیدا نشد" }, 404);
+    }
+
+    // Orders keep their item snapshots in orders.items; deleting a product
+    // must not remove or rewrite any historical order.
+    return json({ success: true, id });
+  } catch (error) {
+    console.error("DELETE store error:", error);
+    return json({ error: error?.message || String(error) }, 500);
+  }
+}
