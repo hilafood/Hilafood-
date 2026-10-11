@@ -12,7 +12,7 @@ function makeDb() {
       const stmt = { sql, args: [], bind(...args) { stmt.args = args; return stmt; } };
       stmt.first = async () => {
         if (sql.includes("SELECT COUNT(*) AS total FROM products")) return { total: 1 };
-        if (sql.includes("SELECT id FROM products WHERE id = ?")) {
+        if (sql.includes("FROM products") && sql.includes("WHERE id = ?") && !sql.includes("discount_price")) {
           return String(stmt.args[0]) === String(state.product.id) ? { id: state.product.id } : null;
         }
         if (sql.includes("FROM products") && sql.includes("discount_price") && sql.includes("WHERE id = ?")) {
