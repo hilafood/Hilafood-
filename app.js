@@ -28,6 +28,15 @@ let selectedShippingId =
 const $ = id =>
   document.getElementById(id);
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
+}
 
 function img(path) {
 
@@ -75,10 +84,10 @@ function renderCategories() {
             String(category.id || "");
 
           const name =
-            String(category.name || "");
+            escapeHtml(String(category.name || ""));
 
           const image =
-            img(category.image || "");
+            escapeHtml(img(category.image || ""));
 
           return `
             <a
@@ -544,9 +553,9 @@ function card(product) {
       ? `
 
         <img
-          src="${img(product.img)}"
+          src="${escapeHtml(img(product.img))}"
           loading="lazy"
-          alt="${displayProductName(product.name)}"
+          alt="${escapeHtml(displayProductName(product.name))}"
         >
 
       `
@@ -607,12 +616,12 @@ function card(product) {
 
         <small>
 
-          ${product.cat || ""}
+          ${escapeHtml(product.cat || "")}
 
           ${
             product.stage
               ? " | " +
-                product.stage
+                escapeHtml(product.stage)
               : ""
           }
 
@@ -620,12 +629,12 @@ function card(product) {
 
 
         <h3>
-          ${displayProductName(product.name)}
+          ${escapeHtml(displayProductName(product.name))}
         </h3>
 
 
         <p>
-          ${product.desc || ""}
+          ${escapeHtml(product.desc || "")}
         </p>
 
 
@@ -639,7 +648,7 @@ function card(product) {
           <button
             class="details"
             type="button"
-            onclick="addToCart('${product.id}', 'full')"
+            onclick="addToCart(${escapeHtml(JSON.stringify(String(product.id || "")))}, 'full')"
           >
             خرید محصول کامل
           </button>
@@ -652,7 +661,7 @@ function card(product) {
             productWeightGrams(product) > 0
               ? `
                 <p>قیمت بسته تست: ${money(Math.round(finalPrice(product) / 4))}</p>
-                <button class="test-order-button" type="button" onclick="addToCart('${product.id}', 'test')">سفارش تست</button>
+                <button class="test-order-button" type="button" onclick="addToCart(${escapeHtml(JSON.stringify(String(product.id || "")))}, 'test')">سفارش تست</button>
               `
               : `
                 <p>سفارش تست این محصول فعلاً فعال نیست.</p>
@@ -751,7 +760,7 @@ function renderCourses() {
       ? courses.map(course => {
 
           const image =
-            img(course.image || "");
+            escapeHtml(img(course.image || ""));
 
           const price = Number(course.price);
           const discount = Number(course.discount_price);
@@ -772,7 +781,7 @@ function renderCourses() {
                     ? `<img
                         src="${image}"
                         loading="lazy"
-                        alt="${course.title || "دوره آموزشی"}"
+                        alt="${escapeHtml(course.title || "دوره آموزشی")}"
                       >`
                     : `
                       <div class="no-image-text">
@@ -786,11 +795,11 @@ function renderCourses() {
               <div class="product-body">
 
                 <h3>
-                  ${course.title || ""}
+                  ${escapeHtml(course.title || "")}
                 </h3>
 
                 <p>
-                  ${course.description || ""}
+                  ${escapeHtml(course.description || "")}
                 </p>
 
                 ${
@@ -892,11 +901,12 @@ const PRODUCT_PREPARATION_VIDEOS = [
 ];
 
 function videoCard(item, kind) {
-  const poster = item.poster ? " poster=\"" + img(item.poster) + "\"" : "";
+  const poster = item.poster ? " poster=\"" + escapeHtml(img(item.poster)) + "\"" : "";
+  const title = escapeHtml(item.title);
   return '<article class="media-video-card ' + kind + '">' +
-    '<h3>' + item.title + '</h3>' +
-    '<video controls playsinline preload="none"' + poster + ' aria-label="' + item.title + '">' +
-    '<source src="' + item.src + '" type="video/mp4">' +
+    '<h3>' + title + '</h3>' +
+    '<video controls playsinline preload="none"' + poster + ' aria-label="' + title + '">' +
+    '<source src="' + escapeHtml(item.src) + '" type="video/mp4">' +
     'مرورگر شما از پخش ویدئو پشتیبانی نمی‌کند.' +
     '</video></article>';
 }
