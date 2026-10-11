@@ -284,7 +284,7 @@ function normalizeWeightDigits(value) {
 
 function parseProductWeightGrams(name) {
   const normalized = normalizeWeightDigits(name);
-  const match = normalized.match(new RegExp("(?:^|[^0-9])([0-9]+)\\\\s*(?:گرم|g\\\\b)", "i"));
+  const match = normalized.match(/(?:^|[^0-9])([0-9]+)\s*(?:گرم|g\b)/i);
   if (!match) return 0;
   const grams = Number(match[1]);
   return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;

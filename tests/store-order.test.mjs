@@ -200,7 +200,7 @@ test("cart, category page, admin form, and order list expose test-order metadata
     readFile(new URL("../admin.html", import.meta.url), "utf8")
   ]);
   assert.match(app, /سفارش تست محصول/);
-  assert.match(app, /cartItemPrice\(product, item\)/);
+  assert.ok(app.includes("cartItemPrice(product, item)"));
   assert.match(category, /addCategoryToCart/);
   assert.match(admin, /id="packageWeightGrams"/);
   assert.match(admin, /orderTypeLabel/);
