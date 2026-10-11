@@ -236,9 +236,12 @@ function normalizeCoursePricing(body) {
   }
 
   const rawDiscount = body?.discountPrice;
-  const discountPrice = rawDiscount === null || rawDiscount === undefined || rawDiscount === ""
-    ? null
-    : Number(rawDiscount);
+  const discountIsBlank = rawDiscount === null || rawDiscount === undefined ||
+    (typeof rawDiscount === "string" && rawDiscount.trim() === "");
+  if (typeof rawDiscount === "boolean") {
+    return { ok: false, error: "قیمت تخفیف باید عدد صحیح، مثبت و کمتر از قیمت اصلی باشد." };
+  }
+  const discountPrice = discountIsBlank ? null : Number(rawDiscount);
 
   if (discountPrice !== null &&
       (!Number.isSafeInteger(discountPrice) || discountPrice <= 0 || discountPrice >= price)) {
@@ -259,9 +262,9 @@ async function courseDiscountColumnAvailable(db) {
 
 function isDuplicateCourseSlugError(error) {
   const message = String(error?.message || error).toLowerCase();
-  return message.includes("unique constraint") ||
-    message.includes("courses.slug") ||
-    message.includes("unique failed");
+  // Only translate the courses.slug uniqueness violation. Other UNIQUE failures
+  // must remain visible as database errors rather than being misreported as slugs.
+  return message.includes("courses.slug");
 }
 
 function duplicateCourseSlugResponse() {
@@ -352,6 +355,7 @@ async function createTables(db) {
       slug TEXT NOT NULL UNIQUE,
       description TEXT DEFAULT '',
       price INTEGER DEFAULT 0,
+      discount_price INTEGER,
       image TEXT DEFAULT '',
       active INTEGER DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
