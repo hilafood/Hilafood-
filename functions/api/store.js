@@ -283,6 +283,18 @@ function normalizeCoursePricing(body) {
   return { ok: true, price, discountPrice };
 }
 
+function isSafeOptionalHttpsUrl(value) {
+  const text = String(value || "").trim();
+  if (!text) return true;
+  if (text.length > 2048) return false;
+  try {
+    const url = new URL(text);
+    return url.protocol === "https:" && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
 async function courseDiscountColumnAvailable(db) {
   try {
     const result = await db.prepare("PRAGMA table_info(courses)").all();
@@ -1685,6 +1697,13 @@ const body =
           }, 400);
         }
 
+        if (title.length > 240 || description.length > 2000 || contentText.length > 100000 ||
+            !["text", "video", "file", "image"].includes(contentType) ||
+            !Number.isSafeInteger(sortOrder) || sortOrder < 0 ||
+            !isSafeOptionalHttpsUrl(contentUrl) || !isSafeOptionalHttpsUrl(image)) {
+          return json({ error: "اطلاعات درس، ترتیب یا نشانی محتوا نامعتبر است." }, 400);
+        }
+
         const result =
           await db.prepare(`
             INSERT INTO course_lessons
@@ -1762,6 +1781,13 @@ const body =
           return json({
             error: "اطلاعات درس کامل نیست"
           }, 400);
+        }
+
+        if (title.length > 240 || description.length > 2000 || contentText.length > 100000 ||
+            !["text", "video", "file", "image"].includes(contentType) ||
+            !Number.isSafeInteger(sortOrder) || sortOrder < 0 ||
+            !isSafeOptionalHttpsUrl(contentUrl) || !isSafeOptionalHttpsUrl(image)) {
+          return json({ error: "اطلاعات درس، ترتیب یا نشانی محتوا نامعتبر است." }, 400);
         }
 
         await db.prepare(`
