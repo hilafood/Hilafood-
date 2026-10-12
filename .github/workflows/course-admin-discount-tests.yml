@@ -25,6 +25,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Test English course title migration on disposable SQLite
+        run: python3 tests/course-english-title-migration.test.py
+
       - name: Test course discount and duplicate slug behavior
         run: node --experimental-default-type=module --test tests/course-admin-discounts.test.mjs
 
