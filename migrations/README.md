@@ -25,3 +25,9 @@ The migration is **proposed only**. The API returns HTTP 503 until the table exi
 `python3 tests/science-articles-migration.test.py`
 
 No AI content provider or new Secret is configured. For that reason, no scheduled job claims to generate articles yet. A future 14-day workflow must be connected to an approved provider and a real duplicate/lease guard before it can generate drafts. It must never publish automatically.
+
+## Independent English course title migration
+
+`0003_add_course_english_title.sql` adds an optional `courses.title_en` column without rewriting existing course data. The admin API checks the live schema and returns a clear migration-required response if a non-empty English title is submitted before that column exists.
+
+Validate the migration with `python3 tests/course-english-title-migration.test.py` against disposable SQLite. Do not apply it to production from this branch.
