@@ -828,6 +828,52 @@ function renderCourses() {
       `;
 }
 /* ==================================================
+   دانستنی‌های علمی منتشرشده
+================================================== */
+function scienceSourceUrl(value) {
+  try {
+    const url = new URL(String(value || ""));
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+async function loadScienceArticles() {
+  const container = $("scienceArticlesList");
+  if (!container) return;
+  try {
+    const response = await fetch("/api/science-articles", {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("مقالات در دسترس نیستند.");
+    const payload = await response.json();
+    const articles = Array.isArray(payload.articles) ? payload.articles : [];
+    container.innerHTML = articles.length ? articles.map(article => {
+      const sources = Array.isArray(article.sources) ? article.sources : [];
+      const sourceLinks = sources.map(source => {
+        const url = scienceSourceUrl(source.url);
+        if (!url) return "";
+        return '<li><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
+          escapeHtml(source.title || source.publisher || url) + '</a></li>';
+      }).filter(Boolean).join("");
+      return '<article class="science-article-card">' +
+        '<p class="science-article-meta">' + escapeHtml(article.topic || "") +
+        ' · ' + escapeHtml(article.prepared_at || "") + '</p>' +
+        '<h3>' + escapeHtml(article.title || "") + '</h3>' +
+        '<p class="science-article-summary">' + escapeHtml(article.summary || "") + '</p>' +
+        '<details><summary>مطالعهٔ مطلب و منابع</summary>' +
+        '<div class="science-article-content">' + escapeHtml(article.content || "").replace(/\n/g, "<br>") + '</div>' +
+        (sourceLinks ? '<h4>منابع قابل بررسی</h4><ul>' + sourceLinks + '</ul>' : "") +
+        '</details></article>';
+    }).join("") : '<p class="empty">هنوز مطلب علمی منتشرشده‌ای ثبت نشده است.</p>';
+  } catch {
+    container.innerHTML = '<p class="empty">در حال حاضر دریافت مطالب علمی ممکن نیست.</p>';
+  }
+}
+
+/* ==================================================
    جستجو
 ================================================== */
 
@@ -2124,6 +2170,7 @@ async function checkout() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await load();
+  await loadScienceArticles();
   if (new URLSearchParams(location.search).get("openCart") === "1") {
     openCart();
   }
