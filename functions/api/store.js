@@ -1334,6 +1334,13 @@ const body =
         const { price, discountPrice } = pricing;
         const hasDiscountColumn = await courseDiscountColumnAvailable(db);
         const hasEnglishTitleColumn = await courseEnglishTitleColumnAvailable(db);
+        if (titleEn && !hasEnglishTitleColumn) {
+          return json({
+            error: "برای ذخیره نام انگلیسی، migration پیشنهادی 0003 باید ابتدا در محیط آزمایشی بررسی شود.",
+            code: "COURSE_ENGLISH_TITLE_SCHEMA_MISSING",
+            migrationRequired: true
+          }, 503);
+        }
         if (discountPrice !== null && !hasDiscountColumn) {
           return json({
             error: "ستون تخفیف دوره در پایگاه داده وجود ندارد؛ تخفیف ذخیره نشد و دوره‌ای ثبت نشد. ابتدا طرح‌واره محیط هدف را بررسی کنید.",
@@ -1430,6 +1437,13 @@ const body =
         const { price, discountPrice } = pricing;
         const hasDiscountColumn = await courseDiscountColumnAvailable(db);
         const hasEnglishTitleColumn = await courseEnglishTitleColumnAvailable(db);
+        if (titleEn && !hasEnglishTitleColumn) {
+          return json({
+            error: "برای ذخیره نام انگلیسی، migration پیشنهادی 0003 باید ابتدا در محیط آزمایشی بررسی شود.",
+            code: "COURSE_ENGLISH_TITLE_SCHEMA_MISSING",
+            migrationRequired: true
+          }, 503);
+        }
         if (discountPrice !== null && !hasDiscountColumn) {
           return json({
             error: "ستون تخفیف دوره در پایگاه داده وجود ندارد؛ تخفیف ذخیره نشد و هیچ تغییری در دوره انجام نشد. ابتدا طرح‌واره محیط هدف را بررسی کنید.",
