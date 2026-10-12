@@ -295,6 +295,15 @@ function isSafeOptionalHttpsUrl(value) {
   }
 }
 
+async function courseEnglishTitleColumnAvailable(db) {
+  try {
+    const result = await db.prepare("PRAGMA table_info(courses)").all();
+    return (result?.results || []).some(column => column.name === "title_en");
+  } catch {
+    return false;
+  }
+}
+
 async function courseDiscountColumnAvailable(db) {
   try {
     const result = await db.prepare("PRAGMA table_info(courses)").all();
@@ -1279,9 +1288,10 @@ const body =
       if (action === "admin-courses-list") {
 
         const hasDiscountColumn = await courseDiscountColumnAvailable(db);
+        const hasEnglishTitleColumn = await courseEnglishTitleColumnAvailable(db);
         const result =
           await db.prepare(`
-            SELECT ${hasDiscountColumn ? "*" : "*, NULL AS discount_price"}
+            SELECT ${hasDiscountColumn ? "*" : "*, NULL AS discount_price"}${hasEnglishTitleColumn ? "" : ", NULL AS title_en"}
             FROM courses
             ORDER BY id DESC
           `).all();
@@ -1316,11 +1326,14 @@ const body =
 
         const description =
           String(body.description || "");
+        const titleEn = String(body.title_en || "").trim();
+        if (titleEn.length > 240) return json({ error: "نام انگلیسی دوره بیش از حد طولانی است." }, 400);
 
         const pricing = normalizeCoursePricing(body);
         if (!pricing.ok) return json({ error: pricing.error }, 400);
         const { price, discountPrice } = pricing;
         const hasDiscountColumn = await courseDiscountColumnAvailable(db);
+        const hasEnglishTitleColumn = await courseEnglishTitleColumnAvailable(db);
         if (discountPrice !== null && !hasDiscountColumn) {
           return json({
             error: "ستون تخفیف دوره در پایگاه داده وجود ندارد؛ تخفیف ذخیره نشد و دوره‌ای ثبت نشد. ابتدا طرح‌واره محیط هدف را بررسی کنید.",
@@ -1342,12 +1355,24 @@ const body =
 
         let result;
         try {
-          if (hasDiscountColumn) {
+          if (hasDiscountColumn && hasEnglishTitleColumn) {
+            result = await db.prepare(`
+              INSERT INTO courses
+                (title, slug, description, price, discount_price, title_en, image, active)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(title, slug, description, price, discountPrice, titleEn, image, active).run();
+          } else if (hasDiscountColumn) {
             result = await db.prepare(`
               INSERT INTO courses
                 (title, slug, description, price, discount_price, image, active)
               VALUES (?, ?, ?, ?, ?, ?, ?)
             `).bind(title, slug, description, price, discountPrice, image, active).run();
+          } else if (hasEnglishTitleColumn) {
+            result = await db.prepare(`
+              INSERT INTO courses
+                (title, slug, description, price, title_en, image, active)
+              VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).bind(title, slug, description, price, titleEn, image, active).run();
           } else {
             result = await db.prepare(`
               INSERT INTO courses
@@ -1397,11 +1422,14 @@ const body =
 
         const description =
           String(body.description || "");
+        const titleEn = String(body.title_en || "").trim();
+        if (titleEn.length > 240) return json({ error: "نام انگلیسی دوره بیش از حد طولانی است." }, 400);
 
         const pricing = normalizeCoursePricing(body);
         if (!pricing.ok) return json({ error: pricing.error }, 400);
         const { price, discountPrice } = pricing;
         const hasDiscountColumn = await courseDiscountColumnAvailable(db);
+        const hasEnglishTitleColumn = await courseEnglishTitleColumnAvailable(db);
         if (discountPrice !== null && !hasDiscountColumn) {
           return json({
             error: "ستون تخفیف دوره در پایگاه داده وجود ندارد؛ تخفیف ذخیره نشد و هیچ تغییری در دوره انجام نشد. ابتدا طرح‌واره محیط هدف را بررسی کنید.",
@@ -1422,13 +1450,27 @@ const body =
           body.active === false ? 0 : 1;
 
         try {
-          if (hasDiscountColumn) {
+          if (hasDiscountColumn && hasEnglishTitleColumn) {
+            await db.prepare(`
+              UPDATE courses
+              SET title = ?, slug = ?, description = ?, price = ?, discount_price = ?,
+                  title_en = ?, image = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(title, slug, description, price, discountPrice, titleEn, image, active, id).run();
+          } else if (hasDiscountColumn) {
             await db.prepare(`
               UPDATE courses
               SET title = ?, slug = ?, description = ?, price = ?, discount_price = ?,
                   image = ?, active = ?, updated_at = CURRENT_TIMESTAMP
               WHERE id = ?
             `).bind(title, slug, description, price, discountPrice, image, active, id).run();
+          } else if (hasEnglishTitleColumn) {
+            await db.prepare(`
+              UPDATE courses
+              SET title = ?, slug = ?, description = ?, price = ?, title_en = ?,
+                  image = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(title, slug, description, price, titleEn, image, active, id).run();
           } else {
             await db.prepare(`
               UPDATE courses
