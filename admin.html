@@ -784,6 +784,16 @@ button{cursor:pointer}
 
 </div>
 
+    <div class="card" id="courseContentManager">
+      <h2>مدیریت فصل‌ها و درس‌ها</h2>
+      <p class="muted">خرید فقط برای کل دوره انجام می‌شود. محتوای پولی باید پس از تکمیل احراز هویت و پرداخت امن به کاربر نمایش داده شود.</p>
+      <select id="courseContentCourseId" onchange="loadCourseContent()"><option value="">انتخاب دوره</option></select>
+      <div class="actions"><button type="button" onclick="addCourseChapter()">افزودن فصل</button><button type="button" onclick="addCourseLesson()">افزودن درس</button><button type="button" onclick="loadCourseContent()">تازه‌سازی</button></div>
+      <div id="courseContentStatus" class="status" aria-live="polite"></div>
+      <div id="courseChaptersList" class="list"></div>
+      <div id="courseLessonsList" class="list"></div>
+    </div>
+
     <!-- محصولات -->
 
     <div class="card">
@@ -960,6 +970,8 @@ async function loadCourses(){
         ? result.courses
         : [];
 
+    refreshCourseContentOptions(courses);
+
     if(!courses.length){
 
       container.innerHTML =
@@ -1092,6 +1104,46 @@ async function loadCourses(){
 
 }
 
+
+let courseContentCache={chapters:[],lessons:[]};
+function courseContentMessage(message){const el=$("courseContentStatus");if(el)el.textContent=String(message||"");}
+function refreshCourseContentOptions(courses){const el=$("courseContentCourseId");if(!el)return;const old=el.value;el.innerHTML='<option value="">انتخاب دوره</option>'+courses.map(c=>'<option value="'+Number(c.id)+'">'+escapeHtml(c.title||"")+'</option>').join("");if(courses.some(c=>String(c.id)===old))el.value=old;}
+async function loadCourseContent(){
+ const courseId=Number($("courseContentCourseId")?.value||0);
+ if(!courseId){$("courseChaptersList").innerHTML='<p class="muted">ابتدا دوره را انتخاب کنید.</p>';$("courseLessonsList").innerHTML="";courseContentCache={chapters:[],lessons:[]};return;}
+ try{const r=await api("POST",{action:"admin-course-content",course_id:courseId});courseContentCache={chapters:Array.isArray(r.chapters)?r.chapters:[],lessons:Array.isArray(r.lessons)?r.lessons:[]};
+ $("courseChaptersList").innerHTML='<h3>فصل‌ها</h3>'+(courseContentCache.chapters.length?courseContentCache.chapters.map(c=>'<div class="row"><b>'+escapeHtml(c.title||"")+' · ترتیب '+Number(c.sort_order||0)+'</b><div class="actions"><button onclick="editCourseChapter('+Number(c.id)+')">ویرایش</button><button class="danger" onclick="deleteCourseChapter('+Number(c.id)+')">حذف</button></div></div>').join(""):'<p class="muted">فصلی ثبت نشده است.</p>');
+ $("courseLessonsList").innerHTML='<h3>درس‌ها</h3>'+(courseContentCache.lessons.length?courseContentCache.lessons.map(l=>'<div class="row"><div><b>'+escapeHtml(l.title||"")+'</b><div class="muted">'+escapeHtml(l.content_type||"text")+' · '+(Number(l.is_free)===1?"رایگان":"پولی")+' · ترتیب '+Number(l.sort_order||0)+'</div></div><div class="actions"><button onclick="editCourseLesson('+Number(l.id)+')">ویرایش</button><button class="danger" onclick="deleteCourseLesson('+Number(l.id)+')">حذف</button></div></div>').join(""):'<p class="muted">درسی ثبت نشده است.</p>');
+ courseContentMessage("محتوای دوره بارگذاری شد.");
+ }catch(e){courseContentMessage("خطا: "+e.message);}
+}
+async function addCourseChapter(existing){
+ const course_id=Number($("courseContentCourseId").value||0);if(!course_id){courseContentMessage("ابتدا دوره را انتخاب کنید.");return;}
+ const title=prompt("عنوان فصل:",existing?.title||"");if(title===null)return;if(!title.trim()){courseContentMessage("عنوان فصل الزامی است.");return;}
+ const orderRaw=prompt("ترتیب فصل (عدد صحیح نامنفی):",String(existing?.sort_order??0));if(orderRaw===null)return;const sort_order=Number(orderRaw);if(!Number.isSafeInteger(sort_order)||sort_order<0){courseContentMessage("ترتیب نامعتبر است.");return;}
+ try{await api("POST",{action:existing?"admin-chapter-update":"admin-chapter-create",...(existing?{id:existing.id}:{course_id}),title:title.trim(),sort_order});await loadCourseContent();}catch(e){courseContentMessage("ذخیره فصل ناموفق بود: "+e.message);}
+}
+function editCourseChapter(id){const item=courseContentCache.chapters.find(x=>Number(x.id)===Number(id));if(item)addCourseChapter(item);}
+async function deleteCourseChapter(id){if(!confirm("حذف فصل، درس‌های وابسته را نیز حذف می‌کند. ادامه؟"))return;try{await api("POST",{action:"admin-chapter-delete",id});await loadCourseContent();}catch(e){courseContentMessage("حذف ناموفق بود: "+e.message);}}
+async function addCourseLesson(existing){
+ const courseId=Number($("courseContentCourseId").value||0);if(!courseId){courseContentMessage("ابتدا دوره را انتخاب کنید.");return;}
+ const chapters=courseContentCache.chapters;if(!chapters.length){courseContentMessage("ابتدا یک فصل بسازید.");return;}
+ const chapterDefault=existing?.chapter_id||chapters[0].id;
+ const chapterRaw=prompt("شناسه فصل ("+chapters.map(c=>c.id+":"+c.title).join("، ")+"):",String(chapterDefault));if(chapterRaw===null)return;const chapter_id=Number(chapterRaw);if(!chapters.some(c=>Number(c.id)===chapter_id)){courseContentMessage("شناسه فصل نامعتبر است.");return;}
+ const title=prompt("عنوان درس:",existing?.title||"");if(title===null)return;if(!title.trim())return;
+ const types=["text","video","file","image"];const content_type=prompt("نوع محتوا: text / video / file / image",existing?.content_type||"text");if(content_type===null)return;if(!types.includes(content_type)){courseContentMessage("نوع محتوا نامعتبر است.");return;}
+ const content_url=prompt("نشانی HTTPS ویدئو/فایل (برای متن خالی بگذارید):",existing?.content_url||"");if(content_url===null)return;
+ const image=prompt("نشانی HTTPS تصویر (اختیاری):",existing?.image||"");if(image===null)return;
+ const content_text=prompt("متن درس:",existing?.content_text||"");if(content_text===null)return;
+ const description=prompt("توضیح کوتاه:",existing?.description||"");if(description===null)return;
+ const freeRaw=prompt("درس رایگان باشد؟ yes یا no",Number(existing?.is_free)===1?"yes":"no");if(freeRaw===null)return;const is_free=freeRaw.trim().toLowerCase()==="yes";
+ const orderRaw=prompt("ترتیب درس (عدد صحیح نامنفی):",String(existing?.sort_order??0));if(orderRaw===null)return;const sort_order=Number(orderRaw);if(!Number.isSafeInteger(sort_order)||sort_order<0)return courseContentMessage("ترتیب نامعتبر است.");
+ for(const value of [content_url,image]){if(value.trim()){try{const u=new URL(value);if(u.protocol!=="https:"||u.username||u.password)throw new Error();}catch{return courseContentMessage("نشانی‌ها باید HTTPS معتبر باشند.");}}}
+ const active=existing?Number(existing.active)===1:true;
+ try{await api("POST",{action:existing?"admin-lesson-update":"admin-lesson-create",...(existing?{id:existing.id}:{chapter_id}),title:title.trim(),description,content_type,content_url,content_text,image,is_free,sort_order,active});await loadCourseContent();}catch(e){courseContentMessage("ذخیره درس ناموفق بود: "+e.message);}
+}
+function editCourseLesson(id){const item=courseContentCache.lessons.find(x=>Number(x.id)===Number(id));if(item)addCourseLesson(item);}
+async function deleteCourseLesson(id){if(!confirm("این درس حذف شود؟"))return;try{await api("POST",{action:"admin-lesson-delete",id});await loadCourseContent();}catch(e){courseContentMessage("حذف ناموفق بود: "+e.message);}}
 
 async function saveCourse(){
 
@@ -1469,6 +1521,7 @@ async function loadStore(){
     render();
 
     await loadOrders();
+    await loadCourses();
     await loadScienceArticlesAdmin();
     await loadSmsStatus();
     setStatus(
