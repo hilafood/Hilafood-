@@ -5,9 +5,10 @@ import { onRequestGet, onRequestPost } from "../functions/api/store.js";
 const origin = "https://hilafood.pages.dev";
 const adminKey = "test-admin-key";
 
-function makeDb({ hasDiscount = true, courses = [], simulateSlugRace = false, simulateUpdateSlugRace = false } = {}) {
+function makeDb({ hasDiscount = true, hasEnglishTitle = false, courses = [], simulateSlugRace = false, simulateUpdateSlugRace = false } = {}) {
   const state = {
     hasDiscount,
+    hasEnglishTitle,
     simulateSlugRace,
     simulateUpdateSlugRace,
     slugPrecheckSeen: false,
@@ -18,6 +19,7 @@ function makeDb({ hasDiscount = true, courses = [], simulateSlugRace = false, si
   function courseColumns() {
     const names = ["id", "title", "slug", "description", "price"];
     if (state.hasDiscount) names.push("discount_price");
+    if (state.hasEnglishTitle) names.push("title_en");
     names.push("image", "active", "created_at", "updated_at");
     return names.map(name => ({ name }));
   }
@@ -66,9 +68,18 @@ function makeDb({ hasDiscount = true, courses = [], simulateSlugRace = false, si
               throw new Error("UNIQUE constraint failed: courses.slug");
             }
             if (sql.includes("discount_price") && !state.hasDiscount) throw new Error("no such column: discount_price");
-            const row = sql.includes("discount_price")
-              ? { id: state.nextId++, title: args[0], slug: args[1], description: args[2], price: args[3], discount_price: args[4], image: args[5], active: args[6], created_at: "test", updated_at: "test" }
-              : { id: state.nextId++, title: args[0], slug: args[1], description: args[2], price: args[3], discount_price: null, image: args[4], active: args[5], created_at: "test", updated_at: "test" };
+            const withDiscount = sql.includes("discount_price");
+            const withEnglish = sql.includes("title_en");
+            let row;
+            if (withDiscount && withEnglish) {
+              row = { id: state.nextId++, title: args[0], slug: args[1], description: args[2], price: args[3], discount_price: args[4], title_en: args[5], image: args[6], active: args[7], created_at: "test", updated_at: "test" };
+            } else if (withDiscount) {
+              row = { id: state.nextId++, title: args[0], slug: args[1], description: args[2], price: args[3], discount_price: args[4], title_en: "", image: args[5], active: args[6], created_at: "test", updated_at: "test" };
+            } else if (withEnglish) {
+              row = { id: state.nextId++, title: args[0], slug: args[1], description: args[2], price: args[3], discount_price: null, title_en: args[4], image: args[5], active: args[6], created_at: "test", updated_at: "test" };
+            } else {
+              row = { id: state.nextId++, title: args[0], slug: args[1], description: args[2], price: args[3], discount_price: null, title_en: "", image: args[4], active: args[5], created_at: "test", updated_at: "test" };
+            }
             state.courses.push(row);
             return { meta: { last_row_id: row.id, changes: 1 } };
           }
@@ -83,12 +94,14 @@ function makeDb({ hasDiscount = true, courses = [], simulateSlugRace = false, si
             }
             if (sql.includes("discount_price") && !state.hasDiscount) throw new Error("no such column: discount_price");
             const withDiscount = sql.includes("discount_price");
-            const id = Number(args[withDiscount ? 7 : 6]);
+            const withEnglish = sql.includes("title_en");
+            const id = Number(args[args.length - 1]);
             const row = state.courses.find(course => Number(course.id) === id);
             if (!row) return { meta: { changes: 0 } };
-            Object.assign(row, withDiscount
-              ? { title: args[0], slug: args[1], description: args[2], price: args[3], discount_price: args[4], image: args[5], active: args[6] }
-              : { title: args[0], slug: args[1], description: args[2], price: args[3], image: args[4], active: args[5] });
+            if (withDiscount && withEnglish) Object.assign(row, { title: args[0], slug: args[1], description: args[2], price: args[3], discount_price: args[4], title_en: args[5], image: args[6], active: args[7] });
+            else if (withDiscount) Object.assign(row, { title: args[0], slug: args[1], description: args[2], price: args[3], discount_price: args[4], image: args[5], active: args[6] });
+            else if (withEnglish) Object.assign(row, { title: args[0], slug: args[1], description: args[2], price: args[3], title_en: args[4], image: args[5], active: args[6] });
+            else Object.assign(row, { title: args[0], slug: args[1], description: args[2], price: args[3], image: args[4], active: args[5] });
             return { meta: { changes: 1 } };
           }
           if (sql.includes("DELETE FROM courses")) {
@@ -294,4 +307,25 @@ test("whitespace-only discount is treated as no discount", async () => {
   const response = await save(db, { action: "admin-course-create", ...baseCourse, discountPrice: "   " });
   assert.equal(response.status, 200);
   assert.equal(db.state.courses[0].discount_price, null);
+});
+
+
+test("stores English course title independently when the optional schema column exists", async () => {
+  const db = makeDb({ hasDiscount: true, hasEnglishTitle: true });
+  const created = await save(db, { action: "admin-course-create", ...baseCourse, title_en: "My First Tastes", discountPrice: 350000 });
+  assert.equal(created.status, 200);
+  assert.equal(db.state.courses[0].title, "دوره آزمایشی");
+  assert.equal(db.state.courses[0].title_en, "My First Tastes");
+  const updated = await save(db, { action: "admin-course-update", id: 1, ...baseCourse, title: "عنوان تازه", title_en: "First Foods", discountPrice: 300000 });
+  assert.equal(updated.status, 200);
+  assert.equal(db.state.courses[0].title, "عنوان تازه");
+  assert.equal(db.state.courses[0].title_en, "First Foods");
+});
+
+test("English course title fails clearly until its schema migration is available", async () => {
+  const db = makeDb({ hasDiscount: true, hasEnglishTitle: false });
+  const response = await save(db, { action: "admin-course-create", ...baseCourse, title_en: "My First Tastes", discountPrice: null });
+  assert.equal(response.status, 503);
+  assert.equal(db.state.courses.length, 0);
+  assert.equal((await response.json()).code, "COURSE_ENGLISH_TITLE_SCHEMA_MISSING");
 });
