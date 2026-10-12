@@ -1226,3 +1226,62 @@ img {
     flex-wrap: wrap;
   }
 }
+
+/* Scientific knowledge articles */
+.science-articles-section {
+  padding-top: 30px;
+  padding-bottom: 34px;
+}
+.science-articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+  gap: 14px;
+}
+.science-article-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #ffffffed;
+  box-shadow: 0 8px 24px #3023330a;
+}
+.science-article-card h3 {
+  margin: 4px 0 8px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.science-article-meta {
+  margin: 0;
+  color: var(--purple);
+  font-size: 12px;
+}
+.science-article-summary {
+  margin: 8px 0 14px;
+  color: var(--muted);
+}
+.science-article-card details {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.science-article-card summary {
+  cursor: pointer;
+  color: var(--pink);
+  font-weight: 700;
+}
+.science-article-content {
+  padding: 10px 0;
+  overflow-wrap: anywhere;
+}
+.science-article-card li {
+  margin: 5px 0;
+  overflow-wrap: anywhere;
+}
+.science-article-card a {
+  color: var(--purple);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 560px) {
+  .science-article-card { padding: 14px; }
+  .science-articles-grid { grid-template-columns: minmax(0, 1fr); }
+}
