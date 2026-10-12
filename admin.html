@@ -3021,12 +3021,12 @@ async function loadScienceArticlesAdmin() {
     list.innerHTML = scienceArticlesCache.map(article => {
       const id = Number(article.id);
       const status = article.status === "published" ? "منتشرشده" : article.status === "rejected" ? "ردشده" : "پیش‌نویس";
-      const actions = article.status === "rejected"
+      const statusActions = article.status === "rejected"
         ? '<span class="muted">مطلب رد شده است.</span>'
         : (article.status === "published"
           ? '<button type="button" onclick="editScienceArticle(' + id + ')">ویرایش</button><button type="button" class="danger" onclick="rejectScienceArticle(' + id + ')">رد</button>'
-          : '<button type="button" onclick="editScienceArticle(' + id + ')">ویرایش</button><button type="button" class="gold" onclick="publishScienceArticle(' + id + ')">انتشار</button><button type="button" class="danger" onclick="rejectScienceArticle(' + id + ')">رد</button>') +
-        '<button type="button" class="danger" onclick="deleteScienceArticle(' + id + ')">حذف</button>';
+          : '<button type="button" onclick="editScienceArticle(' + id + ')">ویرایش</button><button type="button" class="gold" onclick="publishScienceArticle(' + id + ')">انتشار</button><button type="button" class="danger" onclick="rejectScienceArticle(' + id + ')">رد</button>');
+      const actions = statusActions + '<button type="button" class="danger" onclick="deleteScienceArticle(' + id + ')">حذف</button>';
       return '<div class="row"><div><b>' + escapeHtml(article.title || "") + '</b>' +
         '<div class="muted">' + escapeHtml(article.topic || "") + ' · ' + escapeHtml(status) +
         ' · ' + escapeHtml(article.prepared_at || "") + '</div></div><div class="actions">' + actions + '</div></div>';
