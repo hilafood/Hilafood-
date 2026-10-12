@@ -53,3 +53,14 @@ test("category page escapes product fields and blocks unsafe video protocols", (
   assert.ok(!category.includes('href="${p.video}"'));
   assert.ok(category.includes('escapeHtml(JSON.stringify(String(p.id || "")))'));
 });
+
+
+test("science article rendering escapes text and accepts only HTTPS source links", () => {
+  assert.ok(app.includes("async function loadScienceArticles()"));
+  assert.ok(app.includes("function scienceSourceUrl(value)"));
+  assert.ok(app.includes('escapeHtml(article.title || "")'));
+  assert.ok(app.includes('escapeHtml(article.summary || "")'));
+  assert.ok(app.includes('escapeHtml(article.content || "").replace(/\\n/g, "<br>")'));
+  assert.ok(app.includes('escapeHtml(url)'));
+  assert.ok(app.includes('rel="noopener noreferrer"'));
+});
