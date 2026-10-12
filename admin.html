@@ -419,6 +419,42 @@ button{cursor:pointer}
     </div>
 
     <!-- =========================
+         دانستنی‌های علمی
+    ========================== -->
+    <div class="card" id="scienceArticlesAdmin">
+      <div class="topbar">
+        <div>
+          <h2>دانستنی‌های علمی</h2>
+          <p class="muted">مطالب ابتدا پیش‌نویس هستند. انتشار فقط با اقدام صریح مدیر انجام می‌شود.</p>
+        </div>
+        <button type="button" onclick="loadScienceArticlesAdmin()" style="width:auto">تازه‌سازی</button>
+      </div>
+      <div class="grid">
+        <input id="scienceArticleId" type="hidden">
+        <input id="scienceArticleTitle" class="full" maxlength="240" placeholder="عنوان مطلب">
+        <input id="scienceArticleSummary" class="full" maxlength="1200" placeholder="خلاصه مطلب">
+        <select id="scienceArticleTopic">
+          <option value="غذای فراسودمند">غذای فراسودمند</option>
+          <option value="غلات و حبوبات">غلات و حبوبات</option>
+          <option value="تغذیه کودک">تغذیه کودک</option>
+          <option value="بارداری">بارداری</option>
+          <option value="شیردهی">شیردهی</option>
+          <option value="تغذیه زنان">تغذیه زنان</option>
+        </select>
+        <input id="scienceArticleDate" type="date">
+        <textarea id="scienceArticleContent" class="full" rows="7" placeholder="متن فارسی ساده و قابل بررسی"></textarea>
+        <textarea id="scienceArticleSources" class="full" rows="4" placeholder='منابع به صورت JSON: [{"title":"عنوان منبع","url":"https://...","publisher":"ناشر"}]'></textarea>
+        <div class="actions full">
+          <button class="primary" type="button" onclick="saveScienceArticle()">ذخیره پیش‌نویس</button>
+          <button type="button" onclick="clearScienceArticleForm()">پاک‌کردن فرم</button>
+        </div>
+      </div>
+      <p class="muted">منابع باید پیوند HTTPS معتبر داشته باشند. با ویرایش مطلب منتشرشده، وضعیت آن به پیش‌نویس بازمی‌گردد.</p>
+      <div id="scienceArticleStatus" class="status" aria-live="polite"></div>
+      <div id="scienceArticleAdminList"><p class="muted">برای دریافت مطالب، پنل مدیریت را تازه‌سازی کنید.</p></div>
+    </div>
+
+    <!-- =========================
          پیامک
     ========================== -->
 
@@ -1433,7 +1469,8 @@ async function loadStore(){
     render();
 
     await loadOrders();
-await loadSmsStatus();
+    await loadScienceArticlesAdmin();
+    await loadSmsStatus();
     setStatus(
       "اطلاعات فروشگاه با موفقیت دریافت شد."
     );
@@ -2867,6 +2904,136 @@ async function checkExistingLogin(){
   }
 
 }
+/* =========================================
+   مدیریت دانستنی‌های علمی
+========================================= */
+let scienceArticlesCache = [];
+
+function scienceAdminMessage(message) {
+  const status = $("scienceArticleStatus");
+  if (status) status.textContent = String(message || "");
+}
+
+async function scienceAdminRequest(method, body) {
+  const response = await fetch("/api/science-articles", {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-key": adminKey,
+      "Accept": "application/json"
+    },
+    cache: "no-store",
+    ...(body === undefined ? {} : { body: JSON.stringify(body) })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || ("HTTP " + response.status));
+  return payload;
+}
+
+function clearScienceArticleForm() {
+  ["scienceArticleId", "scienceArticleTitle", "scienceArticleSummary",
+   "scienceArticleContent", "scienceArticleDate"].forEach(id => {
+    const field = $(id);
+    if (field) field.value = "";
+  });
+  if ($("scienceArticleTopic")) $("scienceArticleTopic").value = "غذای فراسودمند";
+  if ($("scienceArticleSources")) $("scienceArticleSources").value = '[{"title":"","url":"https://"}]';
+  scienceAdminMessage("");
+}
+
+async function loadScienceArticlesAdmin() {
+  const list = $("scienceArticleAdminList");
+  if (!list) return;
+  list.innerHTML = '<p class="muted">در حال دریافت مطالب...</p>';
+  try {
+    const payload = await scienceAdminRequest("GET");
+    scienceArticlesCache = Array.isArray(payload.articles) ? payload.articles : [];
+    if (!scienceArticlesCache.length) {
+      list.innerHTML = '<p class="muted">هنوز مطلبی ثبت نشده است.</p>';
+      return;
+    }
+    list.innerHTML = scienceArticlesCache.map(article => {
+      const id = Number(article.id);
+      const status = article.status === "published" ? "منتشرشده" : article.status === "rejected" ? "ردشده" : "پیش‌نویس";
+      const actions = article.status === "rejected"
+        ? '<span class="muted">مطلب رد شده است.</span>'
+        : (article.status === "published"
+          ? '<button type="button" onclick="editScienceArticle(' + id + ')">ویرایش</button><button type="button" class="danger" onclick="rejectScienceArticle(' + id + ')">رد</button>'
+          : '<button type="button" onclick="editScienceArticle(' + id + ')">ویرایش</button><button type="button" class="gold" onclick="publishScienceArticle(' + id + ')">انتشار</button><button type="button" class="danger" onclick="rejectScienceArticle(' + id + ')">رد</button>') +
+        '<button type="button" class="danger" onclick="deleteScienceArticle(' + id + ')">حذف</button>';
+      return '<div class="row"><div><b>' + escapeHtml(article.title || "") + '</b>' +
+        '<div class="muted">' + escapeHtml(article.topic || "") + ' · ' + escapeHtml(status) +
+        ' · ' + escapeHtml(article.prepared_at || "") + '</div></div><div class="actions">' + actions + '</div></div>';
+    }).join("");
+  } catch (error) {
+    list.innerHTML = '<p class="muted">خطا در دریافت مطالب: ' + escapeHtml(error.message) + '</p>';
+  }
+}
+
+function editScienceArticle(id) {
+  const article = scienceArticlesCache.find(item => Number(item.id) === Number(id));
+  if (!article) return;
+  $("scienceArticleId").value = article.id;
+  $("scienceArticleTitle").value = article.title || "";
+  $("scienceArticleSummary").value = article.summary || "";
+  $("scienceArticleTopic").value = article.topic || "غذای فراسودمند";
+  $("scienceArticleDate").value = article.prepared_at || "";
+  $("scienceArticleContent").value = article.content || "";
+  $("scienceArticleSources").value = JSON.stringify(article.sources || [], null, 2);
+  scienceAdminMessage("مطلب برای ویرایش بارگذاری شد؛ ذخیرهٔ تغییرات آن را دوباره پیش‌نویس می‌کند.");
+  $("scienceArticleTitle").focus();
+}
+
+async function saveScienceArticle() {
+  let sources;
+  try { sources = JSON.parse($("scienceArticleSources").value || "[]"); }
+  catch { scienceAdminMessage("ساختار JSON منابع معتبر نیست."); return; }
+  const article = {
+    title: $("scienceArticleTitle").value,
+    summary: $("scienceArticleSummary").value,
+    topic: $("scienceArticleTopic").value,
+    prepared_at: $("scienceArticleDate").value,
+    content: $("scienceArticleContent").value,
+    sources
+  };
+  const id = $("scienceArticleId").value;
+  try {
+    await scienceAdminRequest(id ? "PUT" : "POST", id ? { ...article, id: Number(id), action: "edit" } : article);
+    clearScienceArticleForm();
+    scienceAdminMessage("پیش‌نویس ذخیره شد؛ برای انتشار باید دکمهٔ انتشار را جداگانه بزنید.");
+    await loadScienceArticlesAdmin();
+  } catch (error) {
+    scienceAdminMessage("ذخیره انجام نشد: " + error.message);
+  }
+}
+
+async function publishScienceArticle(id) {
+  if (!confirm("آیا منابع و متن این مطلب را بررسی کرده‌اید و می‌خواهید آن را منتشر کنید؟")) return;
+  try {
+    await scienceAdminRequest("PUT", { id, action: "publish" });
+    scienceAdminMessage("مطلب منتشر شد.");
+    await loadScienceArticlesAdmin();
+  } catch (error) { scienceAdminMessage("انتشار انجام نشد: " + error.message); }
+}
+
+async function rejectScienceArticle(id) {
+  if (!confirm("این مطلب رد شود؟")) return;
+  try {
+    await scienceAdminRequest("PUT", { id, action: "reject" });
+    scienceAdminMessage("مطلب رد شد.");
+    await loadScienceArticlesAdmin();
+  } catch (error) { scienceAdminMessage("رد مطلب انجام نشد: " + error.message); }
+}
+
+async function deleteScienceArticle(id) {
+  if (!confirm("این مطلب به‌طور کامل حذف شود؟ این کار قابل بازگشت نیست.")) return;
+  try {
+    await scienceAdminRequest("DELETE", { id });
+    scienceAdminMessage("مطلب حذف شد.");
+    await loadScienceArticlesAdmin();
+  } catch (error) { scienceAdminMessage("حذف انجام نشد: " + error.message); }
+}
+
 /* =========================================
    مدیریت پیامک
 ========================================= */
