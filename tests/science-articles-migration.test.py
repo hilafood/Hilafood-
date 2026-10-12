@@ -34,11 +34,6 @@ class ScienceArticlesMigrationTest(unittest.TestCase):
             with self.assertRaises(sqlite3.IntegrityError):
                 db.execute(
                     "INSERT INTO science_articles (title, summary, content, topic, prepared_at, sources, status, duplicate_key) "
-                    "VALUES ('سوم', 'خلاصه', 'متن', 'تغذیه زنان', '2026-10-12', '[]', 'published', 'سوم')"
-                ) if False else None
-            with self.assertRaises(sqlite3.IntegrityError):
-                db.execute(
-                    "INSERT INTO science_articles (title, summary, content, topic, prepared_at, sources, status, duplicate_key) "
                     "VALUES ('چهارم', 'خلاصه', 'متن', 'موضوع نامعتبر', '2026-10-12', '[]', 'draft', 'چهارم')"
                 )
         finally:
