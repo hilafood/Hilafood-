@@ -13,7 +13,7 @@ function makeDb() {
         return { meta: { changes: 1 } };
       };
       statement.all = async () => {
-        if (/SELECT key, value FROM settings/i.test(sql)) {
+        if (/SELECT key, value\\s+FROM settings/i.test(sql)) {
           return { results: [...settings.entries()].map(([key, value]) => ({ key, value })) };
         }
         if (/PRAGMA table_info\(courses\)/i.test(sql)) {
