@@ -78,10 +78,12 @@ function makeDb() {
           return { meta: { last_row_id: 41, changes: 1 } };
         }
         if (sql.includes("UPDATE orders")) {
-          const row = state.orders[stmt.args[2] - 41];
+          const paymentUpdate = sql.includes("payment_status = ?");
+          const orderIdArg = paymentUpdate ? stmt.args[2] : stmt.args[1];
+          const row = state.orders[orderIdArg - 41];
           if (row) {
             row[9] = stmt.args[0];
-            row[10] = stmt.args[1];
+            if (paymentUpdate) row[10] = stmt.args[1];
             return { meta: { changes: 1 } };
           }
           return { meta: { changes: 0 } };
