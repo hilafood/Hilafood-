@@ -668,9 +668,9 @@ async function getCardTransferInstructions(db) {
     try { settings[row.key] = JSON.parse(row.value); }
     catch { settings[row.key] = row.value; }
   }
-  const cardNumber = String(settings.cardNumber || "").replace(/[\\s-]/g, "");
+  const cardNumber = String(settings.cardNumber || "").replace(/[\s-]/g, "");
   const accountHolderName = String(settings.accountHolderName || "").trim();
-  if (settings.cardTransferEnabled !== true || !/^\\d{16}$/.test(cardNumber) || !accountHolderName) return null;
+  if (settings.cardTransferEnabled !== true || !/^\d{16}$/.test(cardNumber) || !accountHolderName) return null;
   // Only include these instructions in the response to a just-created order.
   // The general public store GET response never contains the account details.
   return { cardNumber, accountHolderName };
