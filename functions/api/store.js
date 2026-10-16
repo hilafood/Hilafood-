@@ -1259,6 +1259,16 @@ const body =
 
     const action =
       body.action || "";
+
+    const adminActions = new Set([
+      "get-sms-status", "save-sms-settings", "send-sms-test",
+      "create-product", "save-settings", "save-shipping",
+      "get-orders", "update-order"
+    ]);
+    if (adminActions.has(action) && !isAdmin(request, env)) {
+      return json({ error: "دسترسی مدیر لازم است." }, 401);
+    }
+
         // =========================================
     // مدیریت دوره‌های آموزشی
     // =========================================
@@ -2600,14 +2610,30 @@ const body =
 
     if (action === "save-settings") {
 
-      const settings =
-        body.settings || {};
+      const settings = body.settings || {};
+      const allowedSettings = new Set([
+        "showPrices", "currency", "paymentEnabled",
+        "cardTransferEnabled", "cardNumber", "accountHolderName"
+      ]);
+      for (const key of Object.keys(settings)) {
+        if (!allowedSettings.has(key)) return json({ error: "این تنظیم قابل تغییر نیست." }, 400);
+      }
+      if (settings.currency !== undefined && !["تومان", "ریال"].includes(String(settings.currency))) {
+        return json({ error: "واحد پول نامعتبر است." }, 400);
+      }
+      if (settings.cardNumber !== undefined) {
+        const card = String(settings.cardNumber || "").replace(/[\\s-]/g, "");
+        if (card && !/^\\d{16}$/.test(card)) return json({ error: "شماره کارت باید ۱۶ رقم باشد." }, 400);
+        settings.cardNumber = card;
+      }
+      if (settings.accountHolderName !== undefined && String(settings.accountHolderName).trim().length > 120) {
+        return json({ error: "نام صاحب حساب بیش از حد طولانی است." }, 400);
+      }
+      if (settings.cardTransferEnabled === true && (!settings.cardNumber || !String(settings.accountHolderName || "").trim())) {
+        return json({ error: "برای فعال‌سازی کارت‌به‌کارت، شماره کارت و نام صاحب حساب را وارد کنید." }, 400);
+      }
 
-
-      for (
-        const [key, value]
-        of Object.entries(settings)
-      ) {
+      for (const [key, value] of Object.entries(settings)) {
 
         await db.prepare(`
           INSERT INTO settings
@@ -2867,10 +2893,10 @@ const body =
         );
 
 
-      const paymentStatus =
-        String(
-          body.paymentStatus || "unpaid"
-        );
+      if (Object.prototype.hasOwnProperty.call(body, "paymentStatus") &&
+          body.paymentStatus === "paid") {
+        return json({ error: "تأیید پرداخت فقط از مسیر بررسی فیش توسط مدیر مجاز است." }, 403);
+      }
 
 
       const allowedStatuses = [
@@ -2921,13 +2947,11 @@ const body =
         await db.prepare(`
           UPDATE orders
           SET
-            status = ?,
-            payment_status = ?
+            status = ?
           WHERE id = ?
         `)
         .bind(
           status,
-          paymentStatus,
           orderId
         )
         .run();
