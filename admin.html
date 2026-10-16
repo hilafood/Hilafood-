@@ -407,9 +407,21 @@ button{cursor:pointer}
 
       </div>
 
+      <div class="grid" style="margin-top:14px">
+        <label class="full">شماره کارت مقصد
+          <input id="cardNumber" inputmode="numeric" maxlength="19" placeholder="شماره کارت ۱۶ رقمی واقعی">
+        </label>
+        <label class="full">نام صاحب حساب
+          <input id="accountHolderName" maxlength="120" placeholder="نام واقعی صاحب حساب">
+        </label>
+        <label class="full">
+          <input type="checkbox" id="cardTransferEnabled">
+          فعال‌کردن کارت‌به‌کارت با تأیید دستی مدیر
+        </label>
+      </div>
       <p class="muted">
-        پرداخت بانکی تا وقتی درگاه و تنظیمات آن کامل نشده،
-        فعال نشود.
+        اطلاعات کارت پیش‌فرض ندارد. تا زمانی که شماره کارت و نام صاحب حساب واقعی وارد و ذخیره نشود، کارت‌به‌کارت فعال نمی‌شود.
+        تأیید پرداخت فقط از بخش بررسی فیش انجام می‌شود.
       </p>
 
       <button class="gold" onclick="saveSettings()">
@@ -589,12 +601,10 @@ button{cursor:pointer}
       </div>
 
       <div id="ordersList">
-
-        <div class="order-empty">
-          در حال دریافت سفارش‌ها...
-        </div>
-
+        <div class="order-empty">در حال دریافت سفارش‌ها...</div>
       </div>
+      <h3>فیش‌های کارت‌به‌کارت در انتظار بررسی</h3>
+      <div id="paymentReceiptsList" class="order-empty">در حال دریافت فیش‌ها...</div>
 
     </div>
 
@@ -1534,6 +1544,7 @@ async function loadStore(){
     render();
 
     await loadOrders();
+    await loadPaymentReceiptsAdmin();
     await loadCourses();
     await loadScienceArticlesAdmin();
     await loadSmsStatus();
@@ -1574,6 +1585,9 @@ function fillSettings(){
 
   $("paymentEnabled").checked =
     !!data.settings.paymentEnabled;
+  $("cardNumber").value = data.settings.cardNumber || "";
+  $("accountHolderName").value = data.settings.accountHolderName || "";
+  $("cardTransferEnabled").checked = data.settings.cardTransferEnabled === true;
 
 }
 
@@ -2197,33 +2211,7 @@ function renderOrders(orders){
               </select>
 
 
-              <select
-                id="payment-${order.id}"
-              >
-
-                <option
-                  value="unpaid"
-                  ${paymentStatus === "unpaid" ? "selected" : ""}
-                >
-                  پرداخت نشده
-                </option>
-
-                <option
-                  value="paid"
-                  ${paymentStatus === "paid" ? "selected" : ""}
-                >
-                  پرداخت شده
-                </option>
-
-                <option
-                  value="failed"
-                  ${paymentStatus === "failed" ? "selected" : ""}
-                >
-                  پرداخت ناموفق
-                </option>
-
-              </select>
-
+              <div class="muted">وضعیت پرداخت فقط از مسیر بررسی فیش تغییر می‌کند.</div>
 
               <button
                 class="gold"
@@ -2243,6 +2231,53 @@ function renderOrders(orders){
 
 }
 
+
+async function loadPaymentReceiptsAdmin() {
+  const container = $("paymentReceiptsList");
+  if (!container) return;
+  try {
+    const response = await fetch("/api/payment-receipts", {
+      headers: { "x-admin-key": adminKey, "Accept": "application/json" }, cache: "no-store"
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "دریافت فیش‌ها ناموفق بود");
+    const receipts = Array.isArray(payload.receipts) ? payload.receipts : [];
+    container.className = receipts.length ? "" : "order-empty";
+    if (!receipts.length) { container.textContent = "فیشی برای بررسی وجود ندارد."; return; }
+    container.innerHTML = receipts.map(item => `
+      <div class="order-card">
+        <b>${escapeHtml(item.orderId || ("HF-" + item.order_id))}</b>
+        <span class="order-badge">${escapeHtml(item.status || "pending")}</span>
+        <div class="muted">مبلغ سفارش: ${Number(item.total || 0).toLocaleString("fa-IR")} تومان · ${escapeHtml(item.created_at || "")}</div>
+        <div class="actions">
+          <button type="button" onclick="viewPaymentReceipt(${Number(item.id)})">دریافت امن فیش</button>
+          ${item.status === "pending" ? `
+            <button type="button" class="gold" onclick="reviewPaymentReceipt(${Number(item.id)}, 'approve')">تأیید پرداخت</button>
+            <button type="button" class="danger" onclick="reviewPaymentReceipt(${Number(item.id)}, 'reject')">رد فیش</button>
+          ` : ""}
+        </div>
+      </div>`).join("");
+  } catch (error) { container.className = "order-empty"; container.textContent = "خطا در دریافت فیش‌ها: " + error.message; }
+}
+async function viewPaymentReceipt(receiptId) {
+  const response = await fetch("/api/payment-receipts?receiptId=" + encodeURIComponent(receiptId), { headers: { "x-admin-key": adminKey }, cache: "no-store" });
+  if (!response.ok) { const payload = await response.json().catch(() => ({})); alert(payload.error || "دریافت فیش ممکن نیست."); return; }
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a"); link.href = url; link.download = "payment-receipt-" + receiptId;
+  document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+async function reviewPaymentReceipt(receiptId, decision) {
+  const note = decision === "reject" ? (prompt("علت رد فیش (اختیاری):") || "") : "";
+  if (decision === "reject" && !confirm("فیش رد شود؟")) return;
+  if (decision === "approve" && !confirm("فقط پس از تطبیق مبلغ با گردش حساب، پرداخت را تأیید کن. ادامه می‌دهی؟")) return;
+  try {
+    const response = await fetch("/api/payment-receipts", { method: "PATCH", headers: { "Content-Type": "application/json", "x-admin-key": adminKey }, body: JSON.stringify({ receiptId, decision, note }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "تغییر وضعیت انجام نشد");
+    alert(decision === "approve" ? "پرداخت تأیید شد." : "فیش رد شد.");
+    await loadOrders(); await loadPaymentReceiptsAdmin();
+  } catch (error) { alert("خطا: " + error.message); }
+}
 
 /* =========================================
    متن وضعیت سفارش
@@ -2290,7 +2325,10 @@ function getPaymentStatusText(status){
       "پرداخت نشده",
 
     paid:
-      "پرداخت شده",
+      "پرداخت تأیید شده",
+
+    awaiting_review:
+      "در انتظار بررسی فیش",
 
     failed:
       "پرداخت ناموفق"
@@ -2315,13 +2353,7 @@ async function updateOrder(orderId){
   const statusElement =
     $("status-" + orderId);
 
-  const paymentElement =
-    $("payment-" + orderId);
-
-  if(
-    !statusElement ||
-    !paymentElement
-  ){
+  if(!statusElement){
 
     return;
 
@@ -2329,9 +2361,6 @@ async function updateOrder(orderId){
 
   const status =
     statusElement.value;
-
-  const paymentStatus =
-    paymentElement.value;
 
   try{
 
@@ -2344,9 +2373,7 @@ async function updateOrder(orderId){
         orderId:
           Number(orderId),
 
-        status,
-
-        paymentStatus
+        status
       }
     );
 
@@ -2902,7 +2929,10 @@ async function saveSettings(){
             $("currency").value,
 
           paymentEnabled:
-            $("paymentEnabled").checked
+            $("paymentEnabled").checked,
+          cardNumber: $("cardNumber").value.trim(),
+          accountHolderName: $("accountHolderName").value.trim(),
+          cardTransferEnabled: $("cardTransferEnabled").checked
 
         }
 
