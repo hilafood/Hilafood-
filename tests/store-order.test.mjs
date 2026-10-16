@@ -264,6 +264,8 @@ test("order list requires admin access and retains paid orders for follow-up", a
   });
   assert.equal(created.status, 200);
   assert.equal(db.state.orders.length, 1);
+  // Simulate a historical order that was already paid before this admin edit.
+  db.state.orders[0][10] = "paid";
 
   const denied = await onRequestPost({
     request: new Request(origin + "/api/store", {
@@ -282,11 +284,20 @@ test("order list requires admin access and retains paid orders for follow-up", a
   assert.equal(listed.status, 200);
   assert.equal((await listed.json()).orders.length, 1);
 
-  const updated = await onRequestPost({
+  const directPaid = await onRequestPost({
     request: adminRequest("update-order", {
       orderId: 41,
       status: "completed",
       paymentStatus: "paid"
+    }),
+    env: { DB: db, ADMIN_KEY: "test-admin-key" }
+  });
+  assert.equal(directPaid.status, 403, "generic order update must not approve payment");
+
+  const updated = await onRequestPost({
+    request: adminRequest("update-order", {
+      orderId: 41,
+      status: "completed"
     }),
     env: { DB: db, ADMIN_KEY: "test-admin-key" }
   });
