@@ -22,7 +22,11 @@ test("settings load from server response and remain available to the authenticat
   assert.match(admin, /\$\("accountHolderName"\)\.value\s*=\s*data\.settings\.accountHolderName\s*\|\|\s*""/);
   assert.match(admin, /\$\("cardTransferEnabled"\)\.checked\s*=\s*data\.settings\.cardTransferEnabled === true/);
   assert.match(admin, /await api\("POST",\s*\{\s*action:\s*"save-settings",\s*settings\s*\}/s);
-  assert.match(admin, /await loadStore\(\)/);
+  assert.match(admin, /const refreshed = await api\("GET"\)/);
+  assert.match(admin, /refreshedSettings\.cardTransferEnabled !== enabled/);
+  assert.match(admin, /String\(refreshedSettings\.cardNumber \|\| ""\) !== cardNumber/);
+  assert.match(admin, /String\(refreshedSettings\.accountHolderName \|\| ""\) !== accountHolderName/);
+  assert.match(admin, /data = refreshed/);
 });
 
 test("disabling card transfer preserves stored card details while setting enabled=false", () => {
