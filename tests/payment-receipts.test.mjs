@@ -48,7 +48,7 @@ test("valid upload matches the server-side order and moves it only to review", a
     }; return stmt;
   } };
   const bucket = { async put(key, bytes) { state.stored.push({ key, bytes: new Uint8Array(bytes) }); }, async delete() {} };
-  const form = new FormData(); form.set("orderId", "7"); form.set("phone", "09123456789");
+  const form = new FormData(); form.set("orderId", "HF-7"); form.set("phone", "09123456789");
   form.set("receipt", new Blob(["%PDF-1.7 dummy receipt"], { type: "application/pdf" }), "dummy.pdf");
   const response = await onRequest({ request: new Request("https://example.test/api/payment-receipts", { method: "POST", body: form }), env: { DB, PAYMENT_RECEIPTS_BUCKET: bucket } });
   assert.equal(response.status, 201);
