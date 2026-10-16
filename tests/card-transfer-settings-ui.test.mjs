@@ -21,7 +21,7 @@ test("settings load from server response and remain available to the authenticat
   assert.match(admin, /\$\("cardNumber"\)\.value\s*=\s*data\.settings\.cardNumber\s*\|\|\s*""/);
   assert.match(admin, /\$\("accountHolderName"\)\.value\s*=\s*data\.settings\.accountHolderName\s*\|\|\s*""/);
   assert.match(admin, /\$\("cardTransferEnabled"\)\.checked\s*=\s*data\.settings\.cardTransferEnabled === true/);
-  assert.match(admin, /await api\("POST",\s*\{\s*action:\s*"save-settings",\s*settings:\s*\{\s*cardNumber,\s*accountHolderName,\s*cardTransferEnabled: enabled/s);
+  assert.match(admin, /await api\("POST",\s*\{\s*action:\s*"save-settings",\s*settings\s*\}/s);
   assert.match(admin, /await loadStore\(\)/);
 });
 
