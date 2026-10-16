@@ -1217,7 +1217,9 @@ await createTables(db);
 const store =
   await getStore(db);
 
-    if (!isAdmin(request, env) && store.settings?.cardTransferEnabled !== true) {
+    // Card-transfer account details are private admin data. Never expose them
+    // through the public store API, even when card-transfer payments are enabled.
+    if (!isAdmin(request, env)) {
       delete store.settings.cardNumber;
       delete store.settings.accountHolderName;
     }
