@@ -3006,9 +3006,23 @@ async function saveCardTransferSettings() {
       action: "save-settings",
       settings
     });
-    await loadStore();
+    const refreshed = await api("GET");
+    const refreshedSettings = refreshed.settings || {};
+    if (refreshedSettings.cardTransferEnabled !== enabled) {
+      throw new Error("وضعیت ذخیره‌شده پس از بارگذاری مجدد تأیید نشد.");
+    }
+    if (Object.prototype.hasOwnProperty.call(settings, "cardNumber") &&
+        String(refreshedSettings.cardNumber || "") !== cardNumber) {
+      throw new Error("شماره کارت پس از بارگذاری مجدد با مقدار ذخیره‌شده مطابقت ندارد.");
+    }
+    if (Object.prototype.hasOwnProperty.call(settings, "accountHolderName") &&
+        String(refreshedSettings.accountHolderName || "") !== accountHolderName) {
+      throw new Error("نام صاحب حساب پس از بارگذاری مجدد با مقدار ذخیره‌شده مطابقت ندارد.");
+    }
+    data = refreshed;
+    fillSettings();
     status.textContent = enabled
-      ? "تنظیمات ذخیره شد و از سرور دوباره خوانده شد."
+      ? "تنظیمات ذخیره و با خواندن مجدد از سرور تأیید شد."
       : "تنظیمات ذخیره شد؛ کارت‌به‌کارت غیرفعال است.";
   } catch (error) {
     status.textContent = "ذخیره تنظیمات انجام نشد: " + error.message;
