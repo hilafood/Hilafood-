@@ -2996,9 +2996,15 @@ async function saveCardTransferSettings() {
   }
   try {
     status.textContent = "در حال ذخیره تنظیمات کارت‌به‌کارت...";
+    const settings = { cardTransferEnabled: enabled };
+    // غیرفعال‌سازی به‌تنهایی نباید اطلاعات ذخیره‌شده را پاک کند.
+    if (enabled || cardNumber || accountHolderName) {
+      settings.cardNumber = cardNumber;
+      settings.accountHolderName = accountHolderName;
+    }
     await api("POST", {
       action: "save-settings",
-      settings: { cardNumber, accountHolderName, cardTransferEnabled: enabled }
+      settings
     });
     await loadStore();
     status.textContent = enabled
