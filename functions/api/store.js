@@ -1195,6 +1195,7 @@ const coursesResult =
 ================================================== */
 
 export async function onRequestGet({
+  request,
   env
 }) {
 
@@ -1216,6 +1217,10 @@ await createTables(db);
 const store =
   await getStore(db);
 
+    if (!isAdmin(request, env) && store.settings?.cardTransferEnabled !== true) {
+      delete store.settings.cardNumber;
+      delete store.settings.accountHolderName;
+    }
     return json(store);
 
   } catch (error) {
