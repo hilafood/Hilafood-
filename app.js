@@ -2089,16 +2089,7 @@ async function submitOrder() {
     const paymentFollowUp =
       "\n\nپرداخت آنلاین از طریق این صفحه انجام نمی‌شود. سفارش ثبت شده است؛ برای هماهنگی پرداخت و ارسال، از راه‌های تماس درج‌شده در سایت پیگیری کنید.";
 
-    alert(
-      "سفارش با موفقیت ثبت شد.\n\n" +
-      "شماره سفارش: " +
-      data.orderId +
-      "\n\nاقلام سفارش:\n" +
-      orderItemsSummary +
-      "\n\nمبلغ نهایی: " +
-      money(data.total) +
-      paymentFollowUp
-    );
+    showCardTransferReceipt(data.orderId, phone, data.total, orderItemsSummary);
 
   } catch (error) {
 
@@ -2129,6 +2120,62 @@ async function submitOrder() {
   }
 }
 
+
+function showCardTransferReceipt(orderId, phone, total, itemsSummary) {
+  const settings = STORE.settings || {};
+  const box = document.createElement("section");
+  box.style.cssText = "position:fixed;inset:0;z-index:99999;background:#0008;display:flex;align-items:center;justify-content:center;padding:16px";
+  box.innerHTML = `
+    <div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:20px;line-height:2">
+      <h2>سفارش شما ثبت شد</h2>
+      <p>شماره سفارش: <b>${escapeHtml(orderId)}</b></p>
+      <p>مبلغ نهایی از سمت سرور: <b>${money(total)}</b></p>
+      <p style="white-space:pre-line">${escapeHtml(itemsSummary || "")}</p>
+      ${settings.cardTransferEnabled === true && settings.cardNumber && settings.accountHolderName ? `
+        <hr><h3>پرداخت کارت‌به‌کارت</h3>
+        <p>صاحب حساب: <b>${escapeHtml(settings.accountHolderName)}</b></p>
+        <p>شماره کارت: <b dir="ltr">${escapeHtml(settings.cardNumber)}</b></p>
+        <p class="muted">پس از انتقال، فیش را بارگذاری کنید. ارسال فیش به‌تنهایی به معنی تأیید پرداخت نیست.</p>
+        <form id="paymentReceiptForm">
+          <label>تصویر یا PDF فیش (حداکثر ۵ مگابایت)
+            <input id="paymentReceiptFile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+          </label>
+          <button class="checkout" type="submit">ارسال فیش برای بررسی</button>
+        </form>
+      ` : `<p>پرداخت کارت‌به‌کارت هنوز توسط مدیر پیکربندی نشده است. لطفاً از راه ارتباطی فروشگاه هماهنگ کنید.</p>`}
+      <hr><h3>اگر امکان بارگذاری فیش ندارید</h3>
+      <p>شماره سفارش و فیش را به‌صورت دستی برای پشتیبانی در ایتا ارسال کنید. تأیید پرداخت پس از بررسی مدیر انجام می‌شود.</p>
+      <textarea id="manualPaymentMessage" readonly style="width:100%;min-height:110px">سلام، برای سفارش ${orderId} به مبلغ ${Number(total || 0).toLocaleString("fa-IR")} تومان فیش پرداخت را ارسال می‌کنم. لطفاً پس از بررسی واریز، پرداخت را تأیید کنید.</textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" id="copyManualPaymentMessage">کپی پیام آماده</button>
+        <a href="https://eitaa.com/hila_mama" target="_blank" rel="noopener" style="padding:10px">بازکردن ایتا</a>
+        <button type="button" id="closePaymentReceipt">بستن</button>
+      </div><div id="paymentReceiptStatus" role="status" style="margin-top:10px"></div>
+    </div>`;
+  document.body.appendChild(box);
+  $("closePaymentReceipt").onclick = () => box.remove();
+  $("copyManualPaymentMessage").onclick = async () => {
+    try { await navigator.clipboard.writeText($("manualPaymentMessage").value); $("paymentReceiptStatus").textContent = "پیام کپی شد؛ آن را در گفت‌وگوی ایتا ارسال کنید."; }
+    catch { $("manualPaymentMessage").select(); $("paymentReceiptStatus").textContent = "متن را انتخاب و کپی کنید."; }
+  };
+  const form = $("paymentReceiptForm");
+  if (form) form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const file = $("paymentReceiptFile").files?.[0]; const status = $("paymentReceiptStatus");
+    if (!file) return;
+    const body = new FormData(); body.append("orderId", String(orderId)); body.append("phone", String(phone || "")); body.append("receipt", file);
+    status.textContent = "در حال ارسال فیش امن...";
+    const button = form.querySelector("button"); button.disabled = true;
+    try {
+      const response = await fetch("/api/payment-receipts", { method: "POST", body });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "ارسال فیش انجام نشد");
+      status.textContent = "فیش دریافت شد و در انتظار بررسی مدیر است. تا تأیید مدیر، پرداخت تأییدشده محسوب نمی‌شود.";
+      form.reset();
+    } catch (error) { status.textContent = "ارسال انجام نشد: " + error.message + "؛ از پیام آماده ایتا استفاده کنید."; }
+    finally { button.disabled = false; }
+  });
+}
 
 /* ==================================================
    شروع checkout
