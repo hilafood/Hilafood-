@@ -5,7 +5,7 @@ import { onRequestDelete, onRequestPost, onRequestPut } from "../functions/api/s
 
 const origin = "https://hilafood.pages.dev";
 function makeDb() {
-  const state = { orders: [], createdProducts: [], productWeights: { p1: 400 }, product: { id: "p1", name: "محصول آزمایشی", price: 120000, discount_price: 90000, active: 1 } };
+  const state = { orders: [], createdProducts: [], productWeights: { p1: 400 }, paymentSettings: {}, product: { id: "p1", name: "محصول آزمایشی", price: 120000, discount_price: 90000, active: 1 } };
   return {
     state,
     prepare(sql) {
@@ -28,6 +28,9 @@ function makeDb() {
         return null;
       };
       stmt.all = async () => {
+        if (sql.includes("FROM settings") && sql.includes("cardTransferEnabled")) {
+          return { results: Object.entries(state.paymentSettings).map(([key, value]) => ({ key, value: JSON.stringify(value) })) };
+        }
         if (sql.includes("FROM orders")) {
           return {
             results: state.orders.map((args, index) => ({
@@ -407,6 +410,26 @@ test("product create validates integer nonnegative prices and discount ranges", 
   assert.equal(db.state.createdProducts.length, 1);
   assert.equal(db.state.createdProducts[0][4], 10000);
   assert.equal(db.state.createdProducts[0][5], 8000);
+});
+
+test("created order returns card instructions only when configured and enabled, without trusting browser amount", async () => {
+  const db = makeDb();
+  db.state.paymentSettings = {
+    cardTransferEnabled: true,
+    cardNumber: "1234567812345678",
+    accountHolderName: "صاحب حساب آزمایشی"
+  };
+  const response = await onRequestPost({
+    request: request(2, { price: 1, name: "قیمت جعلی", total: 1 }),
+    env: { DB: db }
+  });
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.total, 205000); // two discounted items (90,000 each) + 25,000 shipping
+  assert.deepEqual(payload.paymentInstructions, {
+    cardNumber: "1234567812345678",
+    accountHolderName: "صاحب حساب آزمایشی"
+  });
 });
 
 test("product edit rejects invalid prices before updating the stored product", async () => {
