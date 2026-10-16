@@ -2915,41 +2915,6 @@ const body =
       ];
 
 
-      const allowedPaymentStatuses = [
-        "unpaid",
-        "paid",
-        "failed"
-      ];
-
-
-      if (
-        !allowedStatuses.includes(
-          status
-        )
-      ) {
-
-        return json({
-          error:
-            "وضعیت سفارش نامعتبر است"
-        }, 400);
-
-      }
-
-
-      if (
-        !allowedPaymentStatuses.includes(
-          paymentStatus
-        )
-      ) {
-
-        return json({
-          error:
-            "وضعیت پرداخت نامعتبر است"
-        }, 400);
-
-      }
-
-
       const result =
         await db.prepare(`
           UPDATE orders
