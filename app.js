@@ -2089,7 +2089,7 @@ async function submitOrder() {
     const paymentFollowUp =
       "\n\nپرداخت آنلاین از طریق این صفحه انجام نمی‌شود. سفارش ثبت شده است؛ برای هماهنگی پرداخت و ارسال، از راه‌های تماس درج‌شده در سایت پیگیری کنید.";
 
-    showCardTransferReceipt(data.orderId, phone, data.total, orderItemsSummary);
+    showCardTransferReceipt(data.orderId, phone, data.total, orderItemsSummary, data.paymentInstructions || null);
 
   } catch (error) {
 
@@ -2121,8 +2121,10 @@ async function submitOrder() {
 }
 
 
-function showCardTransferReceipt(orderId, phone, total, itemsSummary) {
-  const settings = STORE.settings || {};
+function showCardTransferReceipt(orderId, phone, total, itemsSummary, paymentInstructions = null) {
+  const settings = paymentInstructions && typeof paymentInstructions === "object"
+    ? paymentInstructions
+    : {};
   const box = document.createElement("section");
   box.style.cssText = "position:fixed;inset:0;z-index:99999;background:#0008;display:flex;align-items:center;justify-content:center;padding:16px";
   box.innerHTML = `
