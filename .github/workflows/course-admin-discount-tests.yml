@@ -63,6 +63,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: node --experimental-default-type=module --test tests/payment-receipts.test.mjs
 
+      - name: Test card-transfer settings UI and persistence contract
+        if: ${{ !cancelled() }}
+        run: node --experimental-default-type=module --test tests/card-transfer-settings-ui.test.mjs
+
       - name: Test public rendering XSS regressions
         if: ${{ !cancelled() }}
         run: node --experimental-default-type=module --test tests/public-rendering-security.test.mjs
