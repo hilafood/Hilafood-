@@ -27,7 +27,10 @@ test("settings load from server response and remain available to the authenticat
 
 test("disabling card transfer preserves stored card details while setting enabled=false", () => {
   assert.match(admin, /async function disableCardTransfer\(\)\s*\{\s*\$\("cardTransferEnabled"\)\.checked = false;\s*await saveCardTransferSettings\(\);/);
-  assert.match(admin, /settings:\s*\{\s*cardNumber,\s*accountHolderName,\s*cardTransferEnabled: enabled\s*\}/);
+  assert.match(admin, /const settings = \{ cardTransferEnabled: enabled \}/);
+  assert.match(admin, /if \(enabled \|\| cardNumber \|\| accountHolderName\)/);
+  assert.match(admin, /settings\.cardNumber = cardNumber/);
+  assert.match(admin, /settings\.accountHolderName = accountHolderName/);
 });
 
 test("server validates card details and protects settings writes with admin authorization", () => {
