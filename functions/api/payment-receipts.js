@@ -22,6 +22,8 @@ export async function onRequest({ request, env }) {
   if (!env.DB) return json({ error: "پایگاه داده در دسترس نیست." }, 503);
   const method = request.method.toUpperCase();
   if (method === "POST") {
+    const declaredLength = Number(request.headers.get("content-length") || 0);
+    if (declaredLength > MAX_BYTES + 64 * 1024) return json({ error: "حجم درخواست بیش از حد مجاز است." }, 413);
     if (!env.PAYMENT_RECEIPTS_BUCKET) return json({ error: "ذخیره‌سازی خصوصی فیش هنوز پیکربندی نشده است؛ فعلاً از روش دستی ایتا استفاده کنید." }, 503);
     let form; try { form = await request.formData(); } catch { return json({ error: "فرم ارسال فیش نامعتبر است." }, 400); }
     const orderId = safeId(form.get("orderId")); const phone = digits(form.get("phone")); const file = form.get("receipt");
@@ -71,6 +73,8 @@ export async function onRequest({ request, env }) {
       const receipt = await env.DB.prepare("SELECT id, order_id, status FROM payment_receipts WHERE id = ?").bind(receiptId).first();
       if (!receipt) return json({ error: "فیش پیدا نشد." }, 404);
       if (receipt.status !== "pending") return json({ error: "این فیش قبلاً بررسی شده است." }, 409);
+      const latest = await env.DB.prepare("SELECT MAX(id) AS id FROM payment_receipts WHERE order_id = ?").bind(receipt.order_id).first();
+      if (Number(latest?.id) !== receiptId) return json({ error: "این فیش قدیمی است؛ فقط آخرین فیش سفارش قابل بررسی است." }, 409);
       const order = await env.DB.prepare("SELECT id, payment_status FROM orders WHERE id = ?").bind(receipt.order_id).first();
       if (!order || order.payment_status !== "awaiting_review") return json({ error: "وضعیت سفارش با بررسی فیش سازگار نیست." }, 409);
       const nextStatus = decision === "approve" ? "paid" : "failed";
