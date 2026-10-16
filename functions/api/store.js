@@ -228,6 +228,151 @@ function json(data, status = 200) {
 }
 
 
+/* Validate product prices before they are persisted. */
+function normalizeProductPricing(product) {
+  const rawPrice = product?.price;
+  if (rawPrice === null || rawPrice === undefined ||
+      (typeof rawPrice === "string" && rawPrice.trim() === "") ||
+      typeof rawPrice === "boolean") {
+    return { ok: false, error: "قیمت محصول باید عدد صحیح و نامنفی باشد." };
+  }
+
+  const price = Number(rawPrice);
+  if (!Number.isSafeInteger(price) || price < 0) {
+    return { ok: false, error: "قیمت محصول باید عدد صحیح و نامنفی باشد." };
+  }
+
+  const rawDiscount = product?.discountPrice;
+  if (typeof rawDiscount === "boolean") {
+    return { ok: false, error: "قیمت تخفیف باید عدد صحیح و کمتر از قیمت اصلی باشد." };
+  }
+  const discountIsBlank = rawDiscount === null || rawDiscount === undefined ||
+    rawDiscount === 0 || rawDiscount === "0" ||
+    (typeof rawDiscount === "string" && rawDiscount.trim() === "");
+  const discountPrice = discountIsBlank ? null : Number(rawDiscount);
+
+  if (discountPrice !== null &&
+      (!Number.isSafeInteger(discountPrice) || discountPrice <= 0 ||
+       price <= 0 || discountPrice >= price)) {
+    return { ok: false, error: "قیمت تخفیف باید عدد صحیح، مثبت و کمتر از قیمت اصلی باشد." };
+  }
+
+  return { ok: true, price, discountPrice };
+}
+
+/* اعتبارسنجی قیمت دوره و تشخیص طرح‌واره تخفیف */
+function normalizeCoursePricing(body) {
+  const price = Number(body?.price);
+  if (!Number.isSafeInteger(price) || price < 1000) {
+    return { ok: false, error: "قیمت اصلی دوره باید عدد صحیح و حداقل ۱۰۰۰ تومان باشد." };
+  }
+
+  const rawDiscount = body?.discountPrice;
+  const discountIsBlank = rawDiscount === null || rawDiscount === undefined ||
+    (typeof rawDiscount === "string" && rawDiscount.trim() === "");
+  if (typeof rawDiscount === "boolean") {
+    return { ok: false, error: "قیمت تخفیف باید عدد صحیح، مثبت و کمتر از قیمت اصلی باشد." };
+  }
+  const discountPrice = discountIsBlank ? null : Number(rawDiscount);
+
+  if (discountPrice !== null &&
+      (!Number.isSafeInteger(discountPrice) || discountPrice <= 0 || discountPrice >= price)) {
+    return { ok: false, error: "قیمت تخفیف باید عدد صحیح، مثبت و کمتر از قیمت اصلی باشد." };
+  }
+
+  return { ok: true, price, discountPrice };
+}
+
+function isSafeOptionalHttpsUrl(value) {
+  const text = String(value || "").trim();
+  if (!text) return true;
+  if (text.length > 2048) return false;
+  try {
+    const url = new URL(text);
+    return url.protocol === "https:" && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
+async function courseEnglishTitleColumnAvailable(db) {
+  try {
+    const result = await db.prepare("PRAGMA table_info(courses)").all();
+    return (result?.results || []).some(column => column.name === "title_en");
+  } catch {
+    return false;
+  }
+}
+
+async function courseDiscountColumnAvailable(db) {
+  try {
+    const result = await db.prepare("PRAGMA table_info(courses)").all();
+    return (result?.results || []).some(column => column.name === "discount_price");
+  } catch {
+    return false;
+  }
+}
+
+function isDuplicateCourseSlugError(error) {
+  const message = String(error?.message || error).toLowerCase();
+  // Only translate the courses.slug uniqueness violation. Other UNIQUE failures
+  // must remain visible as database errors rather than being misreported as slugs.
+  return message.includes("courses.slug");
+}
+
+function duplicateCourseSlugResponse() {
+  return json({
+    error: "این نشانی قبلاً برای دوره دیگری ثبت شده است؛ لطفاً نشانی یکتایی وارد کنید.",
+    code: "COURSE_SLUG_TAKEN"
+  }, 409);
+}
+
+function normalizeWeightDigits(value) {
+  return String(value || "").replace(/[۰-۹٠-٩]/g, digit =>
+    "۰۱۲۳۴۵۶۷۸۹".includes(digit)
+      ? String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
+      : String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))
+  );
+}
+
+function parseProductWeightGrams(name) {
+  const normalized = normalizeWeightDigits(name);
+  const match = normalized.match(/(?:^|[^0-9])([0-9]+)\s*(?:گرم|g\b)/i);
+  if (!match) return 0;
+  const grams = Number(match[1]);
+  return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;
+}
+
+async function readProductWeightMap(db) {
+  const result = await db.prepare("SELECT value FROM settings WHERE key = 'productWeights'").first();
+  if (!result?.value) return {};
+  try {
+    const parsed = JSON.parse(result.value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch { return {}; }
+}
+
+function normalizeAdminWeight(raw) {
+  if (raw === null || raw === undefined || (typeof raw === "string" && raw.trim() === "")) return { ok: true, value: null };
+  if (typeof raw === "boolean") return { ok: false };
+  const value = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isSafeInteger(value) || value <= 0 || value > 1000000) return { ok: false };
+  return { ok: true, value };
+}
+
+async function saveProductWeight(db, productId, weightGrams) {
+  const weights = await readProductWeightMap(db);
+  if (weightGrams === null) delete weights[String(productId)];
+  else weights[String(productId)] = weightGrams;
+  await db.prepare("INSERT INTO settings (key, value) VALUES ('productWeights', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(JSON.stringify(weights)).run();
+}
+
+function resolveProductWeight(productId, productName, weights) {
+  const configured = Number(weights?.[String(productId)]);
+  if (Number.isSafeInteger(configured) && configured > 0) return configured;
+  return parseProductWeightGrams(productName);
+}
+
 /* ==================================================
    ساخت جدول‌های D1
 ================================================== */
@@ -309,6 +454,7 @@ async function createTables(db) {
       slug TEXT NOT NULL UNIQUE,
       description TEXT DEFAULT '',
       price INTEGER DEFAULT 0,
+      discount_price INTEGER,
       image TEXT DEFAULT '',
       active INTEGER DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -497,7 +643,7 @@ async function setupDatabase(db) {
 function isAdmin(request, env) {
 
   const key =
-    request.headers.get(
+    request?.headers?.get(
       "x-admin-key"
     ) || "";
 
@@ -511,6 +657,24 @@ function isAdmin(request, env) {
 /* ==================================================
    خواندن وضعیت فعال بودن پیامک
 ================================================== */
+
+async function getCardTransferInstructions(db) {
+  const result = await db.prepare(`
+    SELECT key, value FROM settings
+    WHERE key IN ('cardTransferEnabled', 'cardNumber', 'accountHolderName')
+  `).all();
+  const settings = {};
+  for (const row of result.results || []) {
+    try { settings[row.key] = JSON.parse(row.value); }
+    catch { settings[row.key] = row.value; }
+  }
+  const cardNumber = String(settings.cardNumber || "").replace(/[\s-]/g, "");
+  const accountHolderName = String(settings.accountHolderName || "").trim();
+  if (settings.cardTransferEnabled !== true || !/^\d{16}$/.test(cardNumber) || !accountHolderName) return null;
+  // Only include these instructions in the response to a just-created order.
+  // The general public store GET response never contains the account details.
+  return { cardNumber, accountHolderName };
+}
 
 async function isSmsEnabled(db) {
 
@@ -776,7 +940,7 @@ async function sendEitaaOrderNotification(
   const itemsText =
     items
       .map(item =>
-        `• ${item.name} × ${item.qty} — ${Number(
+        `• ${item.name} — ${item.orderType === "test" ? `سفارش تست، ${item.weightGrams} گرم` : "محصول کامل"} × ${item.qty} — ${Number(
           item.price * item.qty
         ).toLocaleString("fa-IR")} تومان`
       )
@@ -1013,6 +1177,7 @@ async function getStore(db) {
 
     }));
 
+const hasCourseDiscount = await courseDiscountColumnAvailable(db);
 const coursesResult =
   await db.prepare(`
     SELECT
@@ -1021,6 +1186,7 @@ const coursesResult =
       slug,
       description,
       price,
+      ${hasCourseDiscount ? "discount_price" : "NULL AS discount_price"},
       image,
       active
     FROM courses
@@ -1047,6 +1213,7 @@ const coursesResult =
 ================================================== */
 
 export async function onRequestGet({
+  request,
   env
 }) {
 
@@ -1068,6 +1235,12 @@ await createTables(db);
 const store =
   await getStore(db);
 
+    // Card-transfer account details are private admin data. Never expose them
+    // through the public store API, even when card-transfer payments are enabled.
+    if (!isAdmin(request, env)) {
+      delete store.settings.cardNumber;
+      delete store.settings.accountHolderName;
+    }
     return json(store);
 
   } catch (error) {
@@ -1111,6 +1284,16 @@ const body =
 
     const action =
       body.action || "";
+
+    const adminActions = new Set([
+      "get-sms-status", "save-sms-settings", "send-sms-test",
+      "create-product", "save-settings", "save-shipping",
+      "get-orders", "update-order"
+    ]);
+    if (adminActions.has(action) && !isAdmin(request, env)) {
+      return json({ error: "دسترسی مدیر لازم است." }, 401);
+    }
+
         // =========================================
     // مدیریت دوره‌های آموزشی
     // =========================================
@@ -1139,9 +1322,11 @@ const body =
       // لیست دوره‌ها
       if (action === "admin-courses-list") {
 
+        const hasDiscountColumn = await courseDiscountColumnAvailable(db);
+        const hasEnglishTitleColumn = await courseEnglishTitleColumnAvailable(db);
         const result =
           await db.prepare(`
-            SELECT *
+            SELECT ${hasDiscountColumn ? "*" : "*, NULL AS discount_price"}${hasEnglishTitleColumn ? "" : ", NULL AS title_en"}
             FROM courses
             ORDER BY id DESC
           `).all();
@@ -1176,50 +1361,71 @@ const body =
 
         const description =
           String(body.description || "");
+        const titleEn = String(body.title_en || "").trim();
+        if (titleEn.length > 240) return json({ error: "نام انگلیسی دوره بیش از حد طولانی است." }, 400);
 
-        const price =
-          Math.max(
-            0,
-            Number(body.price || 0)
-          );
+        const pricing = normalizeCoursePricing(body);
+        if (!pricing.ok) return json({ error: pricing.error }, 400);
+        const { price, discountPrice } = pricing;
+        const hasDiscountColumn = await courseDiscountColumnAvailable(db);
+        const hasEnglishTitleColumn = await courseEnglishTitleColumnAvailable(db);
+        if (titleEn && !hasEnglishTitleColumn) {
+          return json({
+            error: "برای ذخیره نام انگلیسی، migration پیشنهادی 0003 باید ابتدا در محیط آزمایشی بررسی شود.",
+            code: "COURSE_ENGLISH_TITLE_SCHEMA_MISSING",
+            migrationRequired: true
+          }, 503);
+        }
+        if (discountPrice !== null && !hasDiscountColumn) {
+          return json({
+            error: "ستون تخفیف دوره در پایگاه داده وجود ندارد؛ تخفیف ذخیره نشد و دوره‌ای ثبت نشد. ابتدا طرح‌واره محیط هدف را بررسی کنید.",
+            code: "COURSE_DISCOUNT_SCHEMA_MISSING",
+            migrationRequired: true
+          }, 503);
+        }
 
         const image =
           String(body.image || "");
 
         const active =
           body.active === false ? 0 : 1;
-let baseSlug = slug;
-let suffix = 2;
 
-while (
-  await db.prepare(
-    "SELECT id FROM courses WHERE slug = ?"
-  ).bind(baseSlug).first()
-) {
-  baseSlug = `${slug}-${suffix++}`;
-}
-        const result =
-          await db.prepare(`
-            INSERT INTO courses
-            (
-              title,
-              slug,
-              description,
-              price,
-              image,
-              active
-            )
-            VALUES (?, ?, ?, ?, ?, ?)
-          `)
-          .bind(
-            title,
-            baseSlug,
-            description,
-            price,
-            image,
-            active
-          )
-          .run();
+        const duplicate = await db.prepare(
+          "SELECT id FROM courses WHERE slug = ?"
+        ).bind(slug).first();
+        if (duplicate) return duplicateCourseSlugResponse();
+
+        let result;
+        try {
+          if (hasDiscountColumn && hasEnglishTitleColumn) {
+            result = await db.prepare(`
+              INSERT INTO courses
+                (title, slug, description, price, discount_price, title_en, image, active)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(title, slug, description, price, discountPrice, titleEn, image, active).run();
+          } else if (hasDiscountColumn) {
+            result = await db.prepare(`
+              INSERT INTO courses
+                (title, slug, description, price, discount_price, image, active)
+              VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).bind(title, slug, description, price, discountPrice, image, active).run();
+          } else if (hasEnglishTitleColumn) {
+            result = await db.prepare(`
+              INSERT INTO courses
+                (title, slug, description, price, title_en, image, active)
+              VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).bind(title, slug, description, price, titleEn, image, active).run();
+          } else {
+            result = await db.prepare(`
+              INSERT INTO courses
+                (title, slug, description, price, image, active)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `).bind(title, slug, description, price, image, active).run();
+          }
+        } catch (error) {
+          if (isDuplicateCourseSlugError(error)) return duplicateCourseSlugResponse();
+          throw error;
+        }
 
         return json({
           ok: true,
@@ -1254,16 +1460,37 @@ while (
         }
 
         const slug =
-          String(body.slug || "").trim();
+          String(body.slug || title.toLowerCase().replace(/\s+/g, "-")).trim();
 
         const description =
           String(body.description || "");
+        const titleEn = String(body.title_en || "").trim();
+        if (titleEn.length > 240) return json({ error: "نام انگلیسی دوره بیش از حد طولانی است." }, 400);
 
-        const price =
-          Math.max(
-            0,
-            Number(body.price || 0)
-          );
+        const pricing = normalizeCoursePricing(body);
+        if (!pricing.ok) return json({ error: pricing.error }, 400);
+        const { price, discountPrice } = pricing;
+        const hasDiscountColumn = await courseDiscountColumnAvailable(db);
+        const hasEnglishTitleColumn = await courseEnglishTitleColumnAvailable(db);
+        if (titleEn && !hasEnglishTitleColumn) {
+          return json({
+            error: "برای ذخیره نام انگلیسی، migration پیشنهادی 0003 باید ابتدا در محیط آزمایشی بررسی شود.",
+            code: "COURSE_ENGLISH_TITLE_SCHEMA_MISSING",
+            migrationRequired: true
+          }, 503);
+        }
+        if (discountPrice !== null && !hasDiscountColumn) {
+          return json({
+            error: "ستون تخفیف دوره در پایگاه داده وجود ندارد؛ تخفیف ذخیره نشد و هیچ تغییری در دوره انجام نشد. ابتدا طرح‌واره محیط هدف را بررسی کنید.",
+            code: "COURSE_DISCOUNT_SCHEMA_MISSING",
+            migrationRequired: true
+          }, 503);
+        }
+
+        const duplicate = await db.prepare(
+          "SELECT id FROM courses WHERE slug = ? AND id != ?"
+        ).bind(slug, id).first();
+        if (duplicate) return duplicateCourseSlugResponse();
 
         const image =
           String(body.image || "");
@@ -1271,28 +1498,40 @@ while (
         const active =
           body.active === false ? 0 : 1;
 
-        await db.prepare(`
-          UPDATE courses
-          SET
-            title = ?,
-            slug = ?,
-            description = ?,
-            price = ?,
-            image = ?,
-            active = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `)
-        .bind(
-          title,
-          slug,
-          description,
-          price,
-          image,
-          active,
-          id
-        )
-        .run();
+        try {
+          if (hasDiscountColumn && hasEnglishTitleColumn) {
+            await db.prepare(`
+              UPDATE courses
+              SET title = ?, slug = ?, description = ?, price = ?, discount_price = ?,
+                  title_en = ?, image = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(title, slug, description, price, discountPrice, titleEn, image, active, id).run();
+          } else if (hasDiscountColumn) {
+            await db.prepare(`
+              UPDATE courses
+              SET title = ?, slug = ?, description = ?, price = ?, discount_price = ?,
+                  image = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(title, slug, description, price, discountPrice, image, active, id).run();
+          } else if (hasEnglishTitleColumn) {
+            await db.prepare(`
+              UPDATE courses
+              SET title = ?, slug = ?, description = ?, price = ?, title_en = ?,
+                  image = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(title, slug, description, price, titleEn, image, active, id).run();
+          } else {
+            await db.prepare(`
+              UPDATE courses
+              SET title = ?, slug = ?, description = ?, price = ?,
+                  image = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(title, slug, description, price, image, active, id).run();
+          }
+        } catch (error) {
+          if (isDuplicateCourseSlugError(error)) return duplicateCourseSlugResponse();
+          throw error;
+        }
 
         return json({
           ok: true
@@ -1549,6 +1788,13 @@ while (
           }, 400);
         }
 
+        if (title.length > 240 || description.length > 2000 || contentText.length > 100000 ||
+            !["text", "video", "file", "image"].includes(contentType) ||
+            !Number.isSafeInteger(sortOrder) || sortOrder < 0 ||
+            !isSafeOptionalHttpsUrl(contentUrl) || !isSafeOptionalHttpsUrl(image)) {
+          return json({ error: "اطلاعات درس، ترتیب یا نشانی محتوا نامعتبر است." }, 400);
+        }
+
         const result =
           await db.prepare(`
             INSERT INTO course_lessons
@@ -1626,6 +1872,13 @@ while (
           return json({
             error: "اطلاعات درس کامل نیست"
           }, 400);
+        }
+
+        if (title.length > 240 || description.length > 2000 || contentText.length > 100000 ||
+            !["text", "video", "file", "image"].includes(contentType) ||
+            !Number.isSafeInteger(sortOrder) || sortOrder < 0 ||
+            !isSafeOptionalHttpsUrl(contentUrl) || !isSafeOptionalHttpsUrl(image)) {
+          return json({ error: "اطلاعات درس، ترتیب یا نشانی محتوا نامعتبر است." }, 400);
         }
 
         await db.prepare(`
@@ -1773,6 +2026,7 @@ while (
       let subtotal = 0;
 
       const cleanItems = [];
+      const productWeights = await readProductWeightMap(db);
 
 
       for (const item of items) {
@@ -1783,15 +2037,23 @@ while (
           );
 
 
+        // Missing quantity keeps the historical default of one. Explicit
+        // values must be safe positive integers before they enter any totals.
+        const rawQuantity = item.qty;
         const quantity =
-          Math.max(
-            1,
-            Math.floor(
-              Number(
-                item.qty || 1
-              )
-            )
-          );
+          rawQuantity === undefined
+            ? 1
+            : (typeof rawQuantity === "number"
+                ? rawQuantity
+                : (typeof rawQuantity === "string" && rawQuantity.trim() !== ""
+                    ? Number(rawQuantity)
+                    : NaN));
+
+        if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+          return json({
+            error: "تعداد هر محصول باید عدد صحیح و مثبت باشد"
+          }, 400);
+        }
 
 
         if (!productId) {
@@ -1826,41 +2088,47 @@ while (
         }
 
 
-        const price =
+        const payablePrice =
           Number(
             product.discount_price != null &&
             Number(product.discount_price) > 0 &&
-            Number(product.discount_price) <
-              Number(product.price || 0)
-
+            Number(product.discount_price) < Number(product.price || 0)
               ? product.discount_price
-
               : product.price || 0
           );
 
+        if (payablePrice <= 0) continue;
 
-        if (price <= 0) {
-          continue;
+        const orderType = item.orderType === undefined ? "full" : String(item.orderType);
+        if (!["full", "test"].includes(orderType)) {
+          return json({ error: "نوع سفارش نامعتبر است" }, 400);
         }
 
+        const originalWeightGrams = resolveProductWeight(product.id, product.name, productWeights);
+        if (orderType === "test" && (!Number.isSafeInteger(originalWeightGrams) || originalWeightGrams <= 0)) {
+          return json({ error: "وزن بسته اصلی این محصول ثبت نشده است؛ سفارش تست فعلاً قابل ثبت نیست." }, 400);
+        }
 
-        subtotal +=
-          price * quantity;
+        // Price and weight come from server-side product data, never from client item fields.
+        const unitPrice = orderType === "test" ? Math.round(payablePrice / 4) : payablePrice;
+        const itemWeightGrams = originalWeightGrams > 0
+          ? (orderType === "test" ? originalWeightGrams / 4 : originalWeightGrams)
+          : null;
 
+        if (!Number.isSafeInteger(unitPrice) || unitPrice <= 0) {
+          return json({ error: "قیمت قابل پرداخت این محصول برای سفارش معتبر نیست" }, 400);
+        }
+
+        subtotal += unitPrice * quantity;
 
         cleanItems.push({
-
-          id:
-            product.id,
-
-          name:
-            product.name,
-
-          qty:
-            quantity,
-
-          price
-
+          id: product.id,
+          name: product.name,
+          qty: quantity,
+          price: unitPrice,
+          orderType,
+          orderTypeLabel: orderType === "test" ? "سفارش تست محصول" : "محصول کامل",
+          weightGrams: itemWeightGrams
         });
       }
 
@@ -2068,6 +2336,8 @@ while (
       );
 
 
+      const paymentInstructions = await getCardTransferInstructions(db);
+
       return json({
 
         success: true,
@@ -2076,6 +2346,7 @@ while (
           `HF-${orderNumber}`,
 
         orderNumber,
+        ...(paymentInstructions ? { paymentInstructions } : {}),
 
         customerName,
 
@@ -2286,6 +2557,16 @@ while (
           Date.now()
         );
 
+      const pricing = normalizeProductPricing(p);
+      if (!pricing.ok) return json({ error: pricing.error }, 400);
+      const { price, discountPrice } = pricing;
+
+      const hasWeight = Object.prototype.hasOwnProperty.call(p, "weightGrams");
+      const normalizedWeight = normalizeAdminWeight(p.weightGrams);
+      if (hasWeight && !normalizedWeight.ok) {
+        return json({ error: "وزن بسته اصلی باید عدد صحیح و مثبت برحسب گرم باشد." }, 400);
+      }
+
 
       await db.prepare(`
         INSERT INTO products
@@ -2319,16 +2600,9 @@ while (
           p.desc || ""
         ),
 
-        Number(
-          p.price || 0
-        ),
+        price,
 
-        p.discountPrice == null ||
-        p.discountPrice === ""
-          ? null
-          : Number(
-              p.discountPrice
-            ),
+        discountPrice,
 
         String(
           p.stage || ""
@@ -2349,6 +2623,7 @@ while (
       )
       .run();
 
+      if (hasWeight) await saveProductWeight(db, id, normalizedWeight.value);
 
       return json({
         success: true,
@@ -2363,14 +2638,32 @@ while (
 
     if (action === "save-settings") {
 
-      const settings =
-        body.settings || {};
+      const settings = body.settings || {};
+      const allowedSettings = new Set([
+        "showPrices", "currency", "paymentEnabled",
+        "cardTransferEnabled", "cardNumber", "accountHolderName"
+      ]);
+      for (const key of Object.keys(settings)) {
+        if (!allowedSettings.has(key)) return json({ error: "این تنظیم قابل تغییر نیست." }, 400);
+      }
+      if (settings.currency !== undefined && !["تومان", "ریال"].includes(String(settings.currency))) {
+        return json({ error: "واحد پول نامعتبر است." }, 400);
+      }
+      if (settings.cardNumber !== undefined) {
+        const card = String(settings.cardNumber || "")
+          .replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+          .replace(/[\s-]/g, "");
+        if (card && !/^\d{16}$/.test(card)) return json({ error: "شماره کارت باید ۱۶ رقم باشد." }, 400);
+        settings.cardNumber = card;
+      }
+      if (settings.accountHolderName !== undefined && String(settings.accountHolderName).trim().length > 120) {
+        return json({ error: "نام صاحب حساب بیش از حد طولانی است." }, 400);
+      }
+      if (settings.cardTransferEnabled === true && (!settings.cardNumber || !String(settings.accountHolderName || "").trim())) {
+        return json({ error: "برای فعال‌سازی کارت‌به‌کارت، شماره کارت و نام صاحب حساب را وارد کنید." }, 400);
+      }
 
-
-      for (
-        const [key, value]
-        of Object.entries(settings)
-      ) {
+      for (const [key, value] of Object.entries(settings)) {
 
         await db.prepare(`
           INSERT INTO settings
@@ -2630,10 +2923,10 @@ while (
         );
 
 
-      const paymentStatus =
-        String(
-          body.paymentStatus || "unpaid"
-        );
+      if (Object.prototype.hasOwnProperty.call(body, "paymentStatus") &&
+          body.paymentStatus === "paid") {
+        return json({ error: "تأیید پرداخت فقط از مسیر بررسی فیش توسط مدیر مجاز است." }, 403);
+      }
 
 
       const allowedStatuses = [
@@ -2645,52 +2938,15 @@ while (
       ];
 
 
-      const allowedPaymentStatuses = [
-        "unpaid",
-        "paid",
-        "failed"
-      ];
-
-
-      if (
-        !allowedStatuses.includes(
-          status
-        )
-      ) {
-
-        return json({
-          error:
-            "وضعیت سفارش نامعتبر است"
-        }, 400);
-
-      }
-
-
-      if (
-        !allowedPaymentStatuses.includes(
-          paymentStatus
-        )
-      ) {
-
-        return json({
-          error:
-            "وضعیت پرداخت نامعتبر است"
-        }, 400);
-
-      }
-
-
       const result =
         await db.prepare(`
           UPDATE orders
           SET
-            status = ?,
-            payment_status = ?
+            status = ?
           WHERE id = ?
         `)
         .bind(
           status,
-          paymentStatus,
           orderId
         )
         .run();
@@ -2782,6 +3038,15 @@ export async function onRequestPut({
     const p =
       body.product || {};
 
+    const pricing = normalizeProductPricing(p);
+    if (!pricing.ok) return json({ error: pricing.error }, 400);
+    const { price, discountPrice } = pricing;
+
+    const hasWeight = Object.prototype.hasOwnProperty.call(p, "weightGrams");
+    const normalizedWeight = normalizeAdminWeight(p.weightGrams);
+    if (hasWeight && !normalizedWeight.ok) {
+      return json({ error: "وزن بسته اصلی باید عدد صحیح و مثبت برحسب گرم باشد." }, 400);
+    }
 
     const id =
       String(
@@ -2846,16 +3111,9 @@ export async function onRequestPut({
         p.desc || ""
       ),
 
-      Number(
-        p.price || 0
-      ),
+      price,
 
-      p.discountPrice == null ||
-      p.discountPrice === ""
-        ? null
-        : Number(
-            p.discountPrice
-          ),
+      discountPrice,
 
       String(
         p.stage || ""
@@ -2878,6 +3136,7 @@ export async function onRequestPut({
     )
     .run();
 
+    if (hasWeight) await saveProductWeight(db, id, normalizedWeight.value);
 
     return json({
 
@@ -2904,3 +3163,55 @@ export async function onRequestPut({
     }, 500);
   }
           }
+
+
+/* ==================================================
+   DELETE product (admin only)
+================================================== */
+export async function onRequestDelete({ request, env }) {
+  if (!env.DB) {
+    return json({ error: "D1 database is not configured" }, 500);
+  }
+
+  if (!isAdmin(request, env)) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "اطلاعات حذف محصول نامعتبر است" }, 400);
+  }
+
+  const id = String(body?.id || "").trim();
+  if (!id) {
+    return json({ error: "شناسه محصول الزامی است" }, 400);
+  }
+
+  try {
+    const db = env.DB;
+    const existing = await db.prepare(
+      "SELECT id FROM products WHERE id = ?"
+    ).bind(id).first();
+
+    if (!existing) {
+      return json({ error: "محصول پیدا نشد" }, 404);
+    }
+
+    const result = await db.prepare(
+      "DELETE FROM products WHERE id = ?"
+    ).bind(id).run();
+
+    if (!result.meta?.changes) {
+      return json({ error: "محصول پیدا نشد" }, 404);
+    }
+
+    // Orders keep their item snapshots in orders.items; deleting a product
+    // must not remove or rewrite any historical order.
+    return json({ success: true, id });
+  } catch (error) {
+    console.error("DELETE store error:", error);
+    return json({ error: error?.message || String(error) }, 500);
+  }
+}

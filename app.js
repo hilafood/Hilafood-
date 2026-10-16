@@ -28,6 +28,15 @@ let selectedShippingId =
 const $ = id =>
   document.getElementById(id);
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
+}
 
 function img(path) {
 
@@ -38,7 +47,12 @@ function img(path) {
     return "";
   }
 
+  if (v === "farni-tokhm-kharboze.webp" || v === "farni-tokhm-kharbeze.webp") {
+    return "farni-tokhm-kharbeze.jpg";
+  }
+
   if (
+    v === "farni-tokhm-kharbeze.jpg" ||
     v.startsWith("assets/") ||
     v.startsWith("category/") ||
     v.startsWith("http://") ||
@@ -70,10 +84,10 @@ function renderCategories() {
             String(category.id || "");
 
           const name =
-            String(category.name || "");
+            escapeHtml(String(category.name || ""));
 
           const image =
-            img(category.image || "");
+            escapeHtml(img(category.image || ""));
 
           return `
             <a
@@ -139,6 +153,34 @@ function finalPrice(product) {
 
   return price;
 }
+function normalizeWeightDigits(value) {
+  return String(value || "").replace(/[۰-۹٠-٩]/g, digit =>
+    "۰۱۲۳۴۵۶۷۸۹".includes(digit)
+      ? String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
+      : String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))
+  );
+}
+
+function parseProductWeightGrams(name) {
+  const normalized = normalizeWeightDigits(name);
+  const match = normalized.match(new RegExp("(?:^|[^0-9])([0-9]+)\\s*(?:گرم|g\\b)", "i"));
+  const grams = match ? Number(match[1]) : 0;
+  return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;
+}
+
+function displayProductName(name) {
+  return String(name || "").replace(/\s*[|،·-]?\s*[0-9۰-۹٠-٩]+\s*(?:گرم|g\b)/gi, "").replace(/\s{2,}/g, " ").trim();
+}
+
+function productWeightGrams(product) {
+  const configured = Number(STORE.settings.productWeights?.[String(product.id)]);
+  if (Number.isSafeInteger(configured) && configured > 0) return configured;
+  return parseProductWeightGrams(product.name);
+}
+
+function cartItemPrice(product, item) {
+  return item.orderType === "test" ? Math.round(finalPrice(product) / 4) : finalPrice(product);
+}
 
 
 /* ==================================================
@@ -163,7 +205,7 @@ function cartSubtotal() {
 
       return (
         sum +
-        finalPrice(product) *
+        cartItemPrice(product, item) *
         Number(item.qty || 0)
       );
 
@@ -511,9 +553,9 @@ function card(product) {
       ? `
 
         <img
-          src="${img(product.img)}"
+          src="${escapeHtml(img(product.img))}"
           loading="lazy"
-          alt="${product.name}"
+          alt="${escapeHtml(displayProductName(product.name))}"
         >
 
       `
@@ -574,12 +616,12 @@ function card(product) {
 
         <small>
 
-          ${product.cat || ""}
+          ${escapeHtml(product.cat || "")}
 
           ${
             product.stage
               ? " | " +
-                product.stage
+                escapeHtml(product.stage)
               : ""
           }
 
@@ -587,12 +629,12 @@ function card(product) {
 
 
         <h3>
-          ${product.name}
+          ${escapeHtml(displayProductName(product.name))}
         </h3>
 
 
         <p>
-          ${product.desc || ""}
+          ${escapeHtml(product.desc || "")}
         </p>
 
 
@@ -606,12 +648,27 @@ function card(product) {
           <button
             class="details"
             type="button"
-            onclick="addToCart('${product.id}')"
+            onclick="addToCart(${escapeHtml(JSON.stringify(String(product.id || "")))}, 'full')"
           >
-            افزودن
+            خرید محصول کامل
           </button>
 
         </div>
+
+        <section class="test-order-panel" aria-label="سفارش تست محصول">
+          <strong>سفارش تست محصول</strong>
+          ${
+            productWeightGrams(product) > 0
+              ? `
+                <p>قیمت بسته تست: ${money(Math.round(finalPrice(product) / 4))}</p>
+                <button class="test-order-button" type="button" onclick="addToCart(${escapeHtml(JSON.stringify(String(product.id || "")))}, 'test')">سفارش تست</button>
+              `
+              : `
+                <p>سفارش تست این محصول فعلاً فعال نیست.</p>
+                <button class="test-order-button" type="button" disabled>فعلاً در دسترس نیست</button>
+              `
+          }
+        </section>
 
       </div>
 
@@ -703,10 +760,14 @@ function renderCourses() {
       ? courses.map(course => {
 
           const image =
-            img(course.image || "");
+            escapeHtml(img(course.image || ""));
 
-          const price =
-            Number(course.price || 0);
+          const price = Number(course.price);
+          const discount = Number(course.discount_price);
+          const hasDiscount =
+            Number.isSafeInteger(price) && price >= 1000 &&
+            Number.isSafeInteger(discount) && discount > 0 &&
+            discount < price;
 
           return `
             <article class="product">
@@ -720,7 +781,7 @@ function renderCourses() {
                     ? `<img
                         src="${image}"
                         loading="lazy"
-                        alt="${course.title || "دوره آموزشی"}"
+                        alt="${escapeHtml(course.title || "دوره آموزشی")}"
                       >`
                     : `
                       <div class="no-image-text">
@@ -734,19 +795,21 @@ function renderCourses() {
               <div class="product-body">
 
                 <h3>
-                  ${course.title || ""}
+                  ${escapeHtml(course.title || "")}
                 </h3>
 
                 <p>
-                  ${course.description || ""}
+                  ${escapeHtml(course.description || "")}
                 </p>
 
                 ${
                   STORE.settings.showPrices
                     ? `<div class="product-foot">
-                        <strong>
-                          ${money(price)}
-                        </strong>
+                        ${hasDiscount
+                          ? `<del class="course-original-price">${money(price)}</del>
+                             <strong class="course-discount-price">${money(discount)}</strong>
+                             <span class="course-discount-badge">تخفیف</span>`
+                          : `<strong>${money(price)}</strong>`}
                       </div>`
                     : ""
                 }
@@ -764,6 +827,52 @@ function renderCourses() {
         </div>
       `;
 }
+/* ==================================================
+   دانستنی‌های علمی منتشرشده
+================================================== */
+function scienceSourceUrl(value) {
+  try {
+    const url = new URL(String(value || ""));
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+async function loadScienceArticles() {
+  const container = $("scienceArticlesList");
+  if (!container) return;
+  try {
+    const response = await fetch("/api/science-articles", {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("مقالات در دسترس نیستند.");
+    const payload = await response.json();
+    const articles = Array.isArray(payload.articles) ? payload.articles : [];
+    container.innerHTML = articles.length ? articles.map(article => {
+      const sources = Array.isArray(article.sources) ? article.sources : [];
+      const sourceLinks = sources.map(source => {
+        const url = scienceSourceUrl(source.url);
+        if (!url) return "";
+        return '<li><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
+          escapeHtml(source.title || source.publisher || url) + '</a></li>';
+      }).filter(Boolean).join("");
+      return '<article class="science-article-card">' +
+        '<p class="science-article-meta">' + escapeHtml(article.topic || "") +
+        ' · ' + escapeHtml(article.prepared_at || "") + '</p>' +
+        '<h3>' + escapeHtml(article.title || "") + '</h3>' +
+        '<p class="science-article-summary">' + escapeHtml(article.summary || "") + '</p>' +
+        '<details><summary>مطالعهٔ مطلب و منابع</summary>' +
+        '<div class="science-article-content">' + escapeHtml(article.content || "").replace(/\n/g, "<br>") + '</div>' +
+        (sourceLinks ? '<h4>منابع قابل بررسی</h4><ul>' + sourceLinks + '</ul>' : "") +
+        '</details></article>';
+    }).join("") : '<p class="empty">هنوز مطلب علمی منتشرشده‌ای ثبت نشده است.</p>';
+  } catch {
+    container.innerHTML = '<p class="empty">در حال حاضر دریافت مطالب علمی ممکن نیست.</p>';
+  }
+}
+
 /* ==================================================
    جستجو
 ================================================== */
@@ -822,143 +931,74 @@ function filterProducts(q) {
    ویدئو
 ================================================== */
 
-function renderVideo() {
+const PRODUCT_INTRO_VIDEOS = [
+  { title: "فرنی به‌سیب", src: "assets/01-ferni-be-sib.mp4", poster: "assets/farni-beh-sib.webp" },
+  { title: "سویلاک کودک", src: "assets/02-soylak-koodak.mp4" },
+  { title: "فرنی تخم خربزه", src: "assets/03-ferni-tokhm-kharboze.mp4", poster: "farni-tokhm-kharbeze.jpg" },
+  { title: "اُمیلا", src: "assets/04-omila.mp4", poster: "assets/chasni-omega.webp" },
+  { title: "کاچی بزرک", src: "assets/05-kachi-bozorg.mp4", poster: "assets/kachi-bozorg.webp" }
+];
 
-  const videoBox =
-    $("videoBox");
+const PRODUCT_PREPARATION_VIDEOS = [
+  { title: "آماده‌سازی فرنی به‌سیب", src: "assets/06-amade-sazi-ferni-be-sib.mp4", poster: "assets/farni-beh-sib.webp" },
+  { title: "آماده‌سازی فرنی تخم خربزه", src: "assets/07-amade-sazi-ferni-tokhm-kharboze.mp4", poster: "farni-tokhm-kharbeze.jpg" },
+  { title: "آماده‌سازی اُمیلا", src: "assets/08-amade-sazi-omila.mp4", poster: "assets/chasni-omega.webp" },
+  { title: "آماده‌سازی کاچی بزرک", src: "assets/09-amade-sazi-kachi-bozorg.mp4", poster: "assets/kachi-bozorg.webp" }
+];
 
-  if (!videoBox) {
-    return;
-  }
-
-
-  const product =
-    STORE.products.find(
-      x => x.video
-    );
-
-
-  if (!product) {
-    return;
-  }
-
-
-  videoBox.innerHTML = `
-
-    <div>
-
-      <h3>
-        ${product.name}
-      </h3>
-
-      <p>
-        برای مشاهده طرز آماده‌سازی،
-        ویدئوی محصول را ببینید.
-      </p>
-
-      <a
-        class="btn purple"
-        href="${product.video}"
-        target="_blank"
-        rel="noopener"
-      >
-        ▶ مشاهده ویدئو
-      </a>
-
-    </div>
-
-  `;
+function videoCard(item, kind) {
+  const poster = item.poster ? " poster=\"" + escapeHtml(img(item.poster)) + "\"" : "";
+  const title = escapeHtml(item.title);
+  return '<article class="media-video-card ' + kind + '">' +
+    '<h3>' + title + '</h3>' +
+    '<video controls playsinline preload="none"' + poster + ' aria-label="' + title + '">' +
+    '<source src="' + escapeHtml(item.src) + '" type="video/mp4">' +
+    'مرورگر شما از پخش ویدئو پشتیبانی نمی‌کند.' +
+    '</video></article>';
 }
 
+function renderProductIntroVideos() {
+  const grid = $("productVideoGrid");
+  if (!grid) return;
+  grid.innerHTML = PRODUCT_INTRO_VIDEOS.map(item => videoCard(item, "product-intro-card")).join("");
+}
+
+function renderVideo() {
+  renderProductIntroVideos();
+  const videoBox = $("preparationVideoGrid");
+  if (!videoBox) return;
+  const fixedSources = new Set(PRODUCT_PREPARATION_VIDEOS.map(item => item.src));
+  const preparedCards = PRODUCT_PREPARATION_VIDEOS.map(item => videoCard(item, "preparation-card"));
+  // Keep videos entered from the admin panel visible without duplicating fixed preparation videos.
+  const extraVideos = (Array.isArray(STORE.products) ? STORE.products : [])
+    .filter(product => product && product.video && !fixedSources.has(String(product.video)))
+    .map(product => '<article class="media-video-card preparation-card"><h3>' +
+      displayProductName(product.name) + '</h3><p>ویدئوی ثبت‌شده در مدیریت</p>' +
+      '<a class="video-link" href="' + product.video + '" target="_blank" rel="noopener">▶ مشاهده ویدئو</a></article>');
+  videoBox.innerHTML = [...preparedCards, ...extraVideos].join("");
+}
 
 /* ==================================================
    افزودن به سبد
 ================================================== */
 
-function addToCart(id) {
-
-  const product =
-    STORE.products.find(
-      x =>
-        String(x.id) ===
-        String(id)
-    );
-
-
-  if (!product) {
-
-    alert(
-      "محصول پیدا نشد."
-    );
-
+function addToCart(id, orderType = "full") {
+  const product = STORE.products.find(x => String(x.id) === String(id));
+  if (!product) { alert("محصول پیدا نشد."); return; }
+  if (!STORE.settings.showPrices) { alert("قیمت محصولات فعلاً فعال نیست."); return; }
+  if (finalPrice(product) <= 0) { alert("قیمت این محصول هنوز ثبت نشده است."); return; }
+  if (!["full", "test"].includes(orderType)) { alert("نوع سفارش نامعتبر است."); return; }
+  if (orderType === "test" && productWeightGrams(product) <= 0) {
+    alert("سفارش تست این محصول فعلاً فعال نیست.");
     return;
   }
-
-
-  if (
-    !STORE.settings.showPrices
-  ) {
-
-    alert(
-      "قیمت محصولات فعلاً فعال نیست."
-    );
-
-    return;
-  }
-
-
-  const price =
-    finalPrice(product);
-
-
-  if (price <= 0) {
-
-    alert(
-      "قیمت این محصول هنوز ثبت نشده است."
-    );
-
-    return;
-  }
-
-
-  const existing =
-    cart.find(
-      item =>
-        String(item.id) ===
-        String(id)
-    );
-
-
-  if (existing) {
-
-    existing.qty =
-      Number(existing.qty || 0) + 1;
-
-  } else {
-
-    cart.push({
-
-      id:
-        product.id,
-
-      qty: 1
-
-    });
-
-  }
-
-
-  localStorage.setItem(
-    "hilaCart",
-    JSON.stringify(cart)
-  );
-
-
+  const existing = cart.find(item => String(item.id) === String(id) && (item.orderType || "full") === orderType);
+  if (existing) existing.qty = Number(existing.qty || 0) + 1;
+  else cart.push({ id: product.id, qty: 1, orderType });
+  localStorage.setItem("hilaCart", JSON.stringify(cart));
   updateCart();
-
   openCart();
 }
-
 
 /* ==================================================
    بروزرسانی سبد
@@ -982,6 +1022,14 @@ function updateCart() {
 
     });
 
+
+  const checkoutButton =
+    document.querySelector(".checkout");
+
+  if (checkoutButton) {
+    checkoutButton.textContent =
+      "ادامه برای ثبت سفارش";
+  }
 
   const cartItems =
     $("cartItems");
@@ -1013,40 +1061,19 @@ function updateCart() {
             return `
 
               <div class="cart-row">
-
                 <b>
-
-                  ${product.name}
-
+                  ${displayProductName(product.name)}
                   <small>
-                    ${money(
-                      finalPrice(product)
-                    )}
+                    ${(item.orderType || "full") === "test" ? "سفارش تست محصول" : "محصول کامل"}
+                    
+                    · ${money(cartItemPrice(product, item))}
                   </small>
-
                 </b>
-
-
                 <div class="qty">
-
-                  <button
-                    type="button"
-                    onclick="qty('${product.id}', -1)"
-                  >
-                    −
-                  </button>
-
+                  <button type="button" onclick="qty('${product.id}', -1, '${item.orderType || "full"}')">−</button>
                   ${Number(item.qty || 0)}
-
-                  <button
-                    type="button"
-                    onclick="qty('${product.id}', 1)"
-                  >
-                    +
-                  </button>
-
+                  <button type="button" onclick="qty('${product.id}', 1, '${item.orderType || "full"}')">+</button>
                 </div>
-
               </div>
 
             `;
@@ -1084,47 +1111,16 @@ function updateCart() {
    تغییر تعداد
 ================================================== */
 
-function qty(id, change) {
-
-  const item =
-    cart.find(
-      x =>
-        String(x.id) ===
-        String(id)
-    );
-
-
-  if (!item) {
-    return;
-  }
-
-
-  item.qty =
-    Number(item.qty || 0) +
-    Number(change || 0);
-
-
+function qty(id, change, orderType = "full") {
+  const item = cart.find(x => String(x.id) === String(id) && (x.orderType || "full") === orderType);
+  if (!item) return;
+  item.qty = Number(item.qty || 0) + Number(change || 0);
   if (item.qty < 1) {
-
-    cart =
-      cart.filter(
-        x =>
-          String(x.id) !==
-          String(id)
-      );
-
+    cart = cart.filter(x => !(String(x.id) === String(id) && (x.orderType || "full") === orderType));
   }
-
-
-  localStorage.setItem(
-    "hilaCart",
-    JSON.stringify(cart)
-  );
-
-
+  localStorage.setItem("hilaCart", JSON.stringify(cart));
   updateCart();
 }
-
 
 /* ==================================================
    سبد خرید
@@ -1977,7 +1973,10 @@ async function submitOrder() {
           String(item.id),
 
         qty:
-          Number(item.qty || 1)
+          Number(item.qty || 1),
+
+        orderType:
+          item.orderType || "full"
 
       }));
 
@@ -2075,25 +2074,22 @@ async function submitOrder() {
         "block";
 
       checkoutButton.textContent =
-        "ادامه و پرداخت";
+        "ادامه برای ثبت سفارش";
 
     }
 
 
-    alert(
+    const orderItemsSummary = (data.items || []).map(item => {
+      const typeLabel = item.orderType === "test" ? "سفارش تست محصول" : "محصول کامل";
+      return displayProductName(item.name) + " — " + typeLabel +
+        " × " + Number(item.qty || 1).toLocaleString("fa-IR") +
+        " — " + money(item.price) + " برای هر بسته";
+    }).join("\n");
 
-      "سفارش با موفقیت ثبت شد.\n\n" +
+    const paymentFollowUp =
+      "\n\nپرداخت آنلاین از طریق این صفحه انجام نمی‌شود. سفارش ثبت شده است؛ برای هماهنگی پرداخت و ارسال، از راه‌های تماس درج‌شده در سایت پیگیری کنید.";
 
-      "شماره سفارش: " +
-      data.orderId +
-
-      "\n\n" +
-
-      "مبلغ نهایی: " +
-      money(data.total)
-
-    );
-
+    showCardTransferReceipt(data.orderId, phone, data.total, orderItemsSummary, data.paymentInstructions || null);
 
   } catch (error) {
 
@@ -2124,6 +2120,64 @@ async function submitOrder() {
   }
 }
 
+
+function showCardTransferReceipt(orderId, phone, total, itemsSummary, paymentInstructions = null) {
+  const settings = paymentInstructions && typeof paymentInstructions === "object"
+    ? paymentInstructions
+    : {};
+  const box = document.createElement("section");
+  box.style.cssText = "position:fixed;inset:0;z-index:99999;background:#0008;display:flex;align-items:center;justify-content:center;padding:16px";
+  box.innerHTML = `
+    <div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:20px;line-height:2">
+      <h2>سفارش شما ثبت شد</h2>
+      <p>شماره سفارش: <b>${escapeHtml(orderId)}</b></p>
+      <p>مبلغ نهایی از سمت سرور: <b>${money(total)}</b></p>
+      <p style="white-space:pre-line">${escapeHtml(itemsSummary || "")}</p>
+      ${settings.cardTransferEnabled === true && settings.cardNumber && settings.accountHolderName ? `
+        <hr><h3>پرداخت کارت‌به‌کارت</h3>
+        <p>صاحب حساب: <b>${escapeHtml(settings.accountHolderName)}</b></p>
+        <p>شماره کارت: <b dir="ltr">${escapeHtml(settings.cardNumber)}</b></p>
+        <p class="muted">پس از انتقال، فیش را بارگذاری کنید. ارسال فیش به‌تنهایی به معنی تأیید پرداخت نیست.</p>
+        <form id="paymentReceiptForm">
+          <label>تصویر یا PDF فیش (حداکثر ۵ مگابایت)
+            <input id="paymentReceiptFile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+          </label>
+          <button class="checkout" type="submit">ارسال فیش برای بررسی</button>
+        </form>
+      ` : `<p>پرداخت کارت‌به‌کارت هنوز توسط مدیر پیکربندی نشده است. لطفاً از راه ارتباطی فروشگاه هماهنگ کنید.</p>`}
+      <hr><h3>اگر امکان بارگذاری فیش ندارید</h3>
+      <p>شماره سفارش و فیش را به‌صورت دستی برای پشتیبانی در ایتا ارسال کنید. تأیید پرداخت پس از بررسی مدیر انجام می‌شود.</p>
+      <textarea id="manualPaymentMessage" readonly style="width:100%;min-height:110px">سلام، برای سفارش ${orderId} به مبلغ ${Number(total || 0).toLocaleString("fa-IR")} تومان فیش پرداخت را ارسال می‌کنم. لطفاً پس از بررسی واریز، پرداخت را تأیید کنید.</textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" id="copyManualPaymentMessage">کپی پیام آماده</button>
+        <a href="https://eitaa.com/hila_mama" target="_blank" rel="noopener" style="padding:10px">بازکردن ایتا</a>
+        <button type="button" id="closePaymentReceipt">بستن</button>
+      </div><div id="paymentReceiptStatus" role="status" style="margin-top:10px"></div>
+    </div>`;
+  document.body.appendChild(box);
+  $("closePaymentReceipt").onclick = () => box.remove();
+  $("copyManualPaymentMessage").onclick = async () => {
+    try { await navigator.clipboard.writeText($("manualPaymentMessage").value); $("paymentReceiptStatus").textContent = "پیام کپی شد؛ آن را در گفت‌وگوی ایتا ارسال کنید."; }
+    catch { $("manualPaymentMessage").select(); $("paymentReceiptStatus").textContent = "متن را انتخاب و کپی کنید."; }
+  };
+  const form = $("paymentReceiptForm");
+  if (form) form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const file = $("paymentReceiptFile").files?.[0]; const status = $("paymentReceiptStatus");
+    if (!file) return;
+    const body = new FormData(); body.append("orderId", String(orderId)); body.append("phone", String(phone || "")); body.append("receipt", file);
+    status.textContent = "در حال ارسال فیش امن...";
+    const button = form.querySelector("button"); button.disabled = true;
+    try {
+      const response = await fetch("/api/payment-receipts", { method: "POST", body });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "ارسال فیش انجام نشد");
+      status.textContent = "فیش دریافت شد و در انتظار بررسی مدیر است. تا تأیید مدیر، پرداخت تأییدشده محسوب نمی‌شود.";
+      form.reset();
+    } catch (error) { status.textContent = "ارسال انجام نشد: " + error.message + "؛ از پیام آماده ایتا استفاده کنید."; }
+    finally { button.disabled = false; }
+  });
+}
 
 /* ==================================================
    شروع checkout
@@ -2163,7 +2217,10 @@ async function checkout() {
    شروع برنامه
 ================================================== */
 
-document.addEventListener(
-  "DOMContentLoaded",
-  load
-);
+document.addEventListener("DOMContentLoaded", async () => {
+  await load();
+  await loadScienceArticles();
+  if (new URLSearchParams(location.search).get("openCart") === "1") {
+    openCart();
+  }
+});

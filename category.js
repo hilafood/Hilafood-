@@ -11,10 +11,29 @@ let cat = new URLSearchParams(location.search).get('cat') || '';
 
 const $ = id => document.getElementById(id);
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
+}
+
+function safeVideoUrl(value) {
+  const url = String(value || "").trim();
+  if (/^https?:\/\//i.test(url)) return escapeHtml(url);
+  if (/^(?!\/\/)[A-Za-z0-9._/-]+(?:\?[A-Za-z0-9._=&%-]*)?$/.test(url)) return escapeHtml(url);
+  return "";
+}
+
 const path = x => {
   const v = String(x || '');
   return v
-    ? (v.startsWith('assets/') || v.startsWith('category/')
+    ? ((v === 'farni-tokhm-kharboze.webp' || v === 'farni-tokhm-kharbeze.webp')
+        ? 'farni-tokhm-kharbeze.jpg'
+        : v === 'farni-tokhm-kharbeze.jpg' || v.startsWith('assets/') || v.startsWith('category/') || v.startsWith('http://') || v.startsWith('https://')
         ? v
         : 'assets/' + v)
     : '';
@@ -27,11 +46,53 @@ function money(n) {
 }
 
 function price(p) {
-  return Number(
-    p.discountPrice > 0
-      ? p.discountPrice
-      : p.price || 0
+  const original = Number(p.price || 0);
+  const discount = Number(p.discountPrice || 0);
+  return discount > 0 && discount < original ? discount : original;
+}
+function normalizeWeightDigits(value) {
+  return String(value || "").replace(/[۰-۹٠-٩]/g, digit =>
+    "۰۱۲۳۴۵۶۷۸۹".includes(digit)
+      ? String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
+      : String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))
   );
+}
+
+function parseProductWeightGrams(name) {
+  const normalized = normalizeWeightDigits(name);
+  const match = normalized.match(new RegExp("(?:^|[^0-9])([0-9]+)\\s*(?:گرم|g\\b)", "i"));
+  const grams = match ? Number(match[1]) : 0;
+  return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;
+}
+
+function displayProductName(name) {
+  return String(name || "").replace(/\s*[|،·-]?\s*[0-9۰-۹٠-٩]+\s*(?:گرم|g\b)/gi, "").replace(/\s{2,}/g, " ").trim();
+}
+
+function productWeightGrams(product) {
+  const configured = Number(DATA.settings?.productWeights?.[String(product.id)]);
+  if (Number.isSafeInteger(configured) && configured > 0) return configured;
+  return parseProductWeightGrams(product.name);
+}
+
+function addCategoryToCart(id, orderType = "full") {
+  const product = (DATA.products || []).find(item => String(item.id) === String(id));
+  if (!product) { alert("محصول پیدا نشد."); return; }
+  if (!DATA.settings.showPrices || price(product) <= 0) { alert("قیمت این محصول فعلاً در دسترس نیست."); return; }
+  if (orderType === "test" && productWeightGrams(product) <= 0) {
+    alert("سفارش تست این محصول فعلاً فعال نیست.");
+    return;
+  }
+  let cart = [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem("hilaCart") || "[]");
+    cart = Array.isArray(parsed) ? parsed : [];
+  } catch { cart = []; }
+  const existing = cart.find(item => String(item.id) === String(id) && (item.orderType || "full") === orderType);
+  if (existing) existing.qty = Number(existing.qty || 0) + 1;
+  else cart.push({ id: product.id, qty: 1, orderType });
+  localStorage.setItem("hilaCart", JSON.stringify(cart));
+  location.href = "index.html?openCart=1";
 }
 
 async function init() {
@@ -133,6 +194,7 @@ let list = (DATA.products || []).filter(p =>
         const d =
           Number(p.discountPrice) > 0 &&
           Number(p.discountPrice) < Number(p.price);
+        const videoUrl = safeVideoUrl(p.video);
 
         return `
           <article class="vertical-product">
@@ -141,9 +203,9 @@ let list = (DATA.products || []).filter(p =>
               p.img
                 ? `
                   <img
-                    src="${path(p.img)}"
+                    src="${escapeHtml(path(p.img))}"
                     loading="lazy"
-                    alt="${p.name || 'محصول'}"
+                    alt="${escapeHtml(displayProductName(p.name || 'محصول'))}"
                   >
                 `
                 : `
@@ -158,14 +220,14 @@ let list = (DATA.products || []).filter(p =>
             <div>
 
               <small>
-                ${p.cat || ''}
+                ${escapeHtml(p.cat || '')}
                 ${p.cat && p.stage ? ' | ' : ''}
-                ${p.stage || ''}
+                ${escapeHtml(p.stage || '')}
               </small>
 
-              <h2>${p.name || ''}</h2>
+              <h2>${escapeHtml(displayProductName(p.name || ''))}</h2>
 
-              <p>${p.desc || ''}</p>
+              <p>${escapeHtml(p.desc || '')}</p>
 
               ${
                 DATA.settings.showPrices
@@ -189,11 +251,11 @@ let list = (DATA.products || []).filter(p =>
               }
 
               ${
-                p.video
+                videoUrl
                   ? `
                     <a
                       class="video-link"
-                      href="${p.video}"
+                      href="${videoUrl}"
                       target="_blank"
                       rel="noopener"
                     >
@@ -202,6 +264,24 @@ let list = (DATA.products || []).filter(p =>
                   `
                   : ''
               }
+
+              <div class="vertical-order-actions">
+                <button type="button" class="details" onclick="addCategoryToCart(${escapeHtml(JSON.stringify(String(p.id || "")))}, 'full')">خرید محصول کامل</button>
+              </div>
+
+              <section class="test-order-panel" aria-label="سفارش تست محصول">
+                <strong>سفارش تست محصول</strong>
+                ${productWeightGrams(p) > 0
+                  ? `
+                    <p>قیمت بسته تست: ${money(Math.round(price(p) / 4))}</p>
+                    <button type="button" class="test-order-button" onclick="addCategoryToCart(${escapeHtml(JSON.stringify(String(p.id || "")))}, 'test')">سفارش تست</button>
+                  `
+                  : `
+                    <p>سفارش تست این محصول فعلاً فعال نیست.</p>
+                    <button type="button" class="test-order-button" disabled>فعلاً در دسترس نیست</button>
+                  `
+                }
+              </section>
 
             </div>
 

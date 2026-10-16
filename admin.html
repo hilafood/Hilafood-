@@ -407,15 +407,77 @@ button{cursor:pointer}
 
       </div>
 
-      <p class="muted">
-        پرداخت بانکی تا وقتی درگاه و تنظیمات آن کامل نشده،
-        فعال نشود.
-      </p>
-
-      <button class="gold" onclick="saveSettings()">
-        ذخیره تنظیمات
+      <button class="gold" type="button" onclick="saveSettings()">
+        ذخیره تنظیمات عمومی
       </button>
 
+    </div>
+
+    <!-- =========================
+         تنظیمات پرداخت کارت‌به‌کارت
+    ========================== -->
+    <div class="card" id="cardTransferSettings">
+      <h2>تنظیمات پرداخت کارت‌به‌کارت</h2>
+      <p class="muted">
+        شماره کارت و نام صاحب حساب فقط پس از ذخیره در تنظیمات مدیر ثبت می‌شوند. برای فعال‌سازی، شماره کارت ۱۶ رقمی و نام صاحب حساب را وارد کنید.
+        هنگام غیرفعال‌سازی، اطلاعات ذخیره‌شده پاک نمی‌شوند و برای استفاده بعدی باقی می‌مانند؛ اما به مشتری نمایش داده نخواهند شد.
+        پرداخت تنها پس از بررسی مستقل و تأیید صریح مدیر تأییدشده محسوب می‌شود.
+      </p>
+      <div class="grid">
+        <label class="full">شماره کارت مقصد
+          <input id="cardNumber" type="text" inputmode="numeric" autocomplete="off" maxlength="19" placeholder="شماره کارت واقعی ۱۶ رقمی" aria-describedby="cardTransferHelp">
+        </label>
+        <label class="full">نام صاحب حساب
+          <input id="accountHolderName" type="text" autocomplete="off" maxlength="120" placeholder="نام واقعی صاحب حساب">
+        </label>
+        <label class="full">
+          <input type="checkbox" id="cardTransferEnabled">
+          فعال‌کردن پرداخت کارت‌به‌کارت با تأیید دستی مدیر
+        </label>
+      </div>
+      <p id="cardTransferHelp" class="muted">هیچ شماره کارت یا نام صاحب حساب پیش‌فرضی تعریف نشده است.</p>
+      <div class="bar">
+        <button class="gold" type="button" onclick="saveCardTransferSettings()">ذخیره تنظیمات کارت‌به‌کارت</button>
+        <button type="button" onclick="loadStore()">بارگذاری مجدد تنظیمات ذخیره‌شده</button>
+        <button class="danger" type="button" onclick="disableCardTransfer()">غیرفعال‌کردن کارت‌به‌کارت</button>
+      </div>
+      <p id="cardTransferStatus" class="muted" role="status" aria-live="polite"></p>
+    </div>
+
+    <!-- =========================
+         دانستنی‌های علمی
+    ========================== -->
+    <div class="card" id="scienceArticlesAdmin">
+      <div class="topbar">
+        <div>
+          <h2>دانستنی‌های علمی</h2>
+          <p class="muted">مطالب ابتدا پیش‌نویس هستند. انتشار فقط با اقدام صریح مدیر انجام می‌شود.</p>
+        </div>
+        <button type="button" onclick="loadScienceArticlesAdmin()" style="width:auto">تازه‌سازی</button>
+      </div>
+      <div class="grid">
+        <input id="scienceArticleId" type="hidden">
+        <input id="scienceArticleTitle" class="full" maxlength="240" placeholder="عنوان مطلب">
+        <input id="scienceArticleSummary" class="full" maxlength="1200" placeholder="خلاصه مطلب">
+        <select id="scienceArticleTopic">
+          <option value="غذای فراسودمند">غذای فراسودمند</option>
+          <option value="غلات و حبوبات">غلات و حبوبات</option>
+          <option value="تغذیه کودک">تغذیه کودک</option>
+          <option value="بارداری">بارداری</option>
+          <option value="شیردهی">شیردهی</option>
+          <option value="تغذیه زنان">تغذیه زنان</option>
+        </select>
+        <input id="scienceArticleDate" type="date">
+        <textarea id="scienceArticleContent" class="full" rows="7" placeholder="متن فارسی ساده و قابل بررسی"></textarea>
+        <textarea id="scienceArticleSources" class="full" rows="4" placeholder='منابع به صورت JSON: [{"title":"عنوان منبع","url":"https://...","publisher":"ناشر"}]'></textarea>
+        <div class="actions full">
+          <button class="primary" type="button" onclick="saveScienceArticle()">ذخیره پیش‌نویس</button>
+          <button type="button" onclick="clearScienceArticleForm()">پاک‌کردن فرم</button>
+        </div>
+      </div>
+      <p class="muted">منابع باید پیوند HTTPS معتبر داشته باشند. با ویرایش مطلب منتشرشده، وضعیت آن به پیش‌نویس بازمی‌گردد.</p>
+      <div id="scienceArticleStatus" class="status" aria-live="polite"></div>
+      <div id="scienceArticleAdminList"><p class="muted">برای دریافت مطالب، پنل مدیریت را تازه‌سازی کنید.</p></div>
     </div>
 
     <!-- =========================
@@ -553,12 +615,10 @@ button{cursor:pointer}
       </div>
 
       <div id="ordersList">
-
-        <div class="order-empty">
-          در حال دریافت سفارش‌ها...
-        </div>
-
+        <div class="order-empty">در حال دریافت سفارش‌ها...</div>
       </div>
+      <h3>فیش‌های کارت‌به‌کارت در انتظار بررسی</h3>
+      <div id="paymentReceiptsList" class="order-empty">در حال دریافت فیش‌ها...</div>
 
     </div>
 
@@ -598,6 +658,8 @@ button{cursor:pointer}
           type="number"
           placeholder="قیمت با تخفیف - اختیاری"
         >
+
+        <input id="packageWeightGrams" type="hidden">
 
         <input
           id="stage"
@@ -668,6 +730,12 @@ button{cursor:pointer}
     >
 
     <input
+      id="courseTitleEnglish"
+      maxlength="240"
+      placeholder="نام انگلیسی مستقل دوره (اختیاری)"
+    >
+
+    <input
       id="courseSlug"
       placeholder="نام انگلیسی دوره (اختیاری)"
     >
@@ -681,7 +749,17 @@ button{cursor:pointer}
     <input
       id="coursePrice"
       type="number"
-      placeholder="قیمت دوره"
+      min="1000"
+      step="1"
+      placeholder="قیمت اصلی دوره (تومان)"
+    >
+
+    <input
+      id="courseDiscountPrice"
+      type="number"
+      min="1"
+      step="1"
+      placeholder="قیمت با تخفیف (اختیاری)"
     >
 
     <input
@@ -735,6 +813,16 @@ button{cursor:pointer}
   </div>
 
 </div>
+
+    <div class="card" id="courseContentManager">
+      <h2>مدیریت فصل‌ها و درس‌ها</h2>
+      <p class="muted">خرید فقط برای کل دوره انجام می‌شود. محتوای پولی باید پس از تکمیل احراز هویت و پرداخت امن به کاربر نمایش داده شود.</p>
+      <select id="courseContentCourseId" onchange="loadCourseContent()"><option value="">انتخاب دوره</option></select>
+      <div class="actions"><button type="button" onclick="addCourseChapter()">افزودن فصل</button><button type="button" onclick="addCourseLesson()">افزودن درس</button><button type="button" onclick="loadCourseContent()">تازه‌سازی</button></div>
+      <div id="courseContentStatus" class="status" aria-live="polite"></div>
+      <div id="courseChaptersList" class="list"></div>
+      <div id="courseLessonsList" class="list"></div>
+    </div>
 
     <!-- محصولات -->
 
@@ -912,6 +1000,8 @@ async function loadCourses(){
         ? result.courses
         : [];
 
+    refreshCourseContentOptions(courses);
+
     if(!courses.length){
 
       container.innerHTML =
@@ -928,6 +1018,12 @@ async function loadCourses(){
 
         const price =
           Number(course.price || 0);
+        const discount =
+          Number(course.discount_price);
+        const hasDiscount =
+          Number.isSafeInteger(price) && price >= 1000 &&
+          Number.isSafeInteger(discount) && discount > 0 &&
+          discount < price;
 
         return `
           <div
@@ -950,13 +1046,15 @@ async function loadCourses(){
                 <h3 style="margin:0 0 8px">
                   ${escapeHtml(course.title || "")}
                 </h3>
+                ${course.title_en ? `<div class="muted">${escapeHtml(course.title_en)}</div>` : ""}
 
                 <div class="muted">
                   قیمت:
-                  ${
-                    price.toLocaleString("fa-IR")
-                  }
+                  ${hasDiscount
+                    ? `<del>${price.toLocaleString("fa-IR")}</del> <strong>${discount.toLocaleString("fa-IR")}</strong>`
+                    : price.toLocaleString("fa-IR")}
                   تومان
+                  ${hasDiscount ? " (با تخفیف)" : ""}
                 </div>
 
                 <div class="muted">
@@ -1038,6 +1136,46 @@ async function loadCourses(){
 }
 
 
+let courseContentCache={chapters:[],lessons:[]};
+function courseContentMessage(message){const el=$("courseContentStatus");if(el)el.textContent=String(message||"");}
+function refreshCourseContentOptions(courses){const el=$("courseContentCourseId");if(!el)return;const old=el.value;el.innerHTML='<option value="">انتخاب دوره</option>'+courses.map(c=>'<option value="'+Number(c.id)+'">'+escapeHtml(c.title||"")+'</option>').join("");if(courses.some(c=>String(c.id)===old))el.value=old;}
+async function loadCourseContent(){
+ const courseId=Number($("courseContentCourseId")?.value||0);
+ if(!courseId){$("courseChaptersList").innerHTML='<p class="muted">ابتدا دوره را انتخاب کنید.</p>';$("courseLessonsList").innerHTML="";courseContentCache={chapters:[],lessons:[]};return;}
+ try{const r=await api("POST",{action:"admin-course-content",course_id:courseId});courseContentCache={chapters:Array.isArray(r.chapters)?r.chapters:[],lessons:Array.isArray(r.lessons)?r.lessons:[]};
+ $("courseChaptersList").innerHTML='<h3>فصل‌ها</h3>'+(courseContentCache.chapters.length?courseContentCache.chapters.map(c=>'<div class="row"><b>'+escapeHtml(c.title||"")+' · ترتیب '+Number(c.sort_order||0)+'</b><div class="actions"><button onclick="editCourseChapter('+Number(c.id)+')">ویرایش</button><button class="danger" onclick="deleteCourseChapter('+Number(c.id)+')">حذف</button></div></div>').join(""):'<p class="muted">فصلی ثبت نشده است.</p>');
+ $("courseLessonsList").innerHTML='<h3>درس‌ها</h3>'+(courseContentCache.lessons.length?courseContentCache.lessons.map(l=>'<div class="row"><div><b>'+escapeHtml(l.title||"")+'</b><div class="muted">'+escapeHtml(l.content_type||"text")+' · '+(Number(l.is_free)===1?"رایگان":"پولی")+' · ترتیب '+Number(l.sort_order||0)+'</div></div><div class="actions"><button onclick="editCourseLesson('+Number(l.id)+')">ویرایش</button><button class="danger" onclick="deleteCourseLesson('+Number(l.id)+')">حذف</button></div></div>').join(""):'<p class="muted">درسی ثبت نشده است.</p>');
+ courseContentMessage("محتوای دوره بارگذاری شد.");
+ }catch(e){courseContentMessage("خطا: "+e.message);}
+}
+async function addCourseChapter(existing){
+ const course_id=Number($("courseContentCourseId").value||0);if(!course_id){courseContentMessage("ابتدا دوره را انتخاب کنید.");return;}
+ const title=prompt("عنوان فصل:",existing?.title||"");if(title===null)return;if(!title.trim()){courseContentMessage("عنوان فصل الزامی است.");return;}
+ const orderRaw=prompt("ترتیب فصل (عدد صحیح نامنفی):",String(existing?.sort_order??0));if(orderRaw===null)return;const sort_order=Number(orderRaw);if(!Number.isSafeInteger(sort_order)||sort_order<0){courseContentMessage("ترتیب نامعتبر است.");return;}
+ try{await api("POST",{action:existing?"admin-chapter-update":"admin-chapter-create",...(existing?{id:existing.id}:{course_id}),title:title.trim(),sort_order});await loadCourseContent();}catch(e){courseContentMessage("ذخیره فصل ناموفق بود: "+e.message);}
+}
+function editCourseChapter(id){const item=courseContentCache.chapters.find(x=>Number(x.id)===Number(id));if(item)addCourseChapter(item);}
+async function deleteCourseChapter(id){if(!confirm("حذف فصل، درس‌های وابسته را نیز حذف می‌کند. ادامه؟"))return;try{await api("POST",{action:"admin-chapter-delete",id});await loadCourseContent();}catch(e){courseContentMessage("حذف ناموفق بود: "+e.message);}}
+async function addCourseLesson(existing){
+ const courseId=Number($("courseContentCourseId").value||0);if(!courseId){courseContentMessage("ابتدا دوره را انتخاب کنید.");return;}
+ const chapters=courseContentCache.chapters;if(!chapters.length){courseContentMessage("ابتدا یک فصل بسازید.");return;}
+ const chapterDefault=existing?.chapter_id||chapters[0].id;
+ const chapterRaw=prompt("شناسه فصل ("+chapters.map(c=>c.id+":"+c.title).join("، ")+"):",String(chapterDefault));if(chapterRaw===null)return;const chapter_id=Number(chapterRaw);if(!chapters.some(c=>Number(c.id)===chapter_id)){courseContentMessage("شناسه فصل نامعتبر است.");return;}
+ const title=prompt("عنوان درس:",existing?.title||"");if(title===null)return;if(!title.trim())return;
+ const types=["text","video","file","image"];const content_type=prompt("نوع محتوا: text / video / file / image",existing?.content_type||"text");if(content_type===null)return;if(!types.includes(content_type)){courseContentMessage("نوع محتوا نامعتبر است.");return;}
+ const content_url=prompt("نشانی HTTPS ویدئو/فایل (برای متن خالی بگذارید):",existing?.content_url||"");if(content_url===null)return;
+ const image=prompt("نشانی HTTPS تصویر (اختیاری):",existing?.image||"");if(image===null)return;
+ const content_text=prompt("متن درس:",existing?.content_text||"");if(content_text===null)return;
+ const description=prompt("توضیح کوتاه:",existing?.description||"");if(description===null)return;
+ const freeRaw=prompt("درس رایگان باشد؟ yes یا no",Number(existing?.is_free)===1?"yes":"no");if(freeRaw===null)return;const is_free=freeRaw.trim().toLowerCase()==="yes";
+ const orderRaw=prompt("ترتیب درس (عدد صحیح نامنفی):",String(existing?.sort_order??0));if(orderRaw===null)return;const sort_order=Number(orderRaw);if(!Number.isSafeInteger(sort_order)||sort_order<0)return courseContentMessage("ترتیب نامعتبر است.");
+ for(const value of [content_url,image]){if(value.trim()){try{const u=new URL(value);if(u.protocol!=="https:"||u.username||u.password)throw new Error();}catch{return courseContentMessage("نشانی‌ها باید HTTPS معتبر باشند.");}}}
+ const active=existing?Number(existing.active)===1:true;
+ try{await api("POST",{action:existing?"admin-lesson-update":"admin-lesson-create",...(existing?{id:existing.id}:{chapter_id}),title:title.trim(),description,content_type,content_url,content_text,image,is_free,sort_order,active});await loadCourseContent();}catch(e){courseContentMessage("ذخیره درس ناموفق بود: "+e.message);}
+}
+function editCourseLesson(id){const item=courseContentCache.lessons.find(x=>Number(x.id)===Number(id));if(item)addCourseLesson(item);}
+async function deleteCourseLesson(id){if(!confirm("این درس حذف شود؟"))return;try{await api("POST",{action:"admin-lesson-delete",id});await loadCourseContent();}catch(e){courseContentMessage("حذف ناموفق بود: "+e.message);}}
+
 async function saveCourse(){
 
   const title =
@@ -1049,10 +1187,25 @@ async function saveCourse(){
   const description =
     $("courseDescription")?.value || "";
 
+  const priceRaw =
+    $("coursePrice")?.value.trim() || "";
   const price =
-    Number(
-      $("coursePrice")?.value || 0
-    );
+    priceRaw === "" ? NaN : Number(priceRaw);
+  const discountRaw =
+    $("courseDiscountPrice")?.value.trim() || "";
+  const discountPrice =
+    discountRaw === "" ? null : Number(discountRaw);
+
+  if (!Number.isSafeInteger(price) || price < 1000) {
+    alert("قیمت اصلی دوره باید عدد صحیح و حداقل ۱۰۰۰ تومان باشد.");
+    return;
+  }
+
+  if (discountPrice !== null &&
+      (!Number.isSafeInteger(discountPrice) || discountPrice <= 0 || discountPrice >= price)) {
+    alert("قیمت تخفیف باید عدد صحیح، مثبت و کمتر از قیمت اصلی باشد.");
+    return;
+  }
 
   const image =
     $("courseImage")?.value.trim() || "";
@@ -1085,11 +1238,15 @@ async function saveCourse(){
 
       title,
 
+      title_en: $("courseTitleEnglish")?.value.trim() || "",
+
       slug,
 
       description,
 
       price,
+
+      discountPrice,
 
       image,
 
@@ -1120,9 +1277,11 @@ async function saveCourse(){
 
   }catch(error){
 
+    const message = String(error.message || "");
     alert(
-      "خطا در ذخیره دوره:\n" +
-      error.message
+      message.includes("نشانی")
+        ? "نشانی دوره تکراری است. لطفاً یک نشانی یکتا وارد کنید."
+        : "خطا در ذخیره دوره:\n" + message
     );
 
   }
@@ -1140,12 +1299,18 @@ function clearCourseForm(){
     $("courseSlug").value = "";
   }
 
+  if($("courseTitleEnglish")) $("courseTitleEnglish").value = "";
+
   if($("courseDescription")){
     $("courseDescription").value = "";
   }
 
   if($("coursePrice")){
     $("coursePrice").value = "";
+  }
+
+  if($("courseDiscountPrice")){
+    $("courseDiscountPrice").value = "";
   }
 
   if($("courseImage")){
@@ -1197,6 +1362,8 @@ async function editCourse(id){
     $("courseTitle").value =
       course.title || "";
 
+    if ($("courseTitleEnglish")) $("courseTitleEnglish").value = course.title_en || "";
+
     $("courseSlug").value =
       course.slug || "";
 
@@ -1205,6 +1372,9 @@ async function editCourse(id){
 
     $("coursePrice").value =
       Number(course.price || 0);
+
+    $("courseDiscountPrice").value =
+      course.discount_price == null ? "" : Number(course.discount_price);
 
     $("courseImage").value =
       course.image || "";
@@ -1388,7 +1558,10 @@ async function loadStore(){
     render();
 
     await loadOrders();
-await loadSmsStatus();
+    await loadPaymentReceiptsAdmin();
+    await loadCourses();
+    await loadScienceArticlesAdmin();
+    await loadSmsStatus();
     setStatus(
       "اطلاعات فروشگاه با موفقیت دریافت شد."
     );
@@ -1426,6 +1599,9 @@ function fillSettings(){
 
   $("paymentEnabled").checked =
     !!data.settings.paymentEnabled;
+  $("cardNumber").value = data.settings.cardNumber || "";
+  $("accountHolderName").value = data.settings.accountHolderName || "";
+  $("cardTransferEnabled").checked = data.settings.cardTransferEnabled === true;
 
 }
 
@@ -1835,7 +2011,6 @@ function renderOrders(orders){
 
   container.innerHTML =
   orders
-    .filter(order => order.paymentStatus !== "paid")
     .map(order => {
       
         const items =
@@ -1880,16 +2055,21 @@ function renderOrders(orders){
 
                   const price =
                     Number(item.price || 0);
+                  const isTestOrder = item.orderType === "test";
+                  const orderTypeLabel = isTestOrder
+                    ? "سفارش تست محصول"
+                    : "محصول کامل";
 
                   return `
                     <div class="order-item">
 
                       <span>
-                        ${escapeHtml(
-                          item.name || ""
-                        )}
+                        ${escapeHtml(displayProductName(item.name || ""))}
                         ×
                         ${qty.toLocaleString("fa-IR")}
+                        <small class="order-item-meta">
+                          ${orderTypeLabel}
+                        </small>
                       </span>
 
                       <span>
@@ -2045,33 +2225,7 @@ function renderOrders(orders){
               </select>
 
 
-              <select
-                id="payment-${order.id}"
-              >
-
-                <option
-                  value="unpaid"
-                  ${paymentStatus === "unpaid" ? "selected" : ""}
-                >
-                  پرداخت نشده
-                </option>
-
-                <option
-                  value="paid"
-                  ${paymentStatus === "paid" ? "selected" : ""}
-                >
-                  پرداخت شده
-                </option>
-
-                <option
-                  value="failed"
-                  ${paymentStatus === "failed" ? "selected" : ""}
-                >
-                  پرداخت ناموفق
-                </option>
-
-              </select>
-
+              <div class="muted">وضعیت پرداخت فقط از مسیر بررسی فیش تغییر می‌کند.</div>
 
               <button
                 class="gold"
@@ -2091,6 +2245,53 @@ function renderOrders(orders){
 
 }
 
+
+async function loadPaymentReceiptsAdmin() {
+  const container = $("paymentReceiptsList");
+  if (!container) return;
+  try {
+    const response = await fetch("/api/payment-receipts", {
+      headers: { "x-admin-key": adminKey, "Accept": "application/json" }, cache: "no-store"
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "دریافت فیش‌ها ناموفق بود");
+    const receipts = Array.isArray(payload.receipts) ? payload.receipts : [];
+    container.className = receipts.length ? "" : "order-empty";
+    if (!receipts.length) { container.textContent = "فیشی برای بررسی وجود ندارد."; return; }
+    container.innerHTML = receipts.map(item => `
+      <div class="order-card">
+        <b>${escapeHtml(item.orderId || ("HF-" + item.order_id))}</b>
+        <span class="order-badge">${escapeHtml(item.status || "pending")}</span>
+        <div class="muted">مبلغ سفارش: ${Number(item.total || 0).toLocaleString("fa-IR")} تومان · ${escapeHtml(item.created_at || "")}</div>
+        <div class="actions">
+          <button type="button" onclick="viewPaymentReceipt(${Number(item.id)})">دریافت امن فیش</button>
+          ${item.status === "pending" ? `
+            <button type="button" class="gold" onclick="reviewPaymentReceipt(${Number(item.id)}, 'approve')">تأیید پرداخت</button>
+            <button type="button" class="danger" onclick="reviewPaymentReceipt(${Number(item.id)}, 'reject')">رد فیش</button>
+          ` : ""}
+        </div>
+      </div>`).join("");
+  } catch (error) { container.className = "order-empty"; container.textContent = "خطا در دریافت فیش‌ها: " + error.message; }
+}
+async function viewPaymentReceipt(receiptId) {
+  const response = await fetch("/api/payment-receipts?receiptId=" + encodeURIComponent(receiptId), { headers: { "x-admin-key": adminKey }, cache: "no-store" });
+  if (!response.ok) { const payload = await response.json().catch(() => ({})); alert(payload.error || "دریافت فیش ممکن نیست."); return; }
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a"); link.href = url; link.download = "payment-receipt-" + receiptId;
+  document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+async function reviewPaymentReceipt(receiptId, decision) {
+  const note = decision === "reject" ? (prompt("علت رد فیش (اختیاری):") || "") : "";
+  if (decision === "reject" && !confirm("فیش رد شود؟")) return;
+  if (decision === "approve" && !confirm("فقط پس از تطبیق مبلغ با گردش حساب، پرداخت را تأیید کن. ادامه می‌دهی؟")) return;
+  try {
+    const response = await fetch("/api/payment-receipts", { method: "PATCH", headers: { "Content-Type": "application/json", "x-admin-key": adminKey }, body: JSON.stringify({ receiptId, decision, note }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "تغییر وضعیت انجام نشد");
+    alert(decision === "approve" ? "پرداخت تأیید شد." : "فیش رد شد.");
+    await loadOrders(); await loadPaymentReceiptsAdmin();
+  } catch (error) { alert("خطا: " + error.message); }
+}
 
 /* =========================================
    متن وضعیت سفارش
@@ -2138,7 +2339,10 @@ function getPaymentStatusText(status){
       "پرداخت نشده",
 
     paid:
-      "پرداخت شده",
+      "پرداخت تأیید شده",
+
+    awaiting_review:
+      "در انتظار بررسی فیش",
 
     failed:
       "پرداخت ناموفق"
@@ -2163,13 +2367,7 @@ async function updateOrder(orderId){
   const statusElement =
     $("status-" + orderId);
 
-  const paymentElement =
-    $("payment-" + orderId);
-
-  if(
-    !statusElement ||
-    !paymentElement
-  ){
+  if(!statusElement){
 
     return;
 
@@ -2177,9 +2375,6 @@ async function updateOrder(orderId){
 
   const status =
     statusElement.value;
-
-  const paymentStatus =
-    paymentElement.value;
 
   try{
 
@@ -2192,9 +2387,7 @@ async function updateOrder(orderId){
         orderId:
           Number(orderId),
 
-        status,
-
-        paymentStatus
+        status
       }
     );
 
@@ -2419,6 +2612,25 @@ function escapeAttr(value){
 
 
 /* =========================================
+   وزن محصول برای سفارش تست
+========================================= */
+
+function displayProductName(name){
+  return String(name || "").replace(/\s*[|،·-]?\s*[0-9۰-۹٠-٩]+\s*(?:گرم|g\b)/gi, "").replace(/\s{2,}/g, " ").trim();
+}
+
+function parseProductWeightGrams(name){
+  const normalized = String(name || "").replace(/[۰-۹٠-٩]/g, digit =>
+    "۰۱۲۳۴۵۶۷۸۹".includes(digit)
+      ? String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
+      : String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))
+  );
+  const match = normalized.match(new RegExp("(?:^|[^0-9])([0-9]+)\\s*(?:گرم|g\\b)", "i"));
+  const grams = match ? Number(match[1]) : 0;
+  return Number.isSafeInteger(grams) && grams > 0 ? grams : 0;
+}
+
+/* =========================================
    ویرایش محصول
 ========================================= */
 
@@ -2441,7 +2653,7 @@ function editProduct(id){
   }
 
   $("name").value =
-    product.name || "";
+    displayProductName(product.name || "");
 
   $("cat").value =
     product.cat || "";
@@ -2454,6 +2666,11 @@ function editProduct(id){
 
   $("discountPrice").value =
     product.discountPrice || "";
+
+  $("packageWeightGrams").value =
+    data.settings?.productWeights?.[String(product.id)] ||
+    parseProductWeightGrams(product.name) ||
+    "";
 
   $("stage").value =
     product.stage || "";
@@ -2490,6 +2707,8 @@ function clearForm(){
   $("price").value = "";
 
   $("discountPrice").value = "";
+
+  $("packageWeightGrams").value = "";
 
   $("stage").value = "";
 
@@ -2559,6 +2778,11 @@ async function saveProduct(){
           : Number(
               $("discountPrice").value
             ),
+
+      weightGrams:
+        $("packageWeightGrams").value === ""
+          ? null
+          : Number($("packageWeightGrams").value),
 
       stage:
         $("stage")
@@ -2644,7 +2868,7 @@ async function deleteProduct(id){
 
   const name =
     product
-      ? product.name
+      ? displayProductName(product.name)
       : "این محصول";
 
 
@@ -2744,6 +2968,72 @@ async function saveSettings(){
 }
 
 
+async function saveCardTransferSettings() {
+  const status = $("cardTransferStatus");
+  const cardNumber = $("cardNumber").value.trim().replace(/[\s-]/g, "").replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)));
+  const accountHolderName = $("accountHolderName").value.trim();
+  const enabled = $("cardTransferEnabled").checked;
+
+  if (enabled && !/^\d{16}$/.test(cardNumber)) {
+    status.textContent = "برای فعال‌سازی، شماره کارت معتبر ۱۶ رقمی وارد کنید.";
+    $("cardNumber").focus();
+    return;
+  }
+  if (enabled && !accountHolderName) {
+    status.textContent = "برای فعال‌سازی، نام صاحب حساب را وارد کنید.";
+    $("accountHolderName").focus();
+    return;
+  }
+  if (cardNumber && !/^\d{16}$/.test(cardNumber)) {
+    status.textContent = "شماره کارت باید ۱۶ رقم باشد.";
+    $("cardNumber").focus();
+    return;
+  }
+  if (accountHolderName.length > 120) {
+    status.textContent = "نام صاحب حساب بیش از ۱۲۰ نویسه نباشد.";
+    $("accountHolderName").focus();
+    return;
+  }
+  try {
+    status.textContent = "در حال ذخیره تنظیمات کارت‌به‌کارت...";
+    const settings = { cardTransferEnabled: enabled };
+    // غیرفعال‌سازی به‌تنهایی نباید اطلاعات ذخیره‌شده را پاک کند.
+    if (enabled || cardNumber || accountHolderName) {
+      settings.cardNumber = cardNumber;
+      settings.accountHolderName = accountHolderName;
+    }
+    await api("POST", {
+      action: "save-settings",
+      settings
+    });
+    const refreshed = await api("GET");
+    const refreshedSettings = refreshed.settings || {};
+    if (refreshedSettings.cardTransferEnabled !== enabled) {
+      throw new Error("وضعیت ذخیره‌شده پس از بارگذاری مجدد تأیید نشد.");
+    }
+    if (Object.prototype.hasOwnProperty.call(settings, "cardNumber") &&
+        String(refreshedSettings.cardNumber || "") !== cardNumber) {
+      throw new Error("شماره کارت پس از بارگذاری مجدد با مقدار ذخیره‌شده مطابقت ندارد.");
+    }
+    if (Object.prototype.hasOwnProperty.call(settings, "accountHolderName") &&
+        String(refreshedSettings.accountHolderName || "") !== accountHolderName) {
+      throw new Error("نام صاحب حساب پس از بارگذاری مجدد با مقدار ذخیره‌شده مطابقت ندارد.");
+    }
+    data = refreshed;
+    fillSettings();
+    status.textContent = enabled
+      ? "تنظیمات ذخیره و با خواندن مجدد از سرور تأیید شد."
+      : "تنظیمات ذخیره شد؛ کارت‌به‌کارت غیرفعال است.";
+  } catch (error) {
+    status.textContent = "ذخیره تنظیمات انجام نشد: " + error.message;
+  }
+}
+
+async function disableCardTransfer() {
+  $("cardTransferEnabled").checked = false;
+  await saveCardTransferSettings();
+}
+
 /* =========================================
    بررسی ورود قبلی
 ========================================= */
@@ -2787,6 +3077,136 @@ async function checkExistingLogin(){
   }
 
 }
+/* =========================================
+   مدیریت دانستنی‌های علمی
+========================================= */
+let scienceArticlesCache = [];
+
+function scienceAdminMessage(message) {
+  const status = $("scienceArticleStatus");
+  if (status) status.textContent = String(message || "");
+}
+
+async function scienceAdminRequest(method, body) {
+  const response = await fetch("/api/science-articles", {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-key": adminKey,
+      "Accept": "application/json"
+    },
+    cache: "no-store",
+    ...(body === undefined ? {} : { body: JSON.stringify(body) })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || ("HTTP " + response.status));
+  return payload;
+}
+
+function clearScienceArticleForm() {
+  ["scienceArticleId", "scienceArticleTitle", "scienceArticleSummary",
+   "scienceArticleContent", "scienceArticleDate"].forEach(id => {
+    const field = $(id);
+    if (field) field.value = "";
+  });
+  if ($("scienceArticleTopic")) $("scienceArticleTopic").value = "غذای فراسودمند";
+  if ($("scienceArticleSources")) $("scienceArticleSources").value = '[{"title":"","url":"https://"}]';
+  scienceAdminMessage("");
+}
+
+async function loadScienceArticlesAdmin() {
+  const list = $("scienceArticleAdminList");
+  if (!list) return;
+  list.innerHTML = '<p class="muted">در حال دریافت مطالب...</p>';
+  try {
+    const payload = await scienceAdminRequest("GET");
+    scienceArticlesCache = Array.isArray(payload.articles) ? payload.articles : [];
+    if (!scienceArticlesCache.length) {
+      list.innerHTML = '<p class="muted">هنوز مطلبی ثبت نشده است.</p>';
+      return;
+    }
+    list.innerHTML = scienceArticlesCache.map(article => {
+      const id = Number(article.id);
+      const status = article.status === "published" ? "منتشرشده" : article.status === "rejected" ? "ردشده" : "پیش‌نویس";
+      const statusActions = article.status === "rejected"
+        ? '<span class="muted">مطلب رد شده است.</span>'
+        : (article.status === "published"
+          ? '<button type="button" onclick="editScienceArticle(' + id + ')">ویرایش</button><button type="button" class="danger" onclick="rejectScienceArticle(' + id + ')">رد</button>'
+          : '<button type="button" onclick="editScienceArticle(' + id + ')">ویرایش</button><button type="button" class="gold" onclick="publishScienceArticle(' + id + ')">انتشار</button><button type="button" class="danger" onclick="rejectScienceArticle(' + id + ')">رد</button>');
+      const actions = statusActions + '<button type="button" class="danger" onclick="deleteScienceArticle(' + id + ')">حذف</button>';
+      return '<div class="row"><div><b>' + escapeHtml(article.title || "") + '</b>' +
+        '<div class="muted">' + escapeHtml(article.topic || "") + ' · ' + escapeHtml(status) +
+        ' · ' + escapeHtml(article.prepared_at || "") + '</div></div><div class="actions">' + actions + '</div></div>';
+    }).join("");
+  } catch (error) {
+    list.innerHTML = '<p class="muted">خطا در دریافت مطالب: ' + escapeHtml(error.message) + '</p>';
+  }
+}
+
+function editScienceArticle(id) {
+  const article = scienceArticlesCache.find(item => Number(item.id) === Number(id));
+  if (!article) return;
+  $("scienceArticleId").value = article.id;
+  $("scienceArticleTitle").value = article.title || "";
+  $("scienceArticleSummary").value = article.summary || "";
+  $("scienceArticleTopic").value = article.topic || "غذای فراسودمند";
+  $("scienceArticleDate").value = article.prepared_at || "";
+  $("scienceArticleContent").value = article.content || "";
+  $("scienceArticleSources").value = JSON.stringify(article.sources || [], null, 2);
+  scienceAdminMessage("مطلب برای ویرایش بارگذاری شد؛ ذخیرهٔ تغییرات آن را دوباره پیش‌نویس می‌کند.");
+  $("scienceArticleTitle").focus();
+}
+
+async function saveScienceArticle() {
+  let sources;
+  try { sources = JSON.parse($("scienceArticleSources").value || "[]"); }
+  catch { scienceAdminMessage("ساختار JSON منابع معتبر نیست."); return; }
+  const article = {
+    title: $("scienceArticleTitle").value,
+    summary: $("scienceArticleSummary").value,
+    topic: $("scienceArticleTopic").value,
+    prepared_at: $("scienceArticleDate").value,
+    content: $("scienceArticleContent").value,
+    sources
+  };
+  const id = $("scienceArticleId").value;
+  try {
+    await scienceAdminRequest(id ? "PUT" : "POST", id ? { ...article, id: Number(id), action: "edit" } : article);
+    clearScienceArticleForm();
+    scienceAdminMessage("پیش‌نویس ذخیره شد؛ برای انتشار باید دکمهٔ انتشار را جداگانه بزنید.");
+    await loadScienceArticlesAdmin();
+  } catch (error) {
+    scienceAdminMessage("ذخیره انجام نشد: " + error.message);
+  }
+}
+
+async function publishScienceArticle(id) {
+  if (!confirm("آیا منابع و متن این مطلب را بررسی کرده‌اید و می‌خواهید آن را منتشر کنید؟")) return;
+  try {
+    await scienceAdminRequest("PUT", { id, action: "publish" });
+    scienceAdminMessage("مطلب منتشر شد.");
+    await loadScienceArticlesAdmin();
+  } catch (error) { scienceAdminMessage("انتشار انجام نشد: " + error.message); }
+}
+
+async function rejectScienceArticle(id) {
+  if (!confirm("این مطلب رد شود؟")) return;
+  try {
+    await scienceAdminRequest("PUT", { id, action: "reject" });
+    scienceAdminMessage("مطلب رد شد.");
+    await loadScienceArticlesAdmin();
+  } catch (error) { scienceAdminMessage("رد مطلب انجام نشد: " + error.message); }
+}
+
+async function deleteScienceArticle(id) {
+  if (!confirm("این مطلب به‌طور کامل حذف شود؟ این کار قابل بازگشت نیست.")) return;
+  try {
+    await scienceAdminRequest("DELETE", { id });
+    scienceAdminMessage("مطلب حذف شد.");
+    await loadScienceArticlesAdmin();
+  } catch (error) { scienceAdminMessage("حذف انجام نشد: " + error.message); }
+}
+
 /* =========================================
    مدیریت پیامک
 ========================================= */
