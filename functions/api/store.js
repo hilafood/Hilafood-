@@ -643,7 +643,7 @@ async function setupDatabase(db) {
 function isAdmin(request, env) {
 
   const key =
-    request.headers.get(
+    request?.headers?.get(
       "x-admin-key"
     ) || "";
 
