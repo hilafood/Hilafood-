@@ -31,3 +31,11 @@ No AI content provider or new Secret is configured. For that reason, no schedule
 `0003_add_course_english_title.sql` adds an optional `courses.title_en` column without rewriting existing course data. The admin API checks the live schema and returns a clear migration-required response if a non-empty English title is submitted before that column exists.
 
 Validate the migration with `python3 tests/course-english-title-migration.test.py` against disposable SQLite. Do not apply it to production from this branch.
+
+## Card-to-card payment receipts (proposed; not activated in production)
+
+`0004_create_payment_receipts.sql` stores receipt metadata and review state only. Actual file bytes must be stored in a **private** Cloudflare R2 bucket bound to Pages Functions as `PAYMENT_RECEIPTS_BUCKET`; never use a public bucket or public asset path. The branch returns HTTP 503 for uploads until that binding exists. No Cloudflare setting or secret was changed.
+
+The upload endpoint validates the order ID and customer phone against the stored order, accepts only JPEG/PNG/WebP/PDF files up to 5 MiB, and checks file signatures. Admin-only endpoints list/download private receipts and approve/reject them. Generic order updates cannot mark payment as paid. Uploading a receipt never counts as payment confirmation; an administrator must independently verify the transfer in the bank account.
+
+Before activation, use a disposable test database: apply migration 0004 after the orders table exists; create a private R2 bucket in a non-production project and bind it as `PAYMENT_RECEIPTS_BUCKET`; verify authorization, invalid/spoofed files, size limits, order/phone matching, approval/rejection, and historical-order preservation; enter the real destination card and account-holder name in admin. Use only dummy orders and receipts in CI. The UI provides a prepared message and manual Eitaa fallback for customers unable to upload.
