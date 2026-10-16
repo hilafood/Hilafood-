@@ -35,6 +35,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tests/course-discount-migration.test.py
 
+      - name: Test payment receipt migration on disposable SQLite
+        if: ${{ !cancelled() }}
+        run: python3 tests/payment-receipts-migration.test.py
+
       - name: Test product order regression (must remain visible)
         if: ${{ !cancelled() }}
         run: node --experimental-default-type=module --test tests/store-order.test.mjs
@@ -55,6 +59,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: node --experimental-default-type=module --test tests/course-payment-safety.test.mjs
 
+      - name: Test private card-transfer receipt security and access controls
+        if: ${{ !cancelled() }}
+        run: node --experimental-default-type=module --test tests/payment-receipts.test.mjs
+
       - name: Test public rendering XSS regressions
         if: ${{ !cancelled() }}
         run: node --experimental-default-type=module --test tests/public-rendering-security.test.mjs
@@ -64,6 +72,8 @@ jobs:
         run: |
           node --check --experimental-default-type=module functions/api/store.js
           node --check --experimental-default-type=module functions/api/payment.js
+          node --check --experimental-default-type=module functions/api/payment-receipts.js
+          node --check --experimental-default-type=module tests/payment-receipts.test.mjs
           node --check --experimental-default-type=module functions/api/science-articles.js
           node --check --experimental-default-type=module tests/course-content-security.test.mjs
           node --check --experimental-default-type=module tests/science-articles-api.test.mjs
