@@ -407,27 +407,41 @@ button{cursor:pointer}
 
       </div>
 
-      <div class="grid" style="margin-top:14px">
+      <button class="gold" type="button" onclick="saveSettings()">
+        ذخیره تنظیمات عمومی
+      </button>
+
+    </div>
+
+    <!-- =========================
+         تنظیمات پرداخت کارت‌به‌کارت
+    ========================== -->
+    <div class="card" id="cardTransferSettings">
+      <h2>تنظیمات پرداخت کارت‌به‌کارت</h2>
+      <p class="muted">
+        شماره کارت و نام صاحب حساب فقط پس از ذخیره در تنظیمات مدیر ثبت می‌شوند. برای فعال‌سازی، شماره کارت ۱۶ رقمی و نام صاحب حساب را وارد کنید.
+        هنگام غیرفعال‌سازی، اطلاعات ذخیره‌شده پاک نمی‌شوند و برای استفاده بعدی باقی می‌مانند؛ اما به مشتری نمایش داده نخواهند شد.
+        پرداخت تنها پس از بررسی مستقل و تأیید صریح مدیر تأییدشده محسوب می‌شود.
+      </p>
+      <div class="grid">
         <label class="full">شماره کارت مقصد
-          <input id="cardNumber" inputmode="numeric" maxlength="19" placeholder="شماره کارت ۱۶ رقمی واقعی">
+          <input id="cardNumber" type="text" inputmode="numeric" autocomplete="off" maxlength="19" placeholder="شماره کارت واقعی ۱۶ رقمی" aria-describedby="cardTransferHelp">
         </label>
         <label class="full">نام صاحب حساب
-          <input id="accountHolderName" maxlength="120" placeholder="نام واقعی صاحب حساب">
+          <input id="accountHolderName" type="text" autocomplete="off" maxlength="120" placeholder="نام واقعی صاحب حساب">
         </label>
         <label class="full">
           <input type="checkbox" id="cardTransferEnabled">
-          فعال‌کردن کارت‌به‌کارت با تأیید دستی مدیر
+          فعال‌کردن پرداخت کارت‌به‌کارت با تأیید دستی مدیر
         </label>
       </div>
-      <p class="muted">
-        اطلاعات کارت پیش‌فرض ندارد. تا زمانی که شماره کارت و نام صاحب حساب واقعی وارد و ذخیره نشود، کارت‌به‌کارت فعال نمی‌شود.
-        تأیید پرداخت فقط از بخش بررسی فیش انجام می‌شود.
-      </p>
-
-      <button class="gold" onclick="saveSettings()">
-        ذخیره تنظیمات
-      </button>
-
+      <p id="cardTransferHelp" class="muted">هیچ شماره کارت یا نام صاحب حساب پیش‌فرضی تعریف نشده است.</p>
+      <div class="bar">
+        <button class="gold" type="button" onclick="saveCardTransferSettings()">ذخیره تنظیمات کارت‌به‌کارت</button>
+        <button type="button" onclick="loadStore()">بارگذاری مجدد تنظیمات ذخیره‌شده</button>
+        <button class="danger" type="button" onclick="disableCardTransfer()">غیرفعال‌کردن کارت‌به‌کارت</button>
+      </div>
+      <p id="cardTransferStatus" class="muted" role="status" aria-live="polite"></p>
     </div>
 
     <!-- =========================
@@ -2929,10 +2943,7 @@ async function saveSettings(){
             $("currency").value,
 
           paymentEnabled:
-            $("paymentEnabled").checked,
-          cardNumber: $("cardNumber").value.trim(),
-          accountHolderName: $("accountHolderName").value.trim(),
-          cardTransferEnabled: $("cardTransferEnabled").checked
+            $("paymentEnabled").checked
 
         }
 
@@ -2956,6 +2967,51 @@ async function saveSettings(){
 
 }
 
+
+async function saveCardTransferSettings() {
+  const status = $("cardTransferStatus");
+  const cardNumber = $("cardDigitsOnly")?.value || $("cardNumber").value.trim().replace(/[\\s-]/g, "");
+  const accountHolderName = $("accountHolderName").value.trim();
+  const enabled = $("cardTransferEnabled").checked;
+
+  if (enabled && !/^\\d{16}$/.test(cardNumber.replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))))) {
+    status.textContent = "برای فعال‌سازی، شماره کارت معتبر ۱۶ رقمی وارد کنید.";
+    $("cardNumber").focus();
+    return;
+  }
+  if (enabled && !accountHolderName) {
+    status.textContent = "برای فعال‌سازی، نام صاحب حساب را وارد کنید.";
+    $("accountHolderName").focus();
+    return;
+  }
+  if (cardNumber && !/^[0-9۰-۹]{16}$/.test(cardNumber.replace(/[\\s-]/g, "").replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))))) {
+    status.textContent = "شماره کارت باید ۱۶ رقم باشد.";
+    $("cardNumber").focus();
+    return;
+  }
+  try {
+    status.textContent = "در حال ذخیره امن تنظیمات کارت‌به‌کارت...";
+    await api("POST", {
+      action: "save-settings",
+      settings: {
+        cardNumber: cardNumber.replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))),
+        accountHolderName,
+        cardTransferEnabled: enabled
+      }
+    });
+    await loadStore();
+    status.textContent = enabled
+      ? "تنظیمات ذخیره شد و پس از بارگذاری مجدد نیز از سرور خوانده شد."
+      : "تنظیمات ذخیره شد؛ کارت‌به‌کارت غیرفعال است.";
+  } catch (error) {
+    status.textContent = "ذخیره تنظیمات انجام نشد: " + error.message;
+  }
+}
+
+async function disableCardTransfer() {
+  $("cardTransferEnabled").checked = false;
+  await saveCardTransferSettings();
+}
 
 /* =========================================
    بررسی ورود قبلی
