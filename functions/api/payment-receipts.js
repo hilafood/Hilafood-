@@ -17,6 +17,7 @@ async function validateFile(file) {
   return valid ? { extension, contentType: file.type } : null;
 }
 function safeId(value) { const id = Number(value); return Number.isSafeInteger(id) && id > 0 ? id : 0; }
+function safeOrderId(value) { const normalized = String(value ?? "").trim().replace(/^HF-/i, ""); return safeId(normalized); }
 
 export async function onRequest({ request, env }) {
   if (!env.DB) return json({ error: "پایگاه داده در دسترس نیست." }, 503);
@@ -26,7 +27,7 @@ export async function onRequest({ request, env }) {
     if (declaredLength > MAX_BYTES + 64 * 1024) return json({ error: "حجم درخواست بیش از حد مجاز است." }, 413);
     if (!env.PAYMENT_RECEIPTS_BUCKET) return json({ error: "ذخیره‌سازی خصوصی فیش هنوز پیکربندی نشده است؛ فعلاً از روش دستی ایتا استفاده کنید." }, 503);
     let form; try { form = await request.formData(); } catch { return json({ error: "فرم ارسال فیش نامعتبر است." }, 400); }
-    const orderId = safeId(form.get("orderId")); const phone = digits(form.get("phone")); const file = form.get("receipt");
+    const orderId = safeOrderId(form.get("orderId")); const phone = digits(form.get("phone")); const file = form.get("receipt");
     if (!orderId || phone.length < 10 || phone.length > 15) return json({ error: "شماره سفارش یا موبایل نامعتبر است." }, 400);
     const fileInfo = await validateFile(file);
     if (!fileInfo) return json({ error: "فایل باید تصویر JPEG/PNG/WebP یا PDF معتبر و حداکثر ۵ مگابایت باشد." }, 400);
