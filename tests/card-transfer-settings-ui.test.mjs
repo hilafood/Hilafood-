@@ -33,7 +33,7 @@ test("disabling card transfer preserves stored card details while setting enable
 test("server validates card details and protects settings writes with admin authorization", () => {
   assert.match(store, /adminActions\.has\(action\) && !isAdmin\(request, env\)/);
   assert.match(store, /"cardTransferEnabled", "cardNumber", "accountHolderName"/);
-  assert.ok(store.includes('!/^\\\\d{16}$/.test(card)'));
+  assert.ok(store.includes(String.raw`!/^\\d{16}$/.test(card)`));
   assert.match(store, /settings\.cardTransferEnabled === true/);
   assert.match(store, /delete store\.settings\.cardNumber/);
   assert.match(store, /delete store\.settings\.accountHolderName/);
