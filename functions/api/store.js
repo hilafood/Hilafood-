@@ -2622,8 +2622,10 @@ const body =
         return json({ error: "واحد پول نامعتبر است." }, 400);
       }
       if (settings.cardNumber !== undefined) {
-        const card = String(settings.cardNumber || "").replace(/[\\s-]/g, "");
-        if (card && !/^\\d{16}$/.test(card)) return json({ error: "شماره کارت باید ۱۶ رقم باشد." }, 400);
+        const card = String(settings.cardNumber || "")
+          .replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+          .replace(/[\s-]/g, "");
+        if (card && !/^\d{16}$/.test(card)) return json({ error: "شماره کارت باید ۱۶ رقم باشد." }, 400);
         settings.cardNumber = card;
       }
       if (settings.accountHolderName !== undefined && String(settings.accountHolderName).trim().length > 120) {
