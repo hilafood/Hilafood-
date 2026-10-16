@@ -658,6 +658,24 @@ function isAdmin(request, env) {
    خواندن وضعیت فعال بودن پیامک
 ================================================== */
 
+async function getCardTransferInstructions(db) {
+  const result = await db.prepare(`
+    SELECT key, value FROM settings
+    WHERE key IN ('cardTransferEnabled', 'cardNumber', 'accountHolderName')
+  `).all();
+  const settings = {};
+  for (const row of result.results || []) {
+    try { settings[row.key] = JSON.parse(row.value); }
+    catch { settings[row.key] = row.value; }
+  }
+  const cardNumber = String(settings.cardNumber || "").replace(/[\\s-]/g, "");
+  const accountHolderName = String(settings.accountHolderName || "").trim();
+  if (settings.cardTransferEnabled !== true || !/^\\d{16}$/.test(cardNumber) || !accountHolderName) return null;
+  // Only include these instructions in the response to a just-created order.
+  // The general public store GET response never contains the account details.
+  return { cardNumber, accountHolderName };
+}
+
 async function isSmsEnabled(db) {
 
   try {
@@ -2318,6 +2336,8 @@ const body =
       );
 
 
+      const paymentInstructions = await getCardTransferInstructions(db);
+
       return json({
 
         success: true,
@@ -2326,6 +2346,7 @@ const body =
           `HF-${orderNumber}`,
 
         orderNumber,
+        ...(paymentInstructions ? { paymentInstructions } : {}),
 
         customerName,
 
