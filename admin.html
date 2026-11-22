@@ -543,6 +543,11 @@ button{cursor:pointer}
 
       </div>
 
+      <label style="display:flex;align-items:center;gap:10px;margin:12px 0;padding:12px;border:1px solid #eadfce;border-radius:12px;background:#fffaf3">
+        <input type="checkbox" id="shippingCollect" style="width:auto">
+        <span><b>فعال‌سازی پس‌کرایه</b><small style="display:block;color:#777">در این حالت کرایه به مبلغ سفارش اضافه نمی‌شود و مشتری هنگام تحویل بسته پرداخت می‌کند.</small></span>
+      </label>
+
       <div id="shippingList"></div>
 
       <div class="actions">
@@ -1593,6 +1598,9 @@ function fillSettings(){
 
 function renderShipping(){
 
+  const collectToggle = $("shippingCollect");
+  if (collectToggle) collectToggle.checked = data?.settings?.shippingCollect === true || data?.settings?.shippingCollect === "true";
+
   const methods =
     data &&
     data.settings &&
@@ -1865,13 +1873,15 @@ async function saveShipping(){
         action:
           "save-shipping",
 
-        shippingMethods
+        shippingMethods,
+        shippingCollect: $("shippingCollect")?.checked === true
       }
     );
 
 
     data.settings.shippingMethods =
       shippingMethods;
+    data.settings.shippingCollect = $("shippingCollect")?.checked === true;
 
 
     renderShipping();
