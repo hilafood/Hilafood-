@@ -401,7 +401,7 @@ button{cursor:pointer}
         </select>
 
         <label>
-          <input type="checkbox" id="paymentEnabled">
+          <input type="checkbox" id="paymentEnabled" checked disabled>
           فعال‌بودن پرداخت کارت‌به‌کارت
         </label>
       </div>
@@ -2743,7 +2743,7 @@ async function saveSettings(){
             true,
           paymentProvider: "card_to_card",
           instagram: $("instagramUrl").value.trim(),
-          paymentCardNumber: $("paymentCardNumber").value.replace(/\s+/g, ""),
+          paymentCardNumber: $("paymentCardNumber").value.replace(/\s+/g, "").replace(/[۰-۹]/g, d => "0123456789"["۰۱۲۳۴۵۶۷۸۹".indexOf(d)]).replace(/[٠-٩]/g, d => "0123456789"["٠١٢٣٤٥٦٧٨٩".indexOf(d)]),
           paymentCardHolder: $("paymentCardHolder").value.trim(),
           paymentBankName: $("paymentBankName").value.trim()
 
