@@ -93,9 +93,8 @@ let list = (DATA.products || []).filter(p =>
   (
     !cat ||
     p.stage === cat ||
-    p.cat === cat ||
+    String(p.cat || "").split(/[،,]/).map(value => value.trim()).some(value => value === cat || value === categoryName) ||
     p.stage === categoryName ||
-    p.cat === categoryName ||
     p.name === cat
   )
 );

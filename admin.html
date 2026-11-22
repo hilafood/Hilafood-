@@ -286,6 +286,8 @@ button{cursor:pointer}
 .admin-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:10px;margin:16px 0}
 .admin-nav a{display:flex;align-items:center;justify-content:center;gap:9px;min-height:74px;padding:12px;border-radius:15px;background:#fff;border:1px solid #eadfec;color:#563b70;text-decoration:none;font-weight:bold;box-shadow:0 3px 12px #00000008}
 .admin-nav a span{font-size:23px}.admin-nav a:hover{background:#f4edf7;border-color:#c9b5d8}.admin-section{scroll-margin-top:16px}
+.admin-page-header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:14px 0;padding:12px 14px;background:#fff;border:1px solid #eadfec;border-radius:14px}
+.admin-page-header h2{margin:0;color:#563b70}.admin-page-header button{width:auto}
 @media(max-width:650px){
 
   .grid{
@@ -385,14 +387,18 @@ button{cursor:pointer}
     </div>
 
 
-    <nav class="admin-nav" aria-label="بخش‌های مدیریت">
+    <nav id="adminDashboard" class="admin-nav" aria-label="بخش‌های مدیریت">
       <a href="#ordersSection"><span>🧾</span> سفارشات</a>
       <a href="customers.html"><span>📒</span> دفترچه مشتریان</a>
       <a href="#productsSection"><span>📦</span> محصولات</a>
       <a href="#coursesSection"><span>🎓</span> دوره‌ها</a>
       <a href="#smsSection"><span>💬</span> پیامک</a>
-      <a href="#settingsSection"><span>⚙️</span> تنظیمات و ارسال</a>
+      <a href="#settingsSection"><span>⚙️</span> تنظیمات</a>
     </nav>
+    <div id="adminPageHeader" class="admin-page-header hidden">
+      <button type="button" onclick="showAdminDashboard()">← بازگشت به دسته‌بندی مدیریت</button>
+      <h2 id="adminPageTitle"></h2>
+    </div>
     <!-- تنظیمات فروشگاه -->
     <div id="settingsSection" class="card admin-section">
 
@@ -585,8 +591,9 @@ button{cursor:pointer}
 
         <input
           id="cat"
-          placeholder="دسته‌بندی اصلی، مثال: فرنی‌ها"
+          placeholder="دسته‌بندی‌ها را با ، جدا کن؛ مثال: بارداری، زایمان"
         >
+        <input id="courseTags" class="full" placeholder="دوره‌های مرتبط را با ، جدا کن؛ مثال: تغذیه بارداری، مراقبت کودک">
 
         <textarea
           id="desc"
@@ -1281,6 +1288,33 @@ async function deleteCourse(id){
       }
 
 /* =========================================
+   داشبورد و نمایش یک بخش در هر صفحه
+========================================= */
+const adminPageMap = {
+  ordersSection:{title:"سفارشات",ids:["ordersSection"]},
+  productsSection:{title:"محصولات",ids:["productFormSection","productsSection"]},
+  coursesSection:{title:"دوره‌ها",ids:["coursesSection"]},
+  smsSection:{title:"پیامک",ids:["smsSection"]},
+  settingsSection:{title:"تنظیمات",ids:["settingsSection","shippingSection"]}
+};
+function renderAdminRoute(){
+  const dashboard=$("adminDashboard"), header=$("adminPageHeader");
+  if(!dashboard||!header)return;
+  const page=adminPageMap[String(location.hash||"").slice(1)];
+  document.querySelectorAll(".admin-section").forEach(section=>section.classList.add("hidden"));
+  if(!page){dashboard.classList.remove("hidden");header.classList.add("hidden");return;}
+  dashboard.classList.add("hidden");header.classList.remove("hidden");
+  $("adminPageTitle").textContent=page.title;
+  page.ids.forEach(id=>$(id)?.classList.remove("hidden"));
+  window.scrollTo({top:0,behavior:"auto"});
+}
+function showAdminDashboard(){
+  if(location.hash)location.hash="";
+  else renderAdminRoute();
+}
+window.addEventListener("hashchange",renderAdminRoute);
+
+/* =========================================
    ورود
 ========================================= */
 
@@ -1336,6 +1370,7 @@ async function login(){
       .classList
       .remove("hidden");
 
+    showAdminDashboard();
     await loadStore();
 
   }catch(error){
@@ -2583,6 +2618,9 @@ function editProduct(id){
   $("cat").value =
     product.cat || "";
 
+  $("courseTags").value =
+    product.courseTags || "";
+
   $("desc").value =
     product.desc || "";
 
@@ -2621,6 +2659,8 @@ function clearForm(){
   $("name").value = "";
 
   $("cat").value = "";
+
+  $("courseTags").value = "";
 
   $("desc").value = "";
 
@@ -2676,9 +2716,10 @@ async function saveProduct(){
       name,
 
       cat:
-        $("cat")
-          .value
-          .trim(),
+        $("cat").value.split(/[،,]/).map(value => value.trim()).filter(Boolean).join("،"),
+
+      courseTags:
+        $("courseTags").value.split(/[،,]/).map(value => value.trim()).filter(Boolean).join("،"),
 
       desc:
         $("desc")
@@ -2912,6 +2953,7 @@ async function checkExistingLogin(){
       .classList
       .remove("hidden");
 
+    showAdminDashboard();
     await loadStore();
 
   }catch{

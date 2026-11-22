@@ -264,9 +264,15 @@ async function createTables(db) {
       img TEXT,
       active INTEGER DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      course_tags TEXT DEFAULT ''
     )
   `).run();
+
+  const productColumns = await db.prepare("PRAGMA table_info(products)").all();
+  if (!(productColumns.results || []).some(column => column.name === "course_tags")) {
+    await db.prepare("ALTER TABLE products ADD COLUMN course_tags TEXT DEFAULT ''").run();
+  }
 
 
   await db.prepare(`
@@ -914,7 +920,8 @@ async function getStore(db) {
         img,
         active,
         created_at,
-        updated_at
+        updated_at,
+        course_tags
       FROM products
       ORDER BY rowid
     `).all();
@@ -1005,6 +1012,9 @@ async function getStore(db) {
 
       stage:
         product.stage || "",
+
+      courseTags:
+        product.course_tags || "",
 
       video:
         product.video || "",
@@ -2329,9 +2339,10 @@ while (
           stage,
           video,
           img,
-          active
+          active,
+          course_tags
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
 
@@ -2374,7 +2385,9 @@ while (
 
         p.active === false
           ? 0
-          : 1
+          : 1,
+
+        String(p.courseTags || "")
 
       )
       .run();
@@ -2934,6 +2947,7 @@ export async function onRequestPut({
         video = ?,
         img = ?,
         active = ?,
+        course_tags = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `)
@@ -2977,6 +2991,8 @@ export async function onRequestPut({
       p.active === false
         ? 0
         : 1,
+
+      String(p.courseTags || ""),
 
       id
 
