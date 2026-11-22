@@ -88,9 +88,9 @@
         const item = document.createElement("div");
         item.className = "hila-advisor-product";
         const name = document.createElement("strong");
-        name.textContent = p.name;
+        name.textContent = window.HILA_I18N?.productName({name:p.name}) || p.name;
         const desc = document.createElement("small");
-        desc.textContent = p.desc;
+        desc.textContent = window.HILA_I18N?.t(p.desc) || p.desc;
         item.append(name, desc);
         list.appendChild(item);
       });
@@ -101,7 +101,7 @@
 
   const findGuide = query => {
     const q = clean(query);
-    return GUIDE.filter(p => [p.name, ...p.aliases, ...p.keywords, p.desc].some(v => clean(v).includes(q) || q.includes(clean(v))));
+    return GUIDE.filter(p => [p.name, window.HILA_I18N?.productName({name:p.name}), ...p.aliases, ...p.keywords, p.desc].some(v => v && (clean(v).includes(q) || q.includes(clean(v)))));
   };
 
   const findLive = query => {
@@ -111,6 +111,21 @@
 
   const answer = raw => {
     const q = clean(raw);
+    const language = window.HILA_I18N?.language || "fa";
+    if (language !== "fa") {
+      const localized = (en, ar) => language === "ar" ? ar : en;
+      if (/hello|hi\b|good morning|مرحبا|السلام|أهلا/.test(q)) return [localized("Hello! 🌿 Ask me about product ingredients, flavors, or preparation.","مرحبًا! 🌿 اسألي عن مكونات المنتجات أو نكهاتها أو طريقة تحضيرها.")];
+      if (/price|cost|how much|سعر|كم السعر|بكم/.test(q)) return [localized("Prices and availability may change. Please check the current price on the product page.","قد تتغير الأسعار والتوافر. يرجى مراجعة السعر الحالي في صفحة المنتج.")];
+      if (/order|buy|shipping|delivery|طلب|شراء|توصيل|شحن/.test(q)) return [localized("Add the product to your cart and follow the checkout steps. For order follow-up, use the contact details on the website.","أضيفي المنتج إلى سلة التسوق واتبعي خطوات إتمام الطلب. لمتابعة الطلب، استخدمي بيانات التواصل الموجودة على الموقع.")];
+      if (/pregnan|breastfeed|period|ovary|uterus|disease|treat|medicine|allerg|حامل|حمل|رضاع|دورة|مبيض|رحم|مرض|علاج|دواء|حساسية/.test(q)) return [localized("I can explain ingredients, but I cannot prescribe a product or confirm that it is suitable for pregnancy, breastfeeding, a medical condition, medication use, or allergies. Please check with a qualified healthcare professional. Hila Food products are not medical treatments.","يمكنني شرح المكونات، لكن لا أستطيع وصف منتج أو تأكيد ملاءمته للحمل أو الرضاعة أو الحالات الطبية أو الأدوية أو الحساسية. يرجى استشارة مختص صحي. منتجات هيلا فود ليست علاجات طبية.")];
+      if (/child|baby|infant|month|طفل|رضيع|أشهر|شهر/.test(q)) return [localized("I can share the listed ingredients of children's products, but I cannot confirm the suitable age or safety for an individual child. Please consult your child's healthcare professional.","يمكنني توضيح المكونات المذكورة لمنتجات الأطفال، لكن لا أستطيع تأكيد العمر المناسب أو السلامة لطفل بعينه. يرجى استشارة مختص رعاية الطفل.")];
+      if (/sport|athlet|workout|gym|رياض|رياضي|تمرين/.test(q)) return [localized("The sports-related product is Soylak for Athletes, offered in plain, vanilla, and cocoa flavors. This is a product description, not a guarantee of athletic performance.","المنتج المرتبط بالرياضة هو سويلاك للرياضيين، بنكهات السادة والفانيليا والكاكاو. هذا تعريف بالمنتج وليس ضمانًا للأداء الرياضي."), GUIDE.filter(x => x.name === "سویلاک ورزشکار" || x.name === "سویلاک ورزشکار")];
+      const matches = findGuide(q);
+      if (matches.length) return [localized("Here is the product information available in our guide:","إليك معلومات المنتج المتاحة في دليلنا:"), matches];
+      if (/ingredient|composition|contain|what is in|مكونات|تركيب|ماذا يحتوي/.test(q)) return [localized("Please include the product name in your question, for example: “What are the ingredients in Soylak for Athletes?”","يرجى ذكر اسم المنتج في سؤالك، مثل: «ما مكونات سويلاك للرياضيين؟»")];
+      if (/prepare|make|recipe|how to use|تحضير|طريقة|كيف أعد|كيف أحضر/.test(q)) return [localized("Please mention the exact product name. For exact quantities, follow the instructions printed on the package.","يرجى ذكر اسم المنتج بدقة. للكميات المحددة، اتبعي التعليمات المطبوعة على العبوة.")];
+      return [localized("I do not yet have reliable information for this question. Please ask about a specific Hila Food product or contact support.","لا تتوفر لدي معلومات موثوقة عن هذا السؤال حاليًا. يرجى السؤال عن منتج محدد من هيلا فود أو التواصل مع الدعم.")];
+    }
     if (/سلام|درود|وقت بخیر/.test(q)) return ["سلام و خوش اومدی 🌿 درباره ترکیبات، طعم‌ها و روش آماده‌سازی محصولات از من بپرس."];
     if (/قیمت|هزینه|چند تومن|چنده/.test(q)) return ["قیمت و موجودی ممکن است تغییر کند؛ قیمت به‌روز را در صفحه همان محصول در فروشگاه هیلافود ببین."];
     if (/سفارش|خرید|ارسال|پست|پیگیری/.test(q)) return ["برای خرید، محصول را به سبد اضافه کن و مراحل ثبت سفارش را ادامه بده. برای پیگیری سفارش از راه ارتباطی درج‌شده در سایت استفاده کن."];
