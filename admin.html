@@ -562,6 +562,28 @@ button{cursor:pointer}
 
     </div>
 
+    <!-- دفتر سوابق مشتریان -->
+    <div class="card">
+      <div class="topbar">
+        <div>
+          <h2>دفتر سوابق مشتریان</h2>
+          <p class="muted">سوابق خرید مشتری حتی پس از حذف سفارش در این دفتر باقی می‌ماند.</p>
+        </div>
+        <button onclick="loadCustomers()" style="width:auto">تازه‌سازی</button>
+      </div>
+      <div class="grid">
+        <input id="customerSearch" placeholder="جست‌وجو با نام یا شماره تلفن">
+        <button class="primary" onclick="loadCustomers()">جست‌وجوی مشتری</button>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button class="gold" onclick="exportCustomers()">خروجی فهرست مشتریان (Excel)</button>
+        <button onclick="exportOrderHistory()">خروجی سوابق سفارش‌ها (Excel)</button>
+      </div>
+      <div id="customersList" style="margin-top:14px">
+        <div class="order-empty">برای مشاهده مشتریان، جست‌وجو یا تازه‌سازی را بزن.</div>
+      </div>
+      <div id="customerHistory" style="margin-top:14px"></div>
+    </div>
 
     <!-- محصول -->
 
@@ -1388,7 +1410,8 @@ async function loadStore(){
     render();
 
     await loadOrders();
-await loadSmsStatus();
+    await loadCustomers();
+    await loadSmsStatus();
     setStatus(
       "اطلاعات فروشگاه با موفقیت دریافت شد."
     );
@@ -1835,7 +1858,6 @@ function renderOrders(orders){
 
   container.innerHTML =
   orders
-    .filter(order => order.paymentStatus !== "paid")
     .map(order => {
       
         const items =
@@ -2080,6 +2102,10 @@ function renderOrders(orders){
                 ذخیره وضعیت
               </button>
 
+              ${(status === "shipped" || status === "completed")
+                ? '<button class="danger" onclick="deleteOrder(' + order.id + ')">حذف سفارش (حفظ سوابق)</button>'
+                : ''}
+
             </div>
 
           </div>
@@ -2089,6 +2115,135 @@ function renderOrders(orders){
       })
       .join("");
 
+}
+
+
+/* =========================================
+   دفتر سوابق مشتریان
+========================================= */
+
+async function loadCustomers(){
+  const container = $("customersList");
+  if(!container) return;
+  const query = $("customerSearch") ? $("customerSearch").value.trim() : "";
+  container.innerHTML = '<div class="order-empty">در حال دریافت فهرست مشتریان...</div>';
+  try{
+    const result = await api("POST", {action:"admin-customers-list", query:query});
+    const customers = Array.isArray(result.customers) ? result.customers : [];
+    if(!customers.length){
+      container.innerHTML = '<div class="order-empty">مشتری‌ای با این مشخصات پیدا نشد.</div>';
+      return;
+    }
+    container.innerHTML = customers.map(function(customer){
+      return '<div class="order-card">' +
+        '<div class="order-head"><div><strong>' + escapeHtml(customer.customer_name || "") + '</strong>' +
+        '<div class="muted">' + escapeHtml(customer.customer_phone || "") + '</div></div>' +
+        '<span class="order-badge">' + Number(customer.order_count || 0).toLocaleString("fa-IR") + ' سفارش</span></div>' +
+        '<div class="order-info">اولین خرید: ' + escapeHtml(formatDate(customer.first_order_at || "")) +
+        '<br>آخرین خرید: ' + escapeHtml(formatDate(customer.last_order_at || "")) +
+        '<br>مجموع خرید: ' + Number(customer.total_spent || 0).toLocaleString("fa-IR") + ' تومان</div>' +
+        '<button class="primary" data-phone="' + escapeAttrValue(customer.customer_phone || "") + '" onclick="viewCustomerHistory(this.dataset.phone)">مشاهده سوابق خرید</button>' +
+        '</div>';
+    }).join("");
+  }catch(error){
+    container.innerHTML = '<div class="order-empty">خطا در دریافت مشتریان: ' + escapeHtml(error.message) + '</div>';
+  }
+}
+
+async function viewCustomerHistory(phone){
+  const container = $("customerHistory");
+  if(!container) return;
+  container.innerHTML = '<div class="order-empty">در حال دریافت سوابق خرید...</div>';
+  try{
+    const result = await api("POST", {action:"admin-customer-history", phone:phone});
+    const history = Array.isArray(result.history) ? result.history : [];
+    if(!history.length){
+      container.innerHTML = '<div class="order-empty">سابقه‌ای برای این مشتری ثبت نشده است.</div>';
+      return;
+    }
+    let html = '<div class="card"><h3>سوابق خرید: ' + escapeHtml(history[0].customer_name || "") + '</h3>' +
+      '<div class="muted">' + escapeHtml(phone) + '</div>';
+    history.forEach(function(order){
+      let items = [];
+      try { items = JSON.parse(order.items || "[]"); } catch(e) {}
+      const products = items.map(function(item){ return (item.name || "") + " × " + (item.qty || 1); }).join("، ");
+      html += '<div class="order-info"><strong>سفارش HF-' + Number(order.order_id).toLocaleString("fa-IR") + '</strong>' +
+        '<div class="muted">' + escapeHtml(formatDate(order.order_created_at || "")) + '</div>' +
+        '<div>محصولات: ' + escapeHtml(products) + '</div>' +
+        '<div>مبلغ: ' + Number(order.total || 0).toLocaleString("fa-IR") + ' تومان</div>' +
+        '<div>وضعیت: ' + escapeHtml(getOrderStatusText(order.status || "")) +
+        ' | پرداخت: ' + escapeHtml(getPaymentStatusText(order.payment_status || "")) + '</div></div>';
+    });
+    container.innerHTML = html + '</div>';
+  }catch(error){
+    container.innerHTML = '<div class="order-empty">خطا در دریافت سوابق: ' + escapeHtml(error.message) + '</div>';
+  }
+}
+
+function csvCell(value){
+  return '"' + String(value === null || value === undefined ? "" : value).replace(/"/g, '""') + '"';
+}
+
+function downloadCsv(filename, headers, rows){
+  const csv = "\uFEFF" + [headers].concat(rows).map(function(row){
+    return row.map(csvCell).join(",");
+  }).join("\r\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function exportCustomers(){
+  try{
+    const result = await api("POST", {action:"admin-customers-list", query:""});
+    const customers = Array.isArray(result.customers) ? result.customers : [];
+    const rows = customers.map(function(customer){
+      return [customer.customer_name, customer.customer_phone, customer.first_order_at,
+        customer.last_order_at, customer.order_count, customer.total_spent];
+    });
+    downloadCsv("hilafood-customers.csv",
+      ["نام مشتری","شماره تلفن","اولین خرید","آخرین خرید","تعداد سفارش","مجموع خرید (تومان)"], rows);
+  }catch(error){
+    alert("خروجی مشتریان انجام نشد: " + error.message);
+  }
+}
+
+async function exportOrderHistory(){
+  try{
+    const result = await api("POST", {action:"admin-customer-export"});
+    const history = Array.isArray(result.history) ? result.history : [];
+    const rows = history.map(function(order){
+      let items = [];
+      try { items = JSON.parse(order.items || "[]"); } catch(e) {}
+      const products = items.map(function(item){ return (item.name || "") + " × " + (item.qty || 1); }).join("، ");
+      return ["HF-" + order.order_id, order.order_created_at, order.customer_name,
+        order.customer_phone, order.customer_address, products, order.total,
+        getOrderStatusText(order.status || ""), getPaymentStatusText(order.payment_status || "")];
+    });
+    downloadCsv("hilafood-order-history.csv",
+      ["شماره سفارش","تاریخ","نام مشتری","شماره تلفن","نشانی","محصولات","مبلغ (تومان)","وضعیت سفارش","وضعیت پرداخت"], rows);
+  }catch(error){
+    alert("خروجی سوابق سفارش‌ها انجام نشد: " + error.message);
+  }
+}
+
+async function deleteOrder(orderId){
+  const confirmed = confirm("این سفارش از فهرست سفارش‌های فعال حذف می‌شود، اما سابقه مشتری و خرید او در دفتر سوابق باقی می‌ماند. ادامه می‌دهی؟");
+  if(!confirmed) return;
+  try{
+    await api("POST", {action:"delete-completed-order", orderId:Number(orderId)});
+    alert("سفارش حذف شد و سوابق مشتری حفظ شد.");
+    await loadOrders();
+    await loadCustomers();
+  }catch(error){
+    alert("حذف سفارش انجام نشد: " + error.message);
+  }
 }
 
 
