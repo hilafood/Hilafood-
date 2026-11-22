@@ -3,7 +3,8 @@ const DATA = {
     showPrices: true,
     currency: "تومان",
     paymentEnabled: false,
-    paymentProvider: "zarinpal",
+    paymentProvider: "manual",
+    paymentCards: [],
 
     phone: "۰۹۲۲۷۱۴۰۷۲۶",
     eitaa: "https://eitaa.com/hilafood",
