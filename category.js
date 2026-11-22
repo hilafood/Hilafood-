@@ -77,10 +77,13 @@ let list = (DATA.products || []).filter(p =>
 
   if (q) {
     list = list.filter(p =>
-      String(p.name || '').includes(q) ||
-      String(p.cat || '').includes(q) ||
-      String(p.stage || '').includes(q) ||
-      String(p.desc || '').includes(q)
+      String(p.name || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(window.HILA_I18N?.productName(p) || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(p.cat || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(window.HILA_I18N?.t(p.cat || '') || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(p.stage || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(window.HILA_I18N?.t(p.stage || '') || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(p.desc || '').toLowerCase().includes(q.toLowerCase())
     );
   }
 
