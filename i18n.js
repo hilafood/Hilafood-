@@ -82,6 +82,32 @@ Object.assign(words.ar,{
 "برای این سؤال هنوز اطلاعات مطمئنی در راهنمای من ثبت نشده. نام دقیق محصول را بنویس یا از پشتیبانی هیلافود بپرس.":"لا تتوفر لدي معلومات موثوقة عن هذا السؤال بعد. اكتبي اسم المنتج بدقة أو تواصلي مع دعم هيلا فود."
 });
 
+
+Object.assign(words.en,{
+"زایمان":"Childbirth","اقدام به بارداری":"Trying to conceive","بارداری":"Pregnancy","پس از زایمان و شیردهی":"Postpartum & breastfeeding",
+"برای این سؤال هنوز اطلاعات مطمئنی در راهنمای من ثبت نشده. نام دقیق محصول را بنویس یا از پشتیبانی هیلافود بپرس.":"I don't yet have reliable information for this question. Please name the exact product or contact Hila Food support.",
+"نام محصول را هم در سؤالت بنویس؛ مثلاً «ترکیبات سویلاک ورزشکار چیست؟» تا اطلاعات دقیق‌تری نشان بدهم.":"Please include the product name, for example: “What are the ingredients in Soylak for Athletes?”",
+"نام محصول را بنویس تا روش آماده‌سازی ثبت‌شده آن را پیدا کنم. برای مقدار دقیق مواد، دستور روی بسته را ملاک قرار بده.":"Tell me the product name so I can find its listed preparation method. For exact quantities, follow the package instructions.",
+"اطلاعات ترکیباتی که برای این محصول ثبت شده:":"Here are the listed ingredients for this product:",
+"روش آماده‌سازی ثبت‌شده برای این محصول:":"The listed preparation method for this product:",
+"این اطلاعات درباره محصولی است که پرسیدی:":"Here is the information about the product you asked about:",
+"این محصول در فهرست فروشگاه ثبت شده است. جزئیات ترکیبات هنوز در راهنمای من کامل نیست؛ لطفاً توضیحات محصول یا برچسب بسته را بررسی کن.":"This product is listed in the shop, but its ingredient details are not yet complete in my guide. Please check the product description or package label.",
+"برای مشاهده طرز آماده‌سازی، ویدئوی محصول را ببینید.":"To see how to prepare it, watch the product video.",
+"نام محصول را دقیق بنویس. برای مقدار دقیق مواد، دستور روی بسته را ملاک قرار بده.":"Please enter the exact product name. Follow the package instructions for exact quantities.",
+"اطلاعات این راهنما برای معرفی محصولات است و جایگزین نظر پزشک یا متخصص تغذیه نیست.":"This guide introduces products and does not replace advice from a doctor or dietitian."
+});
+Object.assign(words.ar,{
+"زایمان":"الولادة","اقدام به بارداری":"التخطيط للحمل","بارداری":"الحمل","پس از زایمان و شیردهی":"ما بعد الولادة والرضاعة",
+"نام محصول را هم در سؤالت بنویس؛ مثلاً «ترکیبات سویلاک ورزشکار چیست؟» تا اطلاعات دقیق‌تری نشان بدهم.":"يرجى ذكر اسم المنتج في سؤالك، مثل: «ما مكونات سويلاك للرياضيين؟»",
+"نام محصول را بنویس تا روش آماده‌سازی ثبت‌شده آن را پیدا کنم. برای مقدار دقیق مواد، دستور روی بسته را ملاک قرار بده.":"اكتبي اسم المنتج لأجد طريقة التحضير المسجلة. للكميات الدقيقة، اتبعي تعليمات العبوة.",
+"اطلاعات ترکیباتی که برای این محصول ثبت شده:":"إليك المكونات المسجلة لهذا المنتج:",
+"روش آماده‌سازی ثبت‌شده برای این محصول:":"طريقة التحضير المسجلة لهذا المنتج:",
+"این اطلاعات درباره محصولی است که پرسیدی:":"إليك المعلومات الخاصة بالمنتج الذي سألتِ عنه:",
+"این محصول در فهرست فروشگاه ثبت شده است. جزئیات ترکیبات هنوز در راهنمای من کامل نیست؛ لطفاً توضیحات محصول یا برچسب بسته را بررسی کن.":"هذا المنتج مدرج في المتجر، لكن تفاصيل مكوناته غير مكتملة في الدليل. يرجى مراجعة وصف المنتج أو ملصق العبوة.",
+"برای مشاهده طرز آماده‌سازی، ویدئوی محصول را ببینید.":"شاهدي فيديو المنتج لمعرفة طريقة التحضير.",
+"اطلاعات این راهنما برای معرفی محصولات است و جایگزین نظر پزشک یا متخصص تغذیه نیست.":"هذا الدليل للتعريف بالمنتجات ولا يغني عن استشارة الطبيب أو اختصاصي التغذية."
+});
+
 const norm=s=>String(s||"").replace(/\s+/g," ").trim();
 let lang=["fa","en","ar"].includes(localStorage.getItem("hilaLanguage"))?localStorage.getItem("hilaLanguage"):"fa";
 const t=v=>lang==="fa"?v:(words[lang][norm(v)]||v);
