@@ -283,7 +283,7 @@ button{cursor:pointer}
 }
 
 
-@media(max-width:650px){
+.customer-table-wrap{overflow-x:auto;margin-top:12px}#customerRecordsTable{width:100%;border-collapse:collapse;min-width:760px;background:#fff}#customerRecordsTable th,#customerRecordsTable td{border:1px solid #eee;padding:10px;text-align:right;vertical-align:top;line-height:1.8}#customerRecordsTable th{background:#f7f3f6;white-space:nowrap}#customerRecordsTable tbody tr:nth-child(even){background:#fcfafc}#customerRecordSearch{margin:12px 0}@media print{body *{visibility:hidden!important}#customerRecordsSection,#customerRecordsSection *{visibility:visible!important}#customerRecordsSection{position:absolute;inset:0;width:100%;margin:0;padding:0;box-shadow:none}#customerRecordsSection .topbar button,#customerRecordSearch{display:none!important}.customer-table-wrap{overflow:visible}#customerRecordsTable{min-width:0;font-size:10px}#customerRecordsTable th,#customerRecordsTable td{padding:5px}}@media(max-width:650px){
 
   .grid{
     grid-template-columns:1fr;
@@ -576,6 +576,13 @@ button{cursor:pointer}
     </div>
 
 
+    <div class="card" id="customerRecordsSection">
+      <div class="topbar"><div><h2>دفتر مشتریان و سوابق سفارش</h2><p class="muted">شماره تماس و محصولات سفارش‌داده‌شده؛ این دفتر با حذف سفارش از بخش سفارش‌ها پاک نمی‌شود.</p></div>
+      <div class="actions"><button type="button" onclick="loadCustomerRecords()">بروزرسانی</button><button type="button" class="gold" onclick="exportCustomerRecords()">خروجی Excel (CSV)</button><button type="button" onclick="printCustomerRecords()">چاپ جدول</button></div></div>
+      <input id="customerRecordSearch" type="search" placeholder="جست‌وجو بر اساس نام، شماره تماس یا محصول" oninput="filterCustomerRecords()">
+      <div id="customerRecordsCount" class="muted"></div>
+      <div class="customer-table-wrap"><table id="customerRecordsTable"><thead><tr><th>شماره سفارش</th><th>تاریخ</th><th>نام مشتری</th><th>شماره تماس</th><th>محصولات سفارش</th></tr></thead><tbody id="customerRecordsBody"><tr><td colspan="5">برای دریافت اطلاعات، بروزرسانی را بزنید.</td></tr></tbody></table></div>
+    </div>
     <!-- محصول -->
 
     <div class="card">
@@ -1856,7 +1863,6 @@ function renderOrders(orders){
 
   container.innerHTML =
   orders
-    .filter(order => order.paymentStatus !== "paid")
     .map(order => {
       
         const items =
@@ -2100,6 +2106,7 @@ function renderOrders(orders){
               >
                 ذخیره وضعیت
               </button>
+              ${["shipped","completed"].includes(order.status) ? `<button class="danger" onclick="deleteOrder(${Number(order.id)})">حذف سفارش ارسال‌شده</button>` : ""}
 
             </div>
 
@@ -2113,6 +2120,33 @@ function renderOrders(orders){
 }
 
 
+/* دفتر مشتریان */
+let customerRecords = [];
+async function loadCustomerRecords(){
+  const body = $("customerRecordsBody"); if(!body) return;
+  body.innerHTML = '<tr><td colspan="5">در حال دریافت سوابق...</td></tr>';
+  try{const result=await api("POST",{action:"get-customer-records"});customerRecords=Array.isArray(result.records)?result.records:[];filterCustomerRecords();}
+  catch(error){body.innerHTML='<tr><td colspan="5">خطا: '+escapeHtml(error.message)+'</td></tr>';}
+}
+function filterCustomerRecords(){
+  const q=String($("customerRecordSearch")?.value||"").trim().toLowerCase();
+  const rows=customerRecords.filter(r=>[r.orderId,r.customerName,r.customerPhone,(r.items||[]).map(i=>i.name+" × "+i.qty).join(" "),r.createdAt].some(v=>String(v||"").toLowerCase().includes(q)));
+  $("customerRecordsCount").textContent="تعداد سوابق: "+rows.length.toLocaleString("fa-IR")+" از "+customerRecords.length.toLocaleString("fa-IR");
+  $("customerRecordsBody").innerHTML=rows.length?rows.map(r=>{const items=(r.items||[]).map(i=>escapeHtml(i.name||"")+" × "+Number(i.qty||1).toLocaleString("fa-IR")).join("<br>");return '<tr><td>HF-'+escapeHtml(r.orderId)+'</td><td>'+escapeHtml(formatDate(r.createdAt))+'</td><td>'+escapeHtml(r.customerName)+'</td><td dir="ltr">'+escapeHtml(r.customerPhone)+'</td><td>'+(items||"—")+'</td></tr>';}).join(""):'<tr><td colspan="5">موردی پیدا نشد.</td></tr>';
+}
+function exportCustomerRecords(){
+  const q=String($("customerRecordSearch")?.value||"").trim().toLowerCase();
+  const rows=customerRecords.filter(r=>[r.orderId,r.customerName,r.customerPhone,(r.items||[]).map(i=>i.name+" × "+i.qty).join(" "),r.createdAt].some(v=>String(v||"").toLowerCase().includes(q)));
+  const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const lines=[["شماره سفارش","تاریخ","نام مشتری","شماره تماس","محصولات سفارش"].map(quote).join(","),...rows.map(r=>["HF-"+r.orderId,formatDate(r.createdAt),r.customerName,r.customerPhone,(r.items||[]).map(i=>i.name+" × "+i.qty).join(" | ")].map(quote).join(","))];
+  const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="hilafood-customer-orders.csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+function printCustomerRecords(){window.print();}
+async function deleteOrder(orderId){
+  if(!confirm("این سفارش ارسال‌شده از فهرست سفارش‌ها حذف می‌شود؛ اطلاعات تماس و محصولات آن در دفتر مشتریان باقی می‌ماند. ادامه می‌دهی؟"))return;
+  try{await api("POST",{action:"delete-order",orderId});alert("سفارش حذف شد و سابقه مشتری حفظ شد.");await loadOrders();await loadCustomerRecords();}
+  catch(error){alert("حذف سفارش انجام نشد: "+error.message);}
+}
 /* =========================================
    متن وضعیت سفارش
 ========================================= */
@@ -2801,6 +2835,8 @@ async function checkExistingLogin(){
       .remove("hidden");
 
     await loadStore();
+    await loadOrders();
+    await loadCustomerRecords();
 
   }catch{
 
