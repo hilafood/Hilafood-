@@ -79,7 +79,7 @@
   const add = (message, who = "bot", items = []) => {
     const bubble = document.createElement("div");
     bubble.className = "hila-advisor-bubble " + who;
-    bubble.textContent = message;
+    bubble.textContent = window.HILA_I18N?.t(message) || message;
     messages.appendChild(bubble);
     if (items.length) {
       const list = document.createElement("div");
