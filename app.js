@@ -1815,13 +1815,15 @@ function showCustomerForm() {
       line-height:1.9;
     ">
       <strong>روش پرداخت: فقط کارت‌به‌کارت</strong>
-      <div>پس از ثبت سفارش، مبلغ نهایی را به کارت زیر واریز کن و رسید را با ذکر شماره سفارش برای پشتیبانی هیلافود بفرست.</div>
-      ${STORE.settings.paymentCardNumber
-        ? '<p><b>شماره کارت:</b> ' + escapeHtml(STORE.settings.paymentCardNumber) + '</p>' +
-          '<p><b>صاحب کارت:</b> ' + escapeHtml(STORE.settings.paymentCardHolder || "—") + '</p>' +
-          '<p><b>بانک:</b> ' + escapeHtml(STORE.settings.paymentBankName || "—") + '</p>'
-        : '<p style="color:#a33">اطلاعات کارت هنوز توسط مدیریت ثبت نشده است؛ ثبت سفارش تا تکمیل اطلاعات کارت امکان‌پذیر نیست.</p>'
-      }
+      <div>پس از ثبت سفارش، مبلغ نهایی را به یکی از کارت‌های زیر واریز کن و رسید را با ذکر شماره سفارش برای پشتیبانی هیلافود بفرست.</div>
+      <div id="checkoutPaymentCards">
+        ${(Array.isArray(STORE.settings.paymentCards)?STORE.settings.paymentCards.filter(card=>card.active!==false):[]).length
+          ? STORE.settings.paymentCards.filter(card=>card.active!==false).map((card,index)=>'<label style="display:block;margin:10px 0;padding:10px;border:1px solid #ead7a8;border-radius:10px"><input type="radio" name="checkoutPaymentCard" value="'+escapeHtml(card.id||String(index))+'" '+(index===0?'checked':'')+' style="width:auto"> <b>'+escapeHtml(card.label||('کارت '+(index+1)))+'</b><br>شماره کارت: <b dir="ltr">'+escapeHtml(card.number||'')+'</b><br>صاحب کارت: '+escapeHtml(card.holder||'—')+'<br>بانک: '+escapeHtml(card.bank||'—')+'</label>').join('')
+          : (STORE.settings.paymentCardNumber
+            ? '<p><b>شماره کارت:</b> '+escapeHtml(STORE.settings.paymentCardNumber)+'</p><p><b>صاحب کارت:</b> '+escapeHtml(STORE.settings.paymentCardHolder||'—')+'</p><p><b>بانک:</b> '+escapeHtml(STORE.settings.paymentBankName||'—')+'</p>'
+            : '<p style="color:#a33">مدیریت هنوز شماره کارت فعالی ثبت نکرده است.</p>')
+        }
+      </div>
     </div>
 
     <button
@@ -1998,10 +2000,18 @@ async function submitOrder() {
   }
 
 
-  if (!STORE.settings.paymentCardNumber || !/^\d{16}$/.test(String(STORE.settings.paymentCardNumber).replace(/\s+/g, ""))) {
-    alert("اطلاعات کارت‌به‌کارت هنوز در پنل مدیریت کامل نشده است. لطفاً بعداً دوباره تلاش کن.");
+  const activePaymentCards = Array.isArray(STORE.settings.paymentCards)
+    ? STORE.settings.paymentCards.filter(card => card.active !== false && /^\d{16}$/.test(String(card.number || "").replace(/\s+/g, "")))
+    : [];
+  const legacyCardAvailable = !activePaymentCards.length && STORE.settings.paymentCardNumber && /^\d{16}$/.test(String(STORE.settings.paymentCardNumber).replace(/\s+/g, ""));
+  if (!activePaymentCards.length && !legacyCardAvailable) {
+    alert("مدیریت هنوز شماره کارت فعالی ثبت نکرده است. لطفاً بعداً دوباره تلاش کن.");
     return;
   }
+  const selectedPaymentId = document.querySelector('input[name="checkoutPaymentCard"]:checked')?.value;
+  const selectedPaymentCard = activePaymentCards.length
+    ? (activePaymentCards.find((card,index) => String(card.id || index) === String(selectedPaymentId)) || activePaymentCards[0])
+    : {number:STORE.settings.paymentCardNumber,holder:STORE.settings.paymentCardHolder,bank:STORE.settings.paymentBankName,label:"کارت بانکی"};
 
 
   const button =
@@ -2143,9 +2153,9 @@ async function submitOrder() {
       "مبلغ نهایی: " +
       money(data.total) +
       "\n\nروش پرداخت: کارت‌به‌کارت" +
-      "\nشماره کارت: " + STORE.settings.paymentCardNumber +
-      "\nصاحب کارت: " + (STORE.settings.paymentCardHolder || "—") +
-      "\nبانک: " + (STORE.settings.paymentBankName || "—") +
+      "\nشماره کارت: " + selectedPaymentCard.number +
+      "\nصاحب کارت: " + (selectedPaymentCard.holder || "—") +
+      "\nبانک: " + (selectedPaymentCard.bank || "—") +
       "\n\nپس از واریز، رسید را با شماره سفارش برای پشتیبانی هیلافود ارسال کن."
 
     );
