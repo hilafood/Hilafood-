@@ -1916,6 +1916,84 @@ function showCustomerForm() {
 
 
 /* ==================================================
+   بارگذاری فیش و اتصال به سفارش
+================================================== */
+
+function showOrderReceiptUpload(order) {
+  const oldBox = $("orderReceiptUploadBox");
+  if (oldBox) oldBox.remove();
+
+  const box = document.createElement("section");
+  box.id = "orderReceiptUploadBox";
+  box.style.cssText = "max-width:620px;margin:18px auto;padding:18px;border:1px solid #ead7a8;border-radius:16px;background:#fffaf0;line-height:1.9";
+  box.innerHTML = `
+    <h3 style="margin:0 0 8px">بارگذاری فیش پرداخت</h3>
+    <p style="margin:0 0 10px">شماره سفارش: <b dir="ltr">${escapeHtml(order.orderId || "")}</b></p>
+    <p style="margin:0 0 12px">تصویر فیش این سفارش را انتخاب کن تا همراه شماره سفارش و مشخصات خرید به کانال سفارش‌های هیلافود ارسال شود.</p>
+    <input id="orderReceiptFile" type="file" accept="image/jpeg,image/png,image/webp" style="display:block;width:100%;margin:12px 0">
+    <small style="display:block;color:#765f35">فرمت‌های مجاز: JPG، PNG و WEBP — حداکثر حجم: ۸ مگابایت</small>
+    <button id="sendOrderReceiptBtn" type="button" style="width:100%;margin-top:14px;padding:12px;border:0;border-radius:12px;background:#7b5b32;color:white;font:inherit;font-weight:700">ارسال فیش به کانال سفارش‌ها</button>
+    <p id="orderReceiptStatus" role="status" style="margin:8px 0 0"></p>
+  `;
+
+  const checkoutButton = document.querySelector(".checkout");
+  if (checkoutButton?.parentNode) {
+    checkoutButton.parentNode.insertBefore(box, checkoutButton);
+  } else {
+    document.body.appendChild(box);
+  }
+
+  $("sendOrderReceiptBtn").onclick = async () => {
+    const file = $("orderReceiptFile")?.files?.[0];
+    const status = $("orderReceiptStatus");
+    const sendButton = $("sendOrderReceiptBtn");
+
+    if (!file) {
+      status.textContent = "ابتدا تصویر فیش را انتخاب کن.";
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      status.textContent = "فقط تصویر JPG، PNG یا WEBP قابل ارسال است.";
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      status.textContent = "حجم تصویر باید حداکثر ۸ مگابایت باشد.";
+      return;
+    }
+
+    const form = new FormData();
+    form.append("orderId", String(order.orderNumber || ""));
+    form.append("receiptToken", String(order.receiptToken || ""));
+    form.append("receipt", file, file.name);
+
+    sendButton.disabled = true;
+    sendButton.textContent = "در حال ارسال فیش...";
+    status.textContent = "";
+
+    try {
+      const response = await fetch("/api/store", {
+        method: "POST",
+        body: form
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "ارسال فیش انجام نشد.");
+      }
+      status.textContent = "فیش با موفقیت همراه مشخصات سفارش به کانال ارسال شد.";
+      $("orderReceiptFile").disabled = true;
+      sendButton.textContent = "فیش ارسال شد";
+    } catch (error) {
+      status.textContent = error?.message || "خطا در ارسال فیش؛ دوباره تلاش کن.";
+      sendButton.disabled = false;
+      sendButton.textContent = "تلاش دوباره برای ارسال فیش";
+    }
+  };
+
+  box.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+
+/* ==================================================
    ثبت سفارش در D1
 ================================================== */
 
@@ -2141,23 +2219,22 @@ async function submitOrder() {
     }
 
 
+    showOrderReceiptUpload({
+      orderId: data.orderId,
+      orderNumber: data.orderNumber,
+      receiptToken: data.receiptToken,
+      total: data.total
+    });
+
     alert(
-
       "سفارش با موفقیت ثبت شد.\n\n" +
-
-      "شماره سفارش: " +
-      data.orderId +
-
-      "\n\n" +
-
-      "مبلغ نهایی: " +
-      money(data.total) +
+      "شماره سفارش: " + data.orderId +
+      "\nمبلغ نهایی: " + money(data.total) +
       "\n\nروش پرداخت: کارت‌به‌کارت" +
       "\nشماره کارت: " + selectedPaymentCard.number +
       "\nصاحب کارت: " + (selectedPaymentCard.holder || "—") +
       "\nبانک: " + (selectedPaymentCard.bank || "—") +
-      "\n\nپس از واریز، رسید را با شماره سفارش برای پشتیبانی هیلافود ارسال کن."
-
+      "\n\nبرای ارسال فیش، از بخش بارگذاری فیش در همین صفحه استفاده کن."
     );
 
 

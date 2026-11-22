@@ -294,6 +294,15 @@ async function createTables(db) {
     )
   `).run();
 
+  const orderColumns = await db.prepare("PRAGMA table_info(orders)").all();
+  const existingOrderColumns = (orderColumns.results || []).map(column => column.name);
+  if (!existingOrderColumns.includes("receipt_token_hash")) {
+    await db.prepare("ALTER TABLE orders ADD COLUMN receipt_token_hash TEXT DEFAULT ''").run();
+  }
+  if (!existingOrderColumns.includes("receipt_uploaded_at")) {
+    await db.prepare("ALTER TABLE orders ADD COLUMN receipt_uploaded_at TEXT DEFAULT NULL").run();
+  }
+
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS customer_order_history (
       order_id INTEGER PRIMARY KEY,
@@ -1127,7 +1136,105 @@ export async function onRequestPost({
 
 await createTables(db);
 
-const body =
+const contentType = request.headers.get("content-type") || "";
+
+    // بارگذاری مستقیم فیش: فایل فقط در حافظه پردازش و به ایتایار فرستاده می‌شود؛
+    // هیچ لینک عمومی یا فایل دائمی از فیش در سایت ساخته نمی‌شود.
+    if (contentType.includes("multipart/form-data")) {
+      const form = await request.formData();
+      const orderNumber = Number(form.get("orderId") || 0);
+      const receiptToken = String(form.get("receiptToken") || "");
+      const receipt = form.get("receipt");
+
+      if (!Number.isSafeInteger(orderNumber) || orderNumber < 1 || !receiptToken) {
+        return json({ error: "اطلاعات سفارش برای بارگذاری فیش معتبر نیست" }, 400);
+      }
+      if (!receipt || typeof receipt.arrayBuffer !== "function") {
+        return json({ error: "تصویر فیش انتخاب نشده است" }, 400);
+      }
+      if (!["image/jpeg", "image/png", "image/webp"].includes(receipt.type)) {
+        return json({ error: "فقط تصویر JPG، PNG یا WEBP پذیرفته می‌شود" }, 415);
+      }
+      if (receipt.size < 1 || receipt.size > 8 * 1024 * 1024) {
+        return json({ error: "حجم تصویر باید حداکثر ۸ مگابایت باشد" }, 413);
+      }
+
+      const fileHeader = new Uint8Array(await receipt.slice(0, 12).arrayBuffer());
+      const isJpeg = fileHeader[0] === 0xff && fileHeader[1] === 0xd8 && fileHeader[2] === 0xff;
+      const isPng = fileHeader[0] === 0x89 && fileHeader[1] === 0x50 &&
+        fileHeader[2] === 0x4e && fileHeader[3] === 0x47;
+      const isWebp = String.fromCharCode(...fileHeader.slice(0, 4)) === "RIFF" &&
+        String.fromCharCode(...fileHeader.slice(8, 12)) === "WEBP";
+      if (!isJpeg && !isPng && !isWebp) {
+        return json({ error: "محتوای فایل با فرمت تصویر انتخاب‌شده مطابقت ندارد" }, 415);
+      }
+
+      const order = await db.prepare(`
+        SELECT id, customer_name, items, total, receipt_token_hash, receipt_uploaded_at
+        FROM orders WHERE id = ?
+      `).bind(orderNumber).first();
+
+      if (!order) return json({ error: "سفارش پیدا نشد" }, 404);
+      const tokenDigest = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(receiptToken)
+      );
+      const tokenHash = Array.from(new Uint8Array(tokenDigest))
+        .map(byte => byte.toString(16).padStart(2, "0")).join("");
+
+      if (!order.receipt_token_hash || tokenHash !== order.receipt_token_hash) {
+        return json({ error: "مجوز بارگذاری این سفارش معتبر نیست؛ از همان صفحه ثبت سفارش استفاده کن" }, 403);
+      }
+      if (order.receipt_uploaded_at) {
+        return json({ error: "برای این سفارش قبلاً فیش ارسال شده است" }, 409);
+      }
+      if (!env.EITAA_TOKEN || !env.EITAA_CHAT_ID) {
+        return json({ error: "اتصال فعلی ایتا در دسترس نیست؛ فیش ارسال نشد" }, 503);
+      }
+
+      let orderItems = [];
+      try { orderItems = JSON.parse(order.items || "[]"); } catch { orderItems = []; }
+      const itemSummary = orderItems.map(item =>
+        `• ${String(item.name || "محصول")} × ${Number(item.qty || 1)}`
+      ).join("\\n");
+      const caption = `🧾 فیش پرداخت هیلافود
+شماره سفارش: HF-${orderNumber}
+مشتری: ${order.customer_name}
+محصولات:
+${itemSummary}
+مبلغ نهایی: ${Number(order.total || 0).toLocaleString("fa-IR")} تومان`;
+
+      try {
+        const eitaaForm = new FormData();
+        eitaaForm.append("chat_id", String(env.EITAA_CHAT_ID));
+        eitaaForm.append("title", `فیش سفارش HF-${orderNumber}`);
+        eitaaForm.append("caption", caption);
+        eitaaForm.append("file", receipt, receipt.name || `receipt-HF-${orderNumber}.jpg`);
+
+        const eitaaResponse = await fetch(
+          `https://eitaayar.ir/api/${encodeURIComponent(env.EITAA_TOKEN)}/sendFile`,
+          { method: "POST", body: eitaaForm }
+        );
+        const eitaaResult = await eitaaResponse.json().catch(() => ({}));
+        // مستندات رسمی ایتایار پاسخ موفق را با ok: true مشخص می‌کند.
+        const apiFailed = !eitaaResponse.ok || eitaaResult?.ok !== true;
+        if (apiFailed) {
+          console.error("Eitaa receipt upload rejected", eitaaResponse.status, eitaaResult);
+          return json({ error: "سرویس ایتا فیش را نپذیرفت؛ می‌توانی دوباره تلاش کنی" }, 502);
+        }
+
+        await db.prepare(`
+          UPDATE orders SET receipt_uploaded_at = CURRENT_TIMESTAMP WHERE id = ?
+        `).bind(orderNumber).run();
+
+        return json({ success: true, orderId: `HF-${orderNumber}` });
+      } catch (error) {
+        console.error("Eitaa receipt upload failed:", error);
+        return json({ error: "ارسال فیش به ایتا ناموفق بود؛ دوباره تلاش کن" }, 502);
+      }
+    }
+
+    const body =
   await request.json();
 
     const action =
@@ -1973,8 +2080,17 @@ while (
 
 
       /* ----------------------------------------------
-         ذخیره سفارش
+         ذخیره سفارش و ایجاد مجوز امن بارگذاری فیش
       ---------------------------------------------- */
+
+      const receiptToken = crypto.randomUUID();
+
+      const receiptTokenDigest = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(receiptToken)
+      );
+      const receiptTokenHash = Array.from(new Uint8Array(receiptTokenDigest))
+        .map(byte => byte.toString(16).padStart(2, "0")).join("");
 
       const result =
         await db.prepare(`
@@ -1990,9 +2106,10 @@ while (
             shipping_price,
             total,
             status,
-            payment_status
+            payment_status,
+            receipt_token_hash
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `)
         .bind(
 
@@ -2022,7 +2139,9 @@ while (
 
           "new",
 
-          "unpaid"
+          "unpaid",
+
+          receiptTokenHash
 
         )
         .run();
@@ -2114,6 +2233,8 @@ while (
         shippingPrice,
 
         total,
+
+        receiptToken,
 
         shipping: {
 
@@ -2554,6 +2675,7 @@ while (
             total,
             status,
             payment_status,
+            receipt_uploaded_at,
             created_at
           FROM orders
           ORDER BY id DESC
@@ -2627,6 +2749,9 @@ while (
               paymentStatus:
                 order.payment_status ||
                 "unpaid",
+
+              receiptUploadedAt:
+                order.receipt_uploaded_at || null,
 
               createdAt:
                 order.created_at
