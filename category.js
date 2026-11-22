@@ -222,3 +222,10 @@ init().catch(() => {
     </div>
   `;
 });
+
+
+document.addEventListener("hila-language-change", () => {
+  const category = (DATA.categories || []).find(x => x.id === cat || x.name === cat);
+  $("catTitle").textContent = category ? (window.HILA_I18N?.categoryName(category) || category.name) : (window.HILA_I18N?.t("همه محصولات") || "همه محصولات");
+  apply();
+});
