@@ -2,8 +2,8 @@
   "settings": {
     "showPrices": true,
     "currency": "تومان",
-    "paymentEnabled": false,
-    "paymentProvider": "zarinpal",
+    "paymentEnabled": true,
+    "paymentProvider": "card_to_card",
     "phone": "۰۹۲۲۷۱۴۰۷۲۶",
     "eitaa": "https://eitaa.com/hilafood",
     "instagram": "https://instagram.com/hilafood2026",
