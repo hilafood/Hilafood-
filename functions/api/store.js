@@ -272,31 +272,41 @@ async function createTables(db) {
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS orders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-
       customer_name TEXT NOT NULL,
-
       customer_phone TEXT NOT NULL,
-
       customer_address TEXT NOT NULL,
-
       items TEXT NOT NULL,
-
       subtotal INTEGER DEFAULT 0,
-
       shipping_id TEXT DEFAULT '',
-
       shipping_name TEXT DEFAULT '',
-
       shipping_price INTEGER DEFAULT 0,
-
       total INTEGER DEFAULT 0,
-
       status TEXT DEFAULT 'new',
-
       payment_status TEXT DEFAULT 'unpaid',
-
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
+  `).run();
+
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS customer_order_history (
+      order_id INTEGER PRIMARY KEY,
+      customer_name TEXT NOT NULL,
+      customer_phone TEXT NOT NULL,
+      customer_address TEXT DEFAULT '',
+      items TEXT DEFAULT '[]',
+      total INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'new',
+      payment_status TEXT DEFAULT 'unpaid',
+      order_created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      archived_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  await db.prepare(`
+    INSERT OR IGNORE INTO customer_order_history
+    (order_id, customer_name, customer_phone, customer_address, items, total, status, payment_status, order_created_at)
+    SELECT id, customer_name, customer_phone, customer_address, items, total, status, payment_status, created_at
+    FROM orders
   `).run();
     // ================================
   // جداول دوره‌های آموزشی
@@ -2012,6 +2022,15 @@ while (
           result.meta?.last_row_id || 0
         );
 
+      await db.prepare(`
+        INSERT OR IGNORE INTO customer_order_history
+        (order_id, customer_name, customer_phone, customer_address, items, total, status, payment_status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .bind(orderNumber, customerName, customerPhone, customerAddress,
+        JSON.stringify(cleanItems), total, "new", "unpaid")
+      .run();
+
 
       /* ----------------------------------------------
          اعلان سفارش در کانال ایتا
@@ -2602,6 +2621,69 @@ while (
     }
 
 
+    if (action === "admin-customers-list") {
+      const query = String(body.query || "").trim();
+      const result = await db.prepare(`
+        SELECT customer_phone,
+          MAX(customer_name) AS customer_name,
+          MIN(order_created_at) AS first_order_at,
+          MAX(order_created_at) AS last_order_at,
+          COUNT(*) AS order_count,
+          SUM(total) AS total_spent
+        FROM customer_order_history
+        WHERE (? = '' OR customer_name LIKE '%' || ? || '%' OR customer_phone LIKE '%' || ? || '%')
+        GROUP BY customer_phone
+        ORDER BY last_order_at DESC
+      `).bind(query, query, query).all();
+      return json({ success: true, customers: result.results || [] });
+    }
+
+    if (action === "admin-customer-history") {
+      const phone = String(body.phone || "").trim();
+      if (!phone) return json({ error: "شماره مشتری مشخص نشده است" }, 400);
+      const result = await db.prepare(`
+        SELECT order_id, customer_name, customer_phone, customer_address,
+          items, total, status, payment_status, order_created_at
+        FROM customer_order_history
+        WHERE customer_phone = ?
+        ORDER BY order_created_at DESC, order_id DESC
+      `).bind(phone).all();
+      return json({ success: true, history: result.results || [] });
+    }
+
+    if (action === "admin-customer-export") {
+      const result = await db.prepare(`
+        SELECT order_id, customer_name, customer_phone, customer_address,
+          items, total, status, payment_status, order_created_at
+        FROM customer_order_history
+        ORDER BY order_created_at DESC, order_id DESC
+      `).all();
+      return json({ success: true, history: result.results || [] });
+    }
+
+    if (action === "delete-completed-order") {
+      const orderId = Number(body.orderId || 0);
+      if (!orderId) return json({ error: "شماره سفارش نامعتبر است" }, 400);
+      const order = await db.prepare(`
+        SELECT id, customer_name, customer_phone, customer_address,
+          items, total, status, payment_status, created_at
+        FROM orders WHERE id = ?
+      `).bind(orderId).first();
+      if (!order) return json({ error: "سفارش پیدا نشد" }, 404);
+      if (!["shipped", "completed"].includes(String(order.status || ""))) {
+        return json({ error: "فقط سفارش‌های ارسال‌شده یا تکمیل‌شده قابل حذف هستند" }, 400);
+      }
+      await db.prepare(`
+        INSERT OR IGNORE INTO customer_order_history
+        (order_id, customer_name, customer_phone, customer_address, items, total, status, payment_status, order_created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(order.id, order.customer_name, order.customer_phone, order.customer_address,
+        order.items || "[]", Number(order.total || 0), order.status || "new",
+        order.payment_status || "unpaid", order.created_at || "").run();
+      await db.prepare("DELETE FROM orders WHERE id = ?").bind(orderId).run();
+      return json({ success: true, historyPreserved: true });
+    }
+
     /* ----------------------------------------------
        تغییر وضعیت سفارش
     ---------------------------------------------- */
@@ -2706,6 +2788,12 @@ while (
         }, 404);
 
       }
+
+      await db.prepare(`
+        UPDATE customer_order_history
+        SET status = ?, payment_status = ?
+        WHERE order_id = ?
+      `).bind(status, paymentStatus, orderId).run();
 
 
       return json({
