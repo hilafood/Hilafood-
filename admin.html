@@ -402,15 +402,28 @@ button{cursor:pointer}
 
         <label>
           <input type="checkbox" id="paymentEnabled">
-          فعال‌کردن پرداخت
+          فعال‌بودن پرداخت کارت‌به‌کارت
         </label>
-
       </div>
-
-      <p class="muted">
-        پرداخت بانکی تا وقتی درگاه و تنظیمات آن کامل نشده،
-        فعال نشود.
-      </p>
+      <p class="muted">روش پرداخت فروشگاه فقط کارت‌به‌کارت است. تأیید واریز سفارش‌ها در پنل مدیریت دستی انجام می‌شود.</p>
+      <div class="bar">
+        <label style="flex:1;min-width:220px">آدرس پیج اینستاگرام
+          <input id="instagramUrl" type="url" placeholder="https://instagram.com/hilafood2026" style="display:block;width:100%;margin-top:6px">
+        </label>
+      </div>
+      <h3>اطلاعات کارت برای نمایش به مشتری</h3>
+      <div class="bar">
+        <label style="flex:1;min-width:180px">شماره کارت
+          <input id="paymentCardNumber" inputmode="numeric" maxlength="24" placeholder="شماره کارت ۱۶ رقمی" style="display:block;width:100%;margin-top:6px">
+        </label>
+        <label style="flex:1;min-width:180px">نام صاحب کارت
+          <input id="paymentCardHolder" type="text" placeholder="نام صاحب کارت" style="display:block;width:100%;margin-top:6px">
+        </label>
+        <label style="flex:1;min-width:160px">نام بانک
+          <input id="paymentBankName" type="text" placeholder="نام بانک" style="display:block;width:100%;margin-top:6px">
+        </label>
+      </div>
+      <p class="muted">اطلاعات کارت پس از ذخیره به مشتری نمایش داده می‌شود. تا زمان ثبت شماره کارت ۱۶ رقمی، سفارش جدید ثبت نمی‌شود.</p>
 
       <button class="gold" onclick="saveSettings()">
         ذخیره تنظیمات
@@ -1425,7 +1438,15 @@ function fillSettings(){
     "تومان";
 
   $("paymentEnabled").checked =
-    !!data.settings.paymentEnabled;
+    data.settings.paymentEnabled !== false;
+  const instagram = String(data.settings.instagram || "");
+  $("instagramUrl").value =
+    instagram.includes("hila_mamaa") || instagram.includes("hila_mama")
+      ? "https://instagram.com/hilafood2026"
+      : (instagram || "https://instagram.com/hilafood2026");
+  $("paymentCardNumber").value = data.settings.paymentCardNumber || "";
+  $("paymentCardHolder").value = data.settings.paymentCardHolder || "";
+  $("paymentBankName").value = data.settings.paymentBankName || "";
 
 }
 
@@ -2719,7 +2740,12 @@ async function saveSettings(){
             $("currency").value,
 
           paymentEnabled:
-            $("paymentEnabled").checked
+            $("paymentEnabled").checked,
+          paymentProvider: "card_to_card",
+          instagram: $("instagramUrl").value.trim(),
+          paymentCardNumber: $("paymentCardNumber").value.replace(/\s+/g, ""),
+          paymentCardHolder: $("paymentCardHolder").value.trim(),
+          paymentBankName: $("paymentBankName").value.trim()
 
         }
 
