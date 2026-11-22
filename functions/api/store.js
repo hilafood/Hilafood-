@@ -1159,6 +1159,16 @@ const contentType = request.headers.get("content-type") || "";
         return json({ error: "حجم تصویر باید حداکثر ۸ مگابایت باشد" }, 413);
       }
 
+      const fileHeader = new Uint8Array(await receipt.slice(0, 12).arrayBuffer());
+      const isJpeg = fileHeader[0] === 0xff && fileHeader[1] === 0xd8 && fileHeader[2] === 0xff;
+      const isPng = fileHeader[0] === 0x89 && fileHeader[1] === 0x50 &&
+        fileHeader[2] === 0x4e && fileHeader[3] === 0x47;
+      const isWebp = String.fromCharCode(...fileHeader.slice(0, 4)) === "RIFF" &&
+        String.fromCharCode(...fileHeader.slice(8, 12)) === "WEBP";
+      if (!isJpeg && !isPng && !isWebp) {
+        return json({ error: "محتوای فایل با فرمت تصویر انتخاب‌شده مطابقت ندارد" }, 415);
+      }
+
       const order = await db.prepare(`
         SELECT id, customer_name, items, total, receipt_token_hash, receipt_uploaded_at
         FROM orders WHERE id = ?
@@ -1206,10 +1216,8 @@ ${itemSummary}
           { method: "POST", body: eitaaForm }
         );
         const eitaaResult = await eitaaResponse.json().catch(() => ({}));
-        const apiFailed = !eitaaResponse.ok ||
-          eitaaResult?.ok === false ||
-          eitaaResult?.success === false ||
-          String(eitaaResult?.status || "").toLowerCase() === "error";
+        // مستندات رسمی ایتایار پاسخ موفق را با ok: true مشخص می‌کند.
+        const apiFailed = !eitaaResponse.ok || eitaaResult?.ok !== true;
         if (apiFailed) {
           console.error("Eitaa receipt upload rejected", eitaaResponse.status, eitaaResult);
           return json({ error: "سرویس ایتا فیش را نپذیرفت؛ می‌توانی دوباره تلاش کنی" }, 502);
