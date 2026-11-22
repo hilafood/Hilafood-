@@ -21,9 +21,8 @@ const path = x => {
 };
 
 function money(n) {
-  return Number(n || 0).toLocaleString('fa-IR') +
-    ' ' +
-    (DATA.settings.currency || 'تومان');
+  return window.HILA_I18N ? window.HILA_I18N.money(n) :
+    Number(n || 0).toLocaleString('fa-IR') + ' ' + (DATA.settings.currency || 'تومان');
 }
 
 function price(p) {
@@ -50,7 +49,7 @@ async function init() {
   );
 
   $('catTitle').textContent =
-    c ? c.name : (cat || 'همه محصولات');
+    c ? (window.HILA_I18N?.categoryName(c) || c.name) : (window.HILA_I18N?.t('همه محصولات') || 'همه محصولات');
 
   apply();
 }
@@ -143,7 +142,7 @@ let list = (DATA.products || []).filter(p =>
                   <img
                     src="${path(p.img)}"
                     loading="lazy"
-                    alt="${p.name || 'محصول'}"
+                    alt="${window.HILA_I18N?.productName(p) || p.name || 'محصول'}"
                   >
                 `
                 : `
@@ -158,12 +157,12 @@ let list = (DATA.products || []).filter(p =>
             <div>
 
               <small>
-                ${p.cat || ''}
+                ${window.HILA_I18N?.t(p.cat || '') || p.cat || ''}
                 ${p.cat && p.stage ? ' | ' : ''}
                 ${p.stage || ''}
               </small>
 
-              <h2>${p.name || ''}</h2>
+              <h2>${window.HILA_I18N?.productName(p) || p.name || ''}</h2>
 
               <p>${p.desc || ''}</p>
 
