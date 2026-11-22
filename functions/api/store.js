@@ -2,12 +2,15 @@ const DATA = {
   settings: {
     showPrices: true,
     currency: "تومان",
-    paymentEnabled: false,
-    paymentProvider: "zarinpal",
+    paymentEnabled: true,
+    paymentProvider: "card_to_card",
 
     phone: "۰۹۲۲۷۱۴۰۷۲۶",
     eitaa: "https://eitaa.com/hilafood",
-    instagram: "https://instagram.com/hila_mamaa",
+    instagram: "https://instagram.com/hilafood2026",
+    paymentCardNumber: "",
+    paymentCardHolder: "",
+    paymentBankName: "",
     eitaaMama: "https://eitaa.com/hila_mama",
 
     /* ----------------------------------------------
@@ -295,6 +298,17 @@ async function createTables(db) {
 
       payment_status TEXT DEFAULT 'unpaid',
 
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  // دفتر مستقل سوابق مشتریان؛ با حذف سفارش اصلی، این سوابق باقی می‌مانند.
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS customer_order_records (
+      order_id INTEGER PRIMARY KEY,
+      customer_name TEXT NOT NULL DEFAULT '',
+      customer_phone TEXT NOT NULL DEFAULT '',
+      items TEXT NOT NULL DEFAULT '[]',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
@@ -2012,6 +2026,20 @@ while (
           result.meta?.last_row_id || 0
         );
 
+      // ثبت مستقل اطلاعات تماس و محصولات برای دفتر مشتریان
+      await db.prepare(`
+        INSERT OR IGNORE INTO customer_order_records
+        (order_id, customer_name, customer_phone, items, created_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `)
+      .bind(
+        orderNumber,
+        customerName,
+        customerPhone,
+        JSON.stringify(cleanItems)
+      )
+      .run();
+
 
       /* ----------------------------------------------
          اعلان سفارش در کانال ایتا
@@ -2599,6 +2627,71 @@ while (
         orders
 
       });
+    }
+
+    /* ----------------------------------------------
+       دفتر سوابق مشتریان و سفارش‌ها
+    ---------------------------------------------- */
+    if (action === "get-customer-records") {
+      // سوابق سفارش‌های قدیمی نیز بدون تکرار به دفتر منتقل می‌شوند.
+      await db.prepare(`
+        INSERT OR IGNORE INTO customer_order_records
+          (order_id, customer_name, customer_phone, items, created_at)
+        SELECT id, customer_name, customer_phone, items, created_at
+        FROM orders
+      `).run();
+
+      const result = await db.prepare(`
+        SELECT order_id, customer_name, customer_phone, items, created_at
+        FROM customer_order_records
+        ORDER BY order_id DESC
+      `).all();
+
+      const records = (result.results || []).map(row => {
+        let items = [];
+        try { items = JSON.parse(row.items || "[]"); } catch {}
+        return {
+          orderId: row.order_id,
+          customerName: row.customer_name,
+          customerPhone: row.customer_phone,
+          items,
+          createdAt: row.created_at
+        };
+      });
+
+      return json({ success: true, records });
+    }
+
+    /* ----------------------------------------------
+       حذف سفارش ارسال‌شده؛ دفتر مشتریان حفظ می‌شود
+    ---------------------------------------------- */
+    if (action === "delete-order") {
+      const orderId = Number(body.orderId || 0);
+      if (!Number.isInteger(orderId) || orderId < 1) {
+        return json({ error: "شناسه سفارش نامعتبر است" }, 400);
+      }
+
+      const order = await db.prepare(`
+        SELECT id, customer_name, customer_phone, items, created_at, status
+        FROM orders WHERE id = ?
+      `).bind(orderId).first();
+
+      if (!order) return json({ error: "سفارش پیدا نشد" }, 404);
+      if (!["shipped", "completed"].includes(order.status)) {
+        return json({ error: "فقط سفارش ارسال‌شده یا تکمیل‌شده قابل حذف است" }, 400);
+      }
+
+      await db.prepare(`
+        INSERT OR IGNORE INTO customer_order_records
+          (order_id, customer_name, customer_phone, items, created_at)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(
+        order.id, order.customer_name, order.customer_phone,
+        order.items || "[]", order.created_at
+      ).run();
+
+      await db.prepare("DELETE FROM orders WHERE id = ?").bind(orderId).run();
+      return json({ success: true });
     }
 
 

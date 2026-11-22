@@ -21,9 +21,8 @@ const path = x => {
 };
 
 function money(n) {
-  return Number(n || 0).toLocaleString('fa-IR') +
-    ' ' +
-    (DATA.settings.currency || 'تومان');
+  return window.HILA_I18N ? window.HILA_I18N.money(n) :
+    Number(n || 0).toLocaleString('fa-IR') + ' ' + (DATA.settings.currency || 'تومان');
 }
 
 function price(p) {
@@ -35,26 +34,53 @@ function price(p) {
 }
 
 async function init() {
-  const r = await fetch('/api/store?v=' + Date.now(), {
-    cache: 'no-store'
-  });
+  let apiData = null;
+  let fallbackData = null;
 
-  if (!r.ok) {
-    throw new Error('خطا در دریافت اطلاعات');
+  // API را مستقل امتحان کن؛ خطای آن نباید مانع بارگذاری داده‌های همراه سایت شود.
+  try {
+    const response = await fetch('/api/store?v=' + Date.now(), { cache: 'no-store' });
+    if (response.ok) {
+      const value = await response.json();
+      if (!value?.error) apiData = value;
+    }
+  } catch (error) {
+    console.warn('Store API unavailable; using bundled data:', error);
   }
 
-  DATA = await r.json();
+  try {
+    const fallbackResponse = await fetch('/data.json', { cache: 'no-cache' });
+    if (fallbackResponse.ok) fallbackData = await fallbackResponse.json();
+  } catch (error) {
+    console.warn('Bundled store data unavailable:', error);
+  }
 
-  const c = DATA.categories?.find(x =>
-    x.name === cat || x.id === cat
-  );
+  if (apiData) {
+    DATA = apiData;
+    const fallbackCategories = Array.isArray(fallbackData?.categories) ? fallbackData.categories : [];
+    const categoriesById = new Map();
+    fallbackCategories.forEach(item => {
+      if (item?.id) categoriesById.set(String(item.id), item);
+    });
+    (Array.isArray(DATA.categories) ? DATA.categories : []).forEach(item => {
+      if (item?.id) categoriesById.set(String(item.id), { ...categoriesById.get(String(item.id)), ...item });
+    });
+    DATA.categories = Array.from(categoriesById.values());
+    if (!Array.isArray(DATA.products) || !DATA.products.length) {
+      DATA.products = Array.isArray(fallbackData?.products) ? fallbackData.products : [];
+    }
+  } else if (fallbackData) {
+    DATA = fallbackData;
+  } else {
+    throw new Error('Store API and bundled data are unavailable');
+  }
 
+  const c = DATA.categories?.find(x => x.name === cat || x.id === cat);
   $('catTitle').textContent =
-    c ? c.name : (cat || 'همه محصولات');
+    c ? (window.HILA_I18N?.categoryName(c) || c.name) : (window.HILA_I18N?.t('همه محصولات') || 'همه محصولات');
 
   apply();
 }
-
 function apply() {
   const category = (DATA.categories || []).find(
   c => c.id === cat || c.name === cat
@@ -78,10 +104,13 @@ let list = (DATA.products || []).filter(p =>
 
   if (q) {
     list = list.filter(p =>
-      String(p.name || '').includes(q) ||
-      String(p.cat || '').includes(q) ||
-      String(p.stage || '').includes(q) ||
-      String(p.desc || '').includes(q)
+      String(p.name || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(window.HILA_I18N?.productName(p) || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(p.cat || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(window.HILA_I18N?.t(p.cat || '') || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(p.stage || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(window.HILA_I18N?.t(p.stage || '') || '').toLowerCase().includes(q.toLowerCase()) ||
+      String(p.desc || '').toLowerCase().includes(q.toLowerCase())
     );
   }
 
@@ -143,7 +172,7 @@ let list = (DATA.products || []).filter(p =>
                   <img
                     src="${path(p.img)}"
                     loading="lazy"
-                    alt="${p.name || 'محصول'}"
+                    alt="${window.HILA_I18N?.productName(p) || p.name || 'محصول'}"
                   >
                 `
                 : `
@@ -158,14 +187,14 @@ let list = (DATA.products || []).filter(p =>
             <div>
 
               <small>
-                ${p.cat || ''}
+                ${window.HILA_I18N?.t(p.cat || '') || p.cat || ''}
                 ${p.cat && p.stage ? ' | ' : ''}
-                ${p.stage || ''}
+                ${window.HILA_I18N?.t(p.stage || '') || p.stage || ''}
               </small>
 
-              <h2>${p.name || ''}</h2>
+              <h2>${window.HILA_I18N?.productName(p) || p.name || ''}</h2>
 
-              <p>${p.desc || ''}</p>
+              <p>${window.HILA_I18N?.t(p.desc || '') || p.desc || ''}</p>
 
               ${
                 DATA.settings.showPrices
@@ -216,10 +245,18 @@ let list = (DATA.products || []).filter(p =>
     `;
 }
 
-init().catch(() => {
+init().catch(error => {
+  console.error('Category page initialization failed:', error);
   $('grid').innerHTML = `
     <div class="empty">
-      خطا در دریافت محصولات.
+      اطلاعات فروشگاه در دسترس نیست. لطفاً صفحه را دوباره بارگذاری کن.
     </div>
   `;
+});
+
+
+document.addEventListener("hila-language-change", () => {
+  const category = (DATA.categories || []).find(x => x.id === cat || x.name === cat);
+  $("catTitle").textContent = category ? (window.HILA_I18N?.categoryName(category) || category.name) : (window.HILA_I18N?.t("همه محصولات") || "همه محصولات");
+  apply();
 });

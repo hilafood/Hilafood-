@@ -283,7 +283,7 @@ button{cursor:pointer}
 }
 
 
-@media(max-width:650px){
+.customer-table-wrap{overflow-x:auto;margin-top:12px}#customerRecordsTable{width:100%;border-collapse:collapse;min-width:760px;background:#fff}#customerRecordsTable th,#customerRecordsTable td{border:1px solid #eee;padding:10px;text-align:right;vertical-align:top;line-height:1.8}#customerRecordsTable th{background:#f7f3f6;white-space:nowrap}#customerRecordsTable tbody tr:nth-child(even){background:#fcfafc}#customerRecordSearch{margin:12px 0}@media print{body *{visibility:hidden!important}#customerRecordsSection,#customerRecordsSection *{visibility:visible!important}#customerRecordsSection{position:absolute;inset:0;width:100%;margin:0;padding:0;box-shadow:none}#customerRecordsSection .topbar button,#customerRecordSearch{display:none!important}.customer-table-wrap{overflow:visible}#customerRecordsTable{min-width:0;font-size:10px}#customerRecordsTable th,#customerRecordsTable td{padding:5px}}@media(max-width:650px){
 
   .grid{
     grid-template-columns:1fr;
@@ -322,6 +322,66 @@ button{cursor:pointer}
   }
 
 }
+
+/* HILA FOOD ADMIN — refreshed responsive visual system */
+:root{color-scheme:light;--hila-purple:#76509b;--hila-purple-dark:#563875;--hila-gold:#c69a4b;--hila-ink:#302a35;--hila-muted:#77717d;--hila-line:#eee8f0;--hila-surface:#fff;--hila-bg:#f7f3f8}
+html{scroll-behavior:smooth;max-width:100%;overflow-x:hidden}
+body{background:radial-gradient(ellipse at 12% 0%,#eee4f4 0,transparent 38%),var(--hila-bg);color:var(--hila-ink);overflow-x:hidden}
+.wrap{width:min(1180px,100%);max-width:100%;padding:clamp(12px,3vw,28px);margin-inline:auto}
+.card{border:1px solid rgba(118,80,155,.08);border-radius:22px;padding:clamp(16px,2.4vw,26px);margin:16px 0;box-shadow:0 10px 30px rgba(57,35,73,.055);min-width:0}
+h1{font-size:clamp(23px,4vw,32px);letter-spacing:-.4px;color:var(--hila-purple-dark)}
+h2{font-size:clamp(18px,2.7vw,22px);color:var(--hila-purple-dark);margin-bottom:12px}
+h3{font-size:16px}
+p{max-width:100%}
+.muted{color:var(--hila-muted);font-size:13px;line-height:2}
+input,textarea,select{min-width:0;max-width:100%;background:#fff;border:1px solid #e5dfe8;border-radius:12px;padding:12px 13px;outline:none;transition:border-color .18s,box-shadow .18s}
+input:focus,textarea:focus,select:focus{border-color:#a789c0;box-shadow:0 0 0 3px rgba(118,80,155,.11)}
+button{border-radius:12px;padding:12px 15px;font-weight:600;transition:transform .15s,box-shadow .15s,filter .15s}
+button:active{transform:translateY(1px)}
+button:focus-visible,a:focus-visible{outline:3px solid rgba(198,154,75,.45);outline-offset:2px}
+.primary{background:linear-gradient(135deg,#8660aa,#67438c);box-shadow:0 5px 14px rgba(103,67,140,.18)}
+.gold{background:linear-gradient(135deg,#d4ad65,#b98734);box-shadow:0 5px 14px rgba(185,135,52,.14)}
+.danger{background:#fff0f1;color:#b52d43}
+.logout{border:1px solid var(--hila-line);background:#fff;color:#6b596f;padding:10px 18px}
+.topbar{gap:14px}
+.topbar>div{min-width:0}
+#adminPanel>.topbar{padding:18px 20px;background:linear-gradient(120deg,#fff,#f4edf8);border:1px solid #ece2f1;border-radius:20px;margin-bottom:18px}
+#adminPanel>.topbar a{color:var(--hila-purple);text-decoration:none;font-size:13px;font-weight:700}
+#adminPanel>.topbar h1{margin:10px 0 0}
+.login-box{width:min(100%,480px);max-width:480px;margin:clamp(28px,9vh,82px) auto}
+.login-box .card{padding:clamp(22px,5vw,34px);border-radius:26px;box-shadow:0 18px 55px rgba(57,35,73,.10)}
+.login-box input{width:100%;font-size:16px;min-height:52px}
+.login-box button{width:100%;min-height:52px}
+.status{border:1px solid #eee5f0;background:#faf7fb;border-radius:13px;overflow-wrap:anywhere}
+.order-card{border:1px solid var(--hila-line);border-radius:18px;box-shadow:0 4px 14px rgba(50,30,60,.035)}
+.order-info{background:#faf7fb}
+.order-number{color:var(--hila-purple)}
+.order-badge{border-radius:999px;padding:6px 11px}
+.row,.shipping-row{background:#fff;border-color:var(--hila-line);border-radius:14px}
+.customer-table-wrap{border:1px solid var(--hila-line);border-radius:14px}
+#customerRecordsTable{border:0;min-width:700px}
+#customerRecordsTable th{background:#f3edf7;color:#594269}
+#customerRecordsTable th,#customerRecordsTable td{border-color:#eee8f0}
+#customerRecordSearch{width:100%;margin:14px 0}
+.actions{align-items:center}
+.actions button{min-width:0}
+.grid>*{min-width:0}
+#list img,.row img{border-radius:10px}
+hr{border:0;border-top:1px solid var(--hila-line);margin:22px 0}
+@media(max-width:650px){
+ .wrap{padding:12px}
+ .card{border-radius:17px;margin:12px 0;padding:16px}
+ #adminPanel>.topbar{align-items:flex-start;padding:15px}
+ .topbar{align-items:flex-start}
+ .topbar button{flex-shrink:0}
+ .actions{gap:8px}
+ .actions button{width:100%;flex-basis:100%}
+ .order-head{align-items:flex-start}
+ .customer-table-wrap{margin-inline:-2px}
+ .login-box{margin:30px auto}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
+
 </style>
 </head>
 
@@ -401,16 +461,29 @@ button{cursor:pointer}
         </select>
 
         <label>
-          <input type="checkbox" id="paymentEnabled">
-          فعال‌کردن پرداخت
+          <input type="checkbox" id="paymentEnabled" checked disabled>
+          فعال‌بودن پرداخت کارت‌به‌کارت
         </label>
-
       </div>
-
-      <p class="muted">
-        پرداخت بانکی تا وقتی درگاه و تنظیمات آن کامل نشده،
-        فعال نشود.
-      </p>
+      <p class="muted">روش پرداخت فروشگاه فقط کارت‌به‌کارت است. تأیید واریز سفارش‌ها در پنل مدیریت دستی انجام می‌شود.</p>
+      <div class="bar">
+        <label style="flex:1;min-width:220px">آدرس پیج اینستاگرام
+          <input id="instagramUrl" type="url" placeholder="https://instagram.com/hilafood2026" style="display:block;width:100%;margin-top:6px">
+        </label>
+      </div>
+      <h3>اطلاعات کارت برای نمایش به مشتری</h3>
+      <div class="bar">
+        <label style="flex:1;min-width:180px">شماره کارت
+          <input id="paymentCardNumber" inputmode="numeric" maxlength="24" placeholder="شماره کارت ۱۶ رقمی" style="display:block;width:100%;margin-top:6px">
+        </label>
+        <label style="flex:1;min-width:180px">نام صاحب کارت
+          <input id="paymentCardHolder" type="text" placeholder="نام صاحب کارت" style="display:block;width:100%;margin-top:6px">
+        </label>
+        <label style="flex:1;min-width:160px">نام بانک
+          <input id="paymentBankName" type="text" placeholder="نام بانک" style="display:block;width:100%;margin-top:6px">
+        </label>
+      </div>
+      <p class="muted">اطلاعات کارت پس از ذخیره به مشتری نمایش داده می‌شود. تا زمان ثبت شماره کارت ۱۶ رقمی، سفارش جدید ثبت نمی‌شود.</p>
 
       <button class="gold" onclick="saveSettings()">
         ذخیره تنظیمات
@@ -563,6 +636,13 @@ button{cursor:pointer}
     </div>
 
 
+    <div class="card" id="customerRecordsSection">
+      <div class="topbar"><div><h2>دفتر مشتریان و سوابق سفارش</h2><p class="muted">شماره تماس و محصولات سفارش‌داده‌شده؛ این دفتر با حذف سفارش از بخش سفارش‌ها پاک نمی‌شود.</p></div>
+      <div class="actions"><button type="button" onclick="loadCustomerRecords()">بروزرسانی</button><button type="button" class="gold" onclick="exportCustomerRecords()">خروجی Excel (CSV)</button><button type="button" onclick="printCustomerRecords()">چاپ جدول</button></div></div>
+      <input id="customerRecordSearch" type="search" placeholder="جست‌وجو بر اساس نام، شماره تماس یا محصول" oninput="filterCustomerRecords()">
+      <div id="customerRecordsCount" class="muted"></div>
+      <div class="customer-table-wrap"><table id="customerRecordsTable"><thead><tr><th>شماره سفارش</th><th>تاریخ</th><th>نام مشتری</th><th>شماره تماس</th><th>محصولات سفارش</th></tr></thead><tbody id="customerRecordsBody"><tr><td colspan="5">برای دریافت اطلاعات، بروزرسانی را بزنید.</td></tr></tbody></table></div>
+    </div>
     <!-- محصول -->
 
     <div class="card">
@@ -1388,7 +1468,8 @@ async function loadStore(){
     render();
 
     await loadOrders();
-await loadSmsStatus();
+    await loadCustomerRecords();
+    await loadSmsStatus();
     setStatus(
       "اطلاعات فروشگاه با موفقیت دریافت شد."
     );
@@ -1425,7 +1506,15 @@ function fillSettings(){
     "تومان";
 
   $("paymentEnabled").checked =
-    !!data.settings.paymentEnabled;
+    true;
+  const instagram = String(data.settings.instagram || "");
+  $("instagramUrl").value =
+    instagram.includes("hila_mamaa") || instagram.includes("hila_mama")
+      ? "https://instagram.com/hilafood2026"
+      : (instagram || "https://instagram.com/hilafood2026");
+  $("paymentCardNumber").value = data.settings.paymentCardNumber || "";
+  $("paymentCardHolder").value = data.settings.paymentCardHolder || "";
+  $("paymentBankName").value = data.settings.paymentBankName || "";
 
 }
 
@@ -1835,7 +1924,6 @@ function renderOrders(orders){
 
   container.innerHTML =
   orders
-    .filter(order => order.paymentStatus !== "paid")
     .map(order => {
       
         const items =
@@ -2079,6 +2167,7 @@ function renderOrders(orders){
               >
                 ذخیره وضعیت
               </button>
+              ${["shipped","completed"].includes(order.status) ? `<button class="danger" onclick="deleteOrder(${Number(order.id)})">حذف سفارش ارسال‌شده</button>` : ""}
 
             </div>
 
@@ -2092,6 +2181,33 @@ function renderOrders(orders){
 }
 
 
+/* دفتر مشتریان */
+let customerRecords = [];
+async function loadCustomerRecords(){
+  const body = $("customerRecordsBody"); if(!body) return;
+  body.innerHTML = '<tr><td colspan="5">در حال دریافت سوابق...</td></tr>';
+  try{const result=await api("POST",{action:"get-customer-records"});customerRecords=Array.isArray(result.records)?result.records:[];filterCustomerRecords();}
+  catch(error){body.innerHTML='<tr><td colspan="5">خطا: '+escapeHtml(error.message)+'</td></tr>';}
+}
+function filterCustomerRecords(){
+  const q=String($("customerRecordSearch")?.value||"").trim().toLowerCase();
+  const rows=customerRecords.filter(r=>[r.orderId,r.customerName,r.customerPhone,(r.items||[]).map(i=>i.name+" × "+i.qty).join(" "),r.createdAt].some(v=>String(v||"").toLowerCase().includes(q)));
+  $("customerRecordsCount").textContent="تعداد سوابق: "+rows.length.toLocaleString("fa-IR")+" از "+customerRecords.length.toLocaleString("fa-IR");
+  $("customerRecordsBody").innerHTML=rows.length?rows.map(r=>{const items=(r.items||[]).map(i=>escapeHtml(i.name||"")+" × "+Number(i.qty||1).toLocaleString("fa-IR")).join("<br>");return '<tr><td>HF-'+escapeHtml(r.orderId)+'</td><td>'+escapeHtml(formatDate(r.createdAt))+'</td><td>'+escapeHtml(r.customerName)+'</td><td dir="ltr">'+escapeHtml(r.customerPhone)+'</td><td>'+(items||"—")+'</td></tr>';}).join(""):'<tr><td colspan="5">موردی پیدا نشد.</td></tr>';
+}
+function exportCustomerRecords(){
+  const q=String($("customerRecordSearch")?.value||"").trim().toLowerCase();
+  const rows=customerRecords.filter(r=>[r.orderId,r.customerName,r.customerPhone,(r.items||[]).map(i=>i.name+" × "+i.qty).join(" "),r.createdAt].some(v=>String(v||"").toLowerCase().includes(q)));
+  const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const lines=[["شماره سفارش","تاریخ","نام مشتری","شماره تماس","محصولات سفارش"].map(quote).join(","),...rows.map(r=>["HF-"+r.orderId,formatDate(r.createdAt),r.customerName,r.customerPhone,(r.items||[]).map(i=>i.name+" × "+i.qty).join(" | ")].map(quote).join(","))];
+  const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="hilafood-customer-orders.csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+function printCustomerRecords(){window.print();}
+async function deleteOrder(orderId){
+  if(!confirm("این سفارش ارسال‌شده از فهرست سفارش‌ها حذف می‌شود؛ اطلاعات تماس و محصولات آن در دفتر مشتریان باقی می‌ماند. ادامه می‌دهی؟"))return;
+  try{await api("POST",{action:"delete-order",orderId});alert("سفارش حذف شد و سابقه مشتری حفظ شد.");await loadOrders();await loadCustomerRecords();}
+  catch(error){alert("حذف سفارش انجام نشد: "+error.message);}
+}
 /* =========================================
    متن وضعیت سفارش
 ========================================= */
@@ -2719,7 +2835,12 @@ async function saveSettings(){
             $("currency").value,
 
           paymentEnabled:
-            $("paymentEnabled").checked
+            true,
+          paymentProvider: "card_to_card",
+          instagram: $("instagramUrl").value.trim(),
+          paymentCardNumber: $("paymentCardNumber").value.replace(/\s+/g, "").replace(/[۰-۹]/g, d => "0123456789"["۰۱۲۳۴۵۶۷۸۹".indexOf(d)]).replace(/[٠-٩]/g, d => "0123456789"["٠١٢٣٤٥٦٧٨٩".indexOf(d)]),
+          paymentCardHolder: $("paymentCardHolder").value.trim(),
+          paymentBankName: $("paymentBankName").value.trim()
 
         }
 
