@@ -28,6 +28,18 @@ let selectedShippingId =
 const $ = id =>
   document.getElementById(id);
 
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[ch]);
+}
+
+function syncSocialLinks() {
+  const url = String(STORE.settings?.instagram || "https://instagram.com/hilafood2026");
+  document.querySelectorAll("a.instagram, a.social-link[href*='instagram']").forEach(link => {
+    link.href = url;
+  });
+}
 
 function img(path) {
 
@@ -287,6 +299,7 @@ courses:
 
       }
 
+      syncSocialLinks();
       renderCategories();
 
       renderProducts(
@@ -389,6 +402,7 @@ courses:
 
 
     // نمایش اطلاعات جدید
+    syncSocialLinks();
     renderCategories();
 
     renderProducts(
@@ -1779,6 +1793,25 @@ function showCustomerForm() {
     </div>
 
 
+    <div style="
+      margin-top:14px;
+      padding:14px;
+      border-radius:12px;
+      background:#fff8e8;
+      border:1px solid #ead7a8;
+      line-height:1.9;
+    ">
+      <strong>روش پرداخت: فقط کارت‌به‌کارت</strong>
+      <div>پس از ثبت سفارش، مبلغ نهایی را به کارت زیر واریز کن و رسید را با ذکر شماره سفارش برای پشتیبانی هیلافود بفرست.</div>
+      \${ 
+        STORE.settings.paymentCardNumber
+          ? \`<p><b>شماره کارت:</b> \${escapeHtml(STORE.settings.paymentCardNumber)}</p>
+             <p><b>صاحب کارت:</b> \${escapeHtml(STORE.settings.paymentCardHolder || "—")}</p>
+             <p><b>بانک:</b> \${escapeHtml(STORE.settings.paymentBankName || "—")}</p>\`
+          : \`<p style="color:#a33">اطلاعات کارت هنوز توسط مدیریت ثبت نشده است؛ ثبت سفارش تا تکمیل اطلاعات کارت امکان‌پذیر نیست.</p>\`
+      }
+    </div>
+
     <button
       id="submitOrderBtn"
       type="button"
@@ -1953,6 +1986,12 @@ async function submitOrder() {
   }
 
 
+  if (!STORE.settings.paymentCardNumber || !/^\d{16}$/.test(String(STORE.settings.paymentCardNumber).replace(/\s+/g, ""))) {
+    alert("اطلاعات کارت‌به‌کارت هنوز در پنل مدیریت کامل نشده است. لطفاً بعداً دوباره تلاش کن.");
+    return;
+  }
+
+
   const button =
     $("submitOrderBtn");
 
@@ -2090,7 +2129,12 @@ async function submitOrder() {
       "\n\n" +
 
       "مبلغ نهایی: " +
-      money(data.total)
+      money(data.total) +
+      "\n\nروش پرداخت: کارت‌به‌کارت" +
+      "\nشماره کارت: " + STORE.settings.paymentCardNumber +
+      "\nصاحب کارت: " + (STORE.settings.paymentCardHolder || "—") +
+      "\nبانک: " + (STORE.settings.paymentBankName || "—") +
+      "\n\nپس از واریز، رسید را با شماره سفارش برای پشتیبانی هیلافود ارسال کن."
 
     );
 
