@@ -34,15 +34,35 @@ function price(p) {
 }
 
 async function init() {
-  const r = await fetch('/api/store?v=' + Date.now(), {
-    cache: 'no-store'
-  });
+  const [r, fallbackResponse] = await Promise.all([
+    fetch('/api/store?v=' + Date.now(), { cache: 'no-store' }),
+    fetch('/data.json', { cache: 'no-cache' }).catch(() => null)
+  ]);
 
   if (!r.ok) {
     throw new Error('خطا در دریافت اطلاعات');
   }
 
   DATA = await r.json();
+
+  let fallbackCategories = [];
+  try {
+    if (fallbackResponse?.ok) {
+      const fallbackData = await fallbackResponse.json();
+      fallbackCategories = Array.isArray(fallbackData.categories) ? fallbackData.categories : [];
+    }
+  } catch (error) {
+    console.warn('Fallback categories unavailable:', error);
+  }
+
+  const categoriesById = new Map();
+  fallbackCategories.forEach(item => {
+    if (item?.id) categoriesById.set(String(item.id), item);
+  });
+  (Array.isArray(DATA.categories) ? DATA.categories : []).forEach(item => {
+    if (item?.id) categoriesById.set(String(item.id), { ...categoriesById.get(String(item.id)), ...item });
+  });
+  DATA.categories = Array.from(categoriesById.values());
 
   const c = DATA.categories?.find(x =>
     x.name === cat || x.id === cat
