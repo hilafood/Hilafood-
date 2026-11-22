@@ -2138,9 +2138,20 @@ while (
 
 
     /* ----------------------------------------------
-       بررسی کلید مدیریت
+       حذف محصول
     ---------------------------------------------- */
+    if (action === "delete-product") {
+      const id = String(body.id || "").trim();
+      if (!id) return json({ error: "شناسه محصول نامعتبر است" }, 400);
+      const existing = await db.prepare("SELECT id FROM products WHERE id = ?").bind(id).first();
+      if (!existing) return json({ error: "محصول پیدا نشد" }, 404);
+      await db.prepare("DELETE FROM products WHERE id = ?").bind(id).run();
+      return json({ success: true, id });
+    }
 
+    /* ----------------------------------------------
+       بررسی کلید مدیریت
+    ---------------------------------------------- */ 
     if (action === "check-admin") {
 
       return json({
@@ -2661,7 +2672,7 @@ while (
       return json({ success: true, history: result.results || [] });
     }
 
-    if (action === "delete-completed-order") {
+    if (action === "delete-order" || action === "delete-completed-order") {
       const orderId = Number(body.orderId || 0);
       if (!orderId) return json({ error: "شماره سفارش نامعتبر است" }, 400);
       const order = await db.prepare(`
@@ -2670,13 +2681,19 @@ while (
         FROM orders WHERE id = ?
       `).bind(orderId).first();
       if (!order) return json({ error: "سفارش پیدا نشد" }, 404);
-      if (!["shipped", "completed"].includes(String(order.status || ""))) {
-        return json({ error: "فقط سفارش‌های ارسال‌شده یا تکمیل‌شده قابل حذف هستند" }, 400);
-      }
       await db.prepare(`
-        INSERT OR IGNORE INTO customer_order_history
+        INSERT INTO customer_order_history
         (order_id, customer_name, customer_phone, customer_address, items, total, status, payment_status, order_created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(order_id) DO UPDATE SET
+          customer_name = excluded.customer_name,
+          customer_phone = excluded.customer_phone,
+          customer_address = excluded.customer_address,
+          items = excluded.items,
+          total = excluded.total,
+          status = excluded.status,
+          payment_status = excluded.payment_status,
+          order_created_at = excluded.order_created_at
       `).bind(order.id, order.customer_name, order.customer_phone, order.customer_address,
         order.items || "[]", Number(order.total || 0), order.status || "new",
         order.payment_status || "unpaid", order.created_at || "").run();
