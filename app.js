@@ -261,9 +261,34 @@ function cartGrandTotal() {
 /* ==================================================
    دریافت اطلاعات فروشگاه
 ================================================== */
+async function loadFallbackCategories() {
+  try {
+    const response = await fetch("/data.json", { cache: "no-cache" });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return Array.isArray(data.categories) ? data.categories : [];
+  } catch (error) {
+    console.warn("Fallback category data unavailable:", error);
+    return [];
+  }
+}
+
+function mergeCategoryLists(primary, fallback) {
+  const byId = new Map();
+  // Preserve the original site categories, then let database edits override them.
+  (Array.isArray(fallback) ? fallback : []).forEach(item => {
+    if (item && item.id) byId.set(String(item.id), item);
+  });
+  (Array.isArray(primary) ? primary : []).forEach(item => {
+    if (item && item.id) byId.set(String(item.id), { ...byId.get(String(item.id)), ...item });
+  });
+  return Array.from(byId.values());
+}
+
 async function load() {
 
   const cacheKey = "hilafood_store_cache";
+  const fallbackCategories = await loadFallbackCategories();
 
   // اول اطلاعات ذخیره‌شده را فوراً نمایش بده
   try {
@@ -282,7 +307,7 @@ async function load() {
           data.settings || {},
 
         categories:
-          data.categories || [],
+          mergeCategoryLists(data.categories, fallbackCategories),
 
         products:
   data.products || [],
@@ -364,7 +389,7 @@ renderVideo();
         data.settings || {},
 
       categories:
-        data.categories || [],
+        mergeCategoryLists(data.categories, fallbackCategories),
 
       products:
   data.products || [],
