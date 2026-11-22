@@ -1172,3 +1172,16 @@ img {
 .hila-advisor-form button{border:0;border-radius:12px;background:#73509f;color:#fff;padding:0 14px;font:inherit;cursor:pointer}
 .hila-advisor-note{font-size:10px;color:#888;text-align:center;margin:0;padding:0 8px 8px}
 @media(max-width:500px){.hila-advisor{left:12px;bottom:12px}.hila-advisor-panel{bottom:58px}}
+
+
+/* Multilingual layout */
+.language-switch{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid rgba(120,90,70,.2);border-radius:12px;background:#fff;font:inherit}
+.language-switch select{border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;max-width:112px}
+body.lang-en{font-family:Arial,Helvetica,sans-serif}
+body.lang-ar{font-family:Tahoma,Arial,sans-serif}
+html[dir="ltr"] .site-header,html[dir="ltr"] .header-top,html[dir="ltr"] .nav,html[dir="ltr"] .footer-inner{direction:ltr}
+html[dir="ltr"] .product-body,html[dir="ltr"] .hero-copy,html[dir="ltr"] .section-title,html[dir="ltr"] .about,html[dir="ltr"] .bego-inner{text-align:left}
+html[dir="ltr"] .cart-drawer{right:auto;left:0}
+html[dir="ltr"] .cart-row{direction:ltr}
+html[dir="ltr"] .language-switch{direction:ltr}
+@media(max-width:760px){.language-switch{font-size:13px;padding:5px 7px}.language-switch select{max-width:90px}}
