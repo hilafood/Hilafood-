@@ -283,6 +283,9 @@ button{cursor:pointer}
 }
 
 
+.admin-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:10px;margin:16px 0}
+.admin-nav a{display:flex;align-items:center;justify-content:center;gap:9px;min-height:74px;padding:12px;border-radius:15px;background:#fff;border:1px solid #eadfec;color:#563b70;text-decoration:none;font-weight:bold;box-shadow:0 3px 12px #00000008}
+.admin-nav a span{font-size:23px}.admin-nav a:hover{background:#f4edf7;border-color:#c9b5d8}.admin-section{scroll-margin-top:16px}
 @media(max-width:650px){
 
   .grid{
@@ -382,9 +385,16 @@ button{cursor:pointer}
     </div>
 
 
+    <nav class="admin-nav" aria-label="بخش‌های مدیریت">
+      <a href="#ordersSection"><span>🧾</span> سفارشات</a>
+      <a href="customers.html"><span>📒</span> دفترچه مشتریان</a>
+      <a href="#productsSection"><span>📦</span> محصولات</a>
+      <a href="#coursesSection"><span>🎓</span> دوره‌ها</a>
+      <a href="#smsSection"><span>💬</span> پیامک</a>
+      <a href="#settingsSection"><span>⚙️</span> تنظیمات و ارسال</a>
+    </nav>
     <!-- تنظیمات فروشگاه -->
-
-    <div class="card">
+    <div id="settingsSection" class="card admin-section">
 
       <h2>تنظیمات فروشگاه</h2>
 
@@ -422,7 +432,7 @@ button{cursor:pointer}
          پیامک
     ========================== -->
 
-    <div class="card">
+    <div id="smsSection" class="card admin-section">
 
       <div class="topbar">
 
@@ -490,8 +500,7 @@ button{cursor:pointer}
 
     </div>
     <!-- روش‌های ارسال -->
-
-    <div class="card">
+    <div id="shippingSection" class="card admin-section">
 
       <div class="topbar">
 
@@ -529,7 +538,7 @@ button{cursor:pointer}
          سفارش‌ها
     ========================== -->
 
-    <div class="card">
+    <div id="ordersSection" class="card admin-section">
 
       <div class="topbar">
 
@@ -562,32 +571,8 @@ button{cursor:pointer}
 
     </div>
 
-    <!-- دفتر سوابق مشتریان -->
-    <div class="card">
-      <div class="topbar">
-        <div>
-          <h2>دفتر سوابق مشتریان</h2>
-          <p class="muted">سوابق خرید مشتری حتی پس از حذف سفارش در این دفتر باقی می‌ماند.</p>
-        </div>
-        <button onclick="loadCustomers()" style="width:auto">تازه‌سازی</button>
-      </div>
-      <div class="grid">
-        <input id="customerSearch" placeholder="جست‌وجو با نام یا شماره تلفن">
-        <button class="primary" onclick="loadCustomers()">جست‌وجوی مشتری</button>
-      </div>
-      <div class="actions" style="margin-top:12px">
-        <button class="gold" onclick="exportCustomers()">خروجی فهرست مشتریان (Excel)</button>
-        <button onclick="exportOrderHistory()">خروجی سوابق سفارش‌ها (Excel)</button>
-      </div>
-      <div id="customersList" style="margin-top:14px">
-        <div class="order-empty">برای مشاهده مشتریان، جست‌وجو یا تازه‌سازی را بزن.</div>
-      </div>
-      <div id="customerHistory" style="margin-top:14px"></div>
-    </div>
-
     <!-- محصول -->
-
-    <div class="card">
+    <div id="productFormSection" class="card admin-section">
 
       <h2>افزودن / ویرایش محصول</h2>
 
@@ -667,7 +652,7 @@ button{cursor:pointer}
      دوره‌های آموزشی
 ================================ -->
 
-<div class="card">
+<div id="coursesSection" class="card admin-section">
 
   <div class="topbar">
 
@@ -759,8 +744,7 @@ button{cursor:pointer}
 </div>
 
     <!-- محصولات -->
-
-    <div class="card">
+    <div id="productsSection" class="card admin-section">
 
       <div class="topbar">
 
@@ -1410,8 +1394,8 @@ async function loadStore(){
     render();
 
     await loadOrders();
-    await loadCustomers();
     await loadSmsStatus();
+    await loadCourses();
     setStatus(
       "اطلاعات فروشگاه با موفقیت دریافت شد."
     );
@@ -2102,9 +2086,7 @@ function renderOrders(orders){
                 ذخیره وضعیت
               </button>
 
-              ${(status === "shipped" || status === "completed")
-                ? '<button class="danger" onclick="deleteOrder(' + order.id + ')">حذف سفارش (حفظ سوابق)</button>'
-                : ''}
+              <button class="danger" onclick="deleteOrder(${order.id})">حذف سفارش (حفظ سوابق)</button>
 
             </div>
 
@@ -2237,7 +2219,7 @@ async function deleteOrder(orderId){
   const confirmed = confirm("این سفارش از فهرست سفارش‌های فعال حذف می‌شود، اما سابقه مشتری و خرید او در دفتر سوابق باقی می‌ماند. ادامه می‌دهی؟");
   if(!confirmed) return;
   try{
-    await api("POST", {action:"delete-completed-order", orderId:Number(orderId)});
+    await api("POST", {action:"delete-order", orderId:Number(orderId)});
     alert("سفارش حذف شد و سوابق مشتری حفظ شد.");
     await loadOrders();
     await loadCustomers();
@@ -2823,8 +2805,9 @@ async function deleteProduct(id){
     );
 
     await api(
-      "DELETE",
+      "POST",
       {
+        action:"delete-product",
         id:String(id)
       }
     );
