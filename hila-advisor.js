@@ -1,18 +1,85 @@
 (() => {
   "use strict";
-  const products = () => (typeof STORE !== "undefined" && Array.isArray(STORE.products) ? STORE.products.filter(p => p.active !== false) : []);
-  const clean = s => String(s || "").toLocaleLowerCase("fa");
+
+  // راهنمای ثابت محصولات؛ قیمت و موجودی از فروشگاه خوانده می‌شود.
+  const GUIDE = [
+    {
+      name: "سویلاک کامل",
+      aliases: ["سویلاک", "سویلاک کامل", "فرنی سویلاک"],
+      keywords: ["کودک", "غلات", "میوه", "حبوبات"],
+      desc: "ترکیب سویق برنج، گندم و جو با سیب و به، همراه سویق سنجد، نخود، عدس، ماش و جوانه گندم. در فرمول فرنی به/سیب از سویق برنج استفاده می‌شود، نه آرد برنج."
+    },
+    {
+      name: "سویلاک ورزشکار",
+      aliases: ["ورزشکار", "سویق ورزشکار", "سویلاک ورزشکار"],
+      keywords: ["تمرین", "بدنسازی", "ساده", "وانیل", "کاکائو"],
+      desc: "در طعم‌های ساده، وانیلی و کاکائویی عرضه می‌شود. ترکیبات اعلام‌شده: سویق نخود، عدس، ماش و سنجد، تخم کدو، بادام، گل محمدی، استویا و جوانه گندم."
+    },
+    {
+      name: "چاشنی اُمیلا",
+      aliases: ["اُمیلا", "امیلا", "چاشنی", "امگا"],
+      keywords: ["سالاد", "ماست", "سس", "کتان", "کنجد"],
+      desc: "چاشنی ترکیبی از تخم کتان، کنجد، سماق، نمک، آویشن، سیر، زنجبیل و جوانه گندم؛ برای افزودن به سالاد، ماست یا سس معرفی شده است."
+    },
+    {
+      name: "کاچی سه آرد سه مغز",
+      aliases: ["کاچی سه آرد سه مغز", "سه آرد سه مغز", "کاچی سه آرد", "کاچی سه مغز"],
+      keywords: ["بادام", "گردو", "پسته", "آرد"],
+      desc: "ترکیب آرد گندم سبوس‌دار، جوانه گندم، آرد برنج، پودر نبات و ادویه، همراه بادام، گردو و پسته."
+    },
+    {
+      name: "کاچی بَزَرَک",
+      aliases: ["بزرک", "بَزَرَک", "کاچی بزرک", "کاچی بذرک"],
+      keywords: ["کتان", "ضعف", "قوا"],
+      desc: "ترکیب کتان، آرد سبوس‌دار، پودر نبات و ادویه. روش آماده‌سازی اعلام‌شده: با آب و کره روی حرارت آماده می‌شود؛ برای مقدار دقیق مواد، دستور روی بسته را ملاک قرار بده."
+    },
+    {
+      name: "کاچی کودک",
+      aliases: ["کاچی کودک", "کودک"],
+      keywords: ["بادام", "نارگیل", "غذای کودک"],
+      desc: "در ترکیب آن بادام، آرد گندم، پودر جوانه گندم، پودر نبات، شکر و ادویه به‌کار می‌رود؛ نارگیل نیز در دستور تهیه اعلام‌شده وجود دارد. وجود این محصول به‌تنهایی به معنی مناسب‌بودن برای هر سن یا هر کودک نیست؛ سن مصرف و حساسیت‌ها را پیش از استفاده با متخصص کودک بررسی کن."
+    },
+    {
+      name: "فرنی تخم خربزه",
+      aliases: ["فرنی تخم خربزه", "تخم خربزه", "فرنی خربزه"],
+      keywords: ["کیسه", "تی‌بگ", "دمنوش"],
+      desc: "بسته داخلی شبیه تی‌بگ حاوی تخم خربزه نیم‌کوب است. طبق روش معرفی‌شده، آن را در آب می‌خیسانند، کیسه را خارج می‌کنند و سپس پودر را به آب اضافه کرده و می‌پزند تا فرنی آماده شود. این محصول را درمان بیماری یا پاکسازی پزشکی معرفی نکن."
+    },
+    {
+      name: "فرنی کدوحلوایی",
+      aliases: ["فرنی کدوحلوایی", "کدوحلوایی", "فرنی کدو"],
+      keywords: ["پنکیک", "حلوا", "پودینگ"],
+      desc: "پودر فرنی کدوحلوایی؛ علاوه بر تهیه فرنی، در دستورهای خانگی مانند حلوا، پنکیک و پودینگ هم قابل استفاده است."
+    },
+    {
+      name: "فرنی به و سیب",
+      aliases: ["فرنی به سیب", "فرنی به، سیب", "به و سیب", "سیب و به"],
+      keywords: ["سویق برنج", "گندم", "میوه"],
+      desc: "با سویق برنج، سویق گندم و میوه به و سیب تهیه می‌شود. شیرینی آن از خود میوه‌هاست و در این محصول از آرد برنج استفاده نمی‌شود."
+    },
+    {
+      name: "کاچی گز",
+      aliases: ["کاچی گز", "گز"],
+      keywords: ["پسته", "بادام", "مغز"],
+      desc: "طعم گز در کنار کاچی، همراه مغز پسته و بادام؛ طبق معرفی محصول، بدون نیاز به افزودن شکر یا شیرینی اضافه."
+    }
+  ];
+
+  const clean = s => String(s || "").toLocaleLowerCase("fa").replace(/[يى]/g, "ی").replace(/ك/g, "ک").replace(/\u200c/g, " ");
+  const liveProducts = () => (typeof STORE !== "undefined" && Array.isArray(STORE.products) ? STORE.products.filter(p => p.active !== false) : []);
   const root = document.createElement("section");
   root.className = "hila-advisor";
-  root.innerHTML = '<button class="hila-advisor-launch" type="button" aria-label="مشاور هوشمند هیلافود">✦ <span>مشاور هیلافود</span></button><div class="hila-advisor-panel" hidden><div class="hila-advisor-head"><div><strong>مشاور هوشمند هیلافود</strong><small>راهنمای انتخاب و خرید محصولات</small></div><button class="hila-advisor-close" type="button" aria-label="بستن">×</button></div><div class="hila-advisor-messages" aria-live="polite"><div class="hila-advisor-bubble bot">سلام! من راهنمای محصولات هیلافود هستم. بگو دنبال چه محصولی هستی یا سؤالت رو بنویس.</div></div><div class="hila-advisor-chips"><button type="button">محصولات کودک</button><button type="button">محصولات ورزشکار</button><button type="button">روش مصرف</button><button type="button">ترکیبات محصولات</button></div><form class="hila-advisor-form"><input name="question" maxlength="300" placeholder="سؤالت رو اینجا بنویس..." autocomplete="off" required><button type="submit">ارسال</button></form><p class="hila-advisor-note">این راهنما جایگزین نظر پزشک یا متخصص تغذیه نیست.</p></div>';
+  root.innerHTML = '<button class="hila-advisor-launch" type="button" aria-label="مشاور هوشمند هیلافود">✦ <span>مشاور هیلافود</span></button><div class="hila-advisor-panel" hidden><div class="hila-advisor-head"><div><strong>مشاور هوشمند هیلافود</strong><small>راهنمای انتخاب و شناخت محصولات</small></div><button class="hila-advisor-close" type="button" aria-label="بستن">×</button></div><div class="hila-advisor-messages" aria-live="polite"><div class="hila-advisor-bubble bot">سلام! 🌿 نام محصول یا ترکیباتی را که می‌خواهی بشناسی بنویس.</div></div><div class="hila-advisor-chips"><button type="button">محصولات ورزشکار</button><button type="button">ترکیبات اُمیلا</button><button type="button">انواع کاچی</button><button type="button">فرنی‌ها</button></div><form class="hila-advisor-form"><input name="question" maxlength="300" placeholder="مثلاً سویلاک چه ترکیباتی دارد؟" autocomplete="off" required><button type="submit">ارسال</button></form><p class="hila-advisor-note">اطلاعات این راهنما برای معرفی محصولات است و جایگزین نظر پزشک یا متخصص تغذیه نیست.</p></div>';
   document.body.appendChild(root);
+
   const panel = root.querySelector(".hila-advisor-panel");
   const messages = root.querySelector(".hila-advisor-messages");
   const input = root.querySelector("input");
-  const add = (text, who = "bot", items = []) => {
+
+  const add = (message, who = "bot", items = []) => {
     const bubble = document.createElement("div");
     bubble.className = "hila-advisor-bubble " + who;
-    bubble.textContent = text;
+    bubble.textContent = message;
     messages.appendChild(bubble);
     if (items.length) {
       const list = document.createElement("div");
@@ -21,37 +88,53 @@
         const item = document.createElement("div");
         item.className = "hila-advisor-product";
         const name = document.createElement("strong");
-        name.textContent = p.name || "محصول هیلافود";
-        item.appendChild(name);
-        if (p.desc) {
-          const desc = document.createElement("small");
-          desc.textContent = p.desc;
-          item.appendChild(desc);
-        }
+        name.textContent = p.name;
+        const desc = document.createElement("small");
+        desc.textContent = p.desc;
+        item.append(name, desc);
         list.appendChild(item);
       });
       messages.appendChild(list);
     }
     messages.scrollTop = messages.scrollHeight;
   };
-  const find = terms => products().filter(p => terms.some(t => clean(p.name + " " + p.cat + " " + p.stage + " " + p.desc).includes(t)));
+
+  const findGuide = query => {
+    const q = clean(query);
+    return GUIDE.filter(p => [p.name, ...p.aliases, ...p.keywords, p.desc].some(v => clean(v).includes(q) || q.includes(clean(v))));
+  };
+
+  const findLive = query => {
+    const q = clean(query);
+    return liveProducts().filter(p => clean([p.name, p.cat, p.stage, p.desc].join(" ")).includes(q));
+  };
+
   const answer = raw => {
     const q = clean(raw);
-    if (/سلام|درود|وقت بخیر/.test(q)) return ["سلام و خوش اومدی 🌿 برای انتخاب محصول، ترکیبات یا روش آماده‌سازی هر محصول راهنماییت می‌کنم."];
-    if (/قیمت|هزینه|چند تومن|چنده/.test(q)) return ["قیمت روز هر محصول در صفحه فروشگاه نمایش داده می‌شود. اگر قیمت محصولی را نمی‌بینی، از پشتیبانی هیلافود استعلام بگیر."];
-    if (/سفارش|خرید|ارسال|پست|پیگیری/.test(q)) return ["برای خرید، محصول را به سبد اضافه کن و مراحل ثبت سفارش را ادامه بده. برای پیگیری سفارش یا سؤال درباره ارسال می‌توانی از راه ارتباطی هیلافود کمک بگیری."];
-    if (/کودک|نوزاد|شیرخوار|ماهگی|ماهگ/.test(q)) return ["برای انتخاب غذای کودک، سن دقیق، مرحله شروع غذای کمکی و ترکیبات حساسیت‌زا اهمیت دارد. من نمی‌توانم مناسب‌بودن یک محصول را برای کودک تأیید پزشکی کنم؛ قبل از خرید، ترکیبات و سن مصرف را با پشتیبانی بررسی کن.", find(["کودک","حریره","فرنی","سویلاک"])];
-    if (/ورزش|بدنساز|عضله|تمرین/.test(q)) return ["برای آشنایی با گزینه‌های مرتبط با ورزش، محصولات زیر را ببین. این پیشنهاد به معنی تضمین افزایش عملکرد یا جایگزینی برنامه غذایی تخصصی نیست.", find(["ورزشکار","سویق نخود","پروتئین"])];
-    if (/اُم|امگا|چاشنی|سالاد|ماست/.test(q)) return ["چاشنی اُمیلا برای افزودن به غذاهایی مثل سالاد و ماست معرفی شده است. اگر به کنجد یا سایر ترکیبات حساسیت داری، پیش از مصرف فهرست مواد تشکیل‌دهنده را بررسی کن.", find(["اُمیلا","امیلا","چاشنی"])];
-    if (/کاچی|بزرک|بزرک|گز/.test(q)) return ["برای دیدن انواع کاچی و ترکیبات هرکدام، این محصولات را بررسی کن. روش آماده‌سازی را مطابق دستور روی بسته انجام بده.", find(["کاچی","بزرک","بزرَک"])];
-    if (/فرنی|حریره|صبحانه/.test(q)) return ["این محصولات در دسته فرنی و حریره قرار می‌گیرند. برای انتخاب، ترکیبات، شیوه آماده‌سازی و تناسب با سن مصرف‌کننده را بررسی کن.", find(["فرنی","حریره","سویلاک"])];
-    if (/ترکیب|مواد|داخلش|محتویات/.test(q)) return ["ترکیبات دقیق هر محصول باید از توضیحات همان محصول یا برچسب بسته بررسی شود. نام محصولی را که مدنظرت است بنویس تا اطلاعات ثبت‌شده فروشگاه را پیدا کنم.", find(q.split(/\s+/).filter(w => w.length > 2))];
-    if (/باردار|شیرده|زایمان|قاعدگی|تخمدان|رحم|بیماری|درمان|درمانی|دارو|حساسیت/.test(q)) return ["برای بارداری، شیردهی، بیماری‌ها، داروها یا حساسیت غذایی، پیشنهاد محصول بدون بررسی فردی ایمن نیست. لطفاً برای تصمیم مصرف با پزشک یا متخصص تغذیه مشورت کن؛ محصولات هیلافود درمان بیماری نیستند."];
-    const words = q.split(/\s+/).filter(w => w.length > 2);
-    const matches = find(words);
-    if (matches.length) return ["این محصولات با واژه‌هایی که نوشتی مرتبط‌اند. برای انتخاب دقیق‌تر، بگو محصول را برای چه کسی و با چه کاربردی می‌خواهی.", matches];
-    return ["هنوز پاسخ مشخصی برای این سؤال در راهنمای من ثبت نشده. می‌توانی نام محصول یا موضوع دقیق‌تری بنویسی یا از طریق پشتیبانی هیلافود سؤال کنی."];
+    if (/سلام|درود|وقت بخیر/.test(q)) return ["سلام و خوش اومدی 🌿 درباره ترکیبات، طعم‌ها و روش آماده‌سازی محصولات از من بپرس."];
+    if (/قیمت|هزینه|چند تومن|چنده/.test(q)) return ["قیمت و موجودی ممکن است تغییر کند؛ قیمت به‌روز را در صفحه همان محصول در فروشگاه هیلافود ببین."];
+    if (/سفارش|خرید|ارسال|پست|پیگیری/.test(q)) return ["برای خرید، محصول را به سبد اضافه کن و مراحل ثبت سفارش را ادامه بده. برای پیگیری سفارش از راه ارتباطی درج‌شده در سایت استفاده کن."];
+    if (/باردار|شیرده|زایمان|قاعدگی|تخمدان|رحم|بیماری|درمان|درمانی|دارو|حساسیت/.test(q)) return ["برای بارداری، شیردهی، بیماری، مصرف دارو یا حساسیت غذایی نمی‌توانم محصولی را تجویز یا مناسب اعلام کنم. ترکیبات را با پزشک یا متخصص تغذیه بررسی کن. محصولات هیلافود درمان بیماری نیستند."];
+    if (/کودک|نوزاد|شیرخوار|ماهگی|ماهگ/.test(q)) {
+      const p = GUIDE.filter(x => /کودک|سویلاک/.test(clean(x.name + " " + x.aliases.join(" "))));
+      return ["درباره محصولات کودک می‌توانم ترکیبات اعلام‌شده را توضیح بدهم؛ اما از روی نام محصول نمی‌توانم سن مناسب یا ایمنی آن را برای یک کودک تأیید کنم. سن مصرف، حساسیت‌ها و آمادگی کودک برای غذای کمکی را با متخصص کودک بررسی کن.", p];
+    }
+    if (/ورزش|بدنساز|عضله|تمرین/.test(q)) return ["محصول مرتبط با ورزش در هیلافود «سویلاک ورزشکار» است. ترکیبات و طعم‌های آن را اینجا می‌بینی؛ این معرفی به معنی تضمین عملکرد ورزشی نیست.", GUIDE.filter(x => x.name === "سویلاک ورزشکار")];
+    if (/ترکیب|مواد|داخلش|محتویات|چی داره/.test(q)) {
+      const matches = findGuide(q).length ? findGuide(q) : GUIDE.filter(p => q.split(/\s+/).some(w => w.length > 2 && clean(p.name + " " + p.aliases.join(" ") + " " + p.desc).includes(w)));
+      return matches.length ? ["اطلاعات ترکیباتی که برای این محصول ثبت شده:", matches] : ["نام محصول را هم در سؤالت بنویس؛ مثلاً «ترکیبات سویلاک ورزشکار چیست؟» تا اطلاعات دقیق‌تری نشان بدهم."];
+    }
+    if (/روش مصرف|چطور درست|چطور آماده|طرز تهیه|آماده سازی|آماده‌سازی/.test(q)) {
+      const matches = findGuide(q);
+      return matches.length ? ["روش آماده‌سازی ثبت‌شده برای این محصول:", matches] : ["نام محصول را بنویس تا روش آماده‌سازی ثبت‌شده آن را پیدا کنم. برای مقدار دقیق مواد، دستور روی بسته را ملاک قرار بده."];
+    }
+    const matches = findGuide(q);
+    if (matches.length) return ["این اطلاعات درباره محصولی است که پرسیدی:", matches];
+    const live = findLive(q);
+    if (live.length) return ["این محصول در فهرست فروشگاه ثبت شده است. جزئیات ترکیبات هنوز در راهنمای من کامل نیست؛ لطفاً توضیحات محصول یا برچسب بسته را بررسی کن.", live.map(p => ({name:p.name, desc:p.desc || "توضیحات تکمیلی در صفحه محصول بررسی شود."}))];
+    return ["برای این سؤال هنوز اطلاعات مطمئنی در راهنمای من ثبت نشده. نام دقیق محصول را بنویس یا از پشتیبانی هیلافود بپرس."];
   };
+
   root.querySelector(".hila-advisor-launch").addEventListener("click", () => { panel.hidden = !panel.hidden; if (!panel.hidden) input.focus(); });
   root.querySelector(".hila-advisor-close").addEventListener("click", () => { panel.hidden = true; });
   root.querySelectorAll(".hila-advisor-chips button").forEach(btn => btn.addEventListener("click", () => {
