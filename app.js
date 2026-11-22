@@ -28,6 +28,25 @@ let selectedShippingId =
 const $ = id =>
   document.getElementById(id);
 
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[ch]);
+}
+
+function displayProductName(product) {
+  return window.HILA_I18N?.productName(product) || product?.name || "";
+}
+function displayCategoryName(category) {
+  return window.HILA_I18N?.categoryName(category) || category?.name || "";
+}
+function syncSocialLinks() {
+  const storedUrl = String(STORE.settings?.instagram || "");
+  const url = (!storedUrl || storedUrl.includes("hila_mamaa") || storedUrl.includes("hila_mama")) ? "https://instagram.com/hilafood2026" : storedUrl;
+  document.querySelectorAll("a.instagram, a.social-link[href*='instagram']").forEach(link => {
+    link.href = url;
+  });
+}
 
 function img(path) {
 
@@ -70,7 +89,7 @@ function renderCategories() {
             String(category.id || "");
 
           const name =
-            String(category.name || "");
+            displayCategoryName(category);
 
           const image =
             img(category.image || "");
@@ -109,14 +128,9 @@ function renderCategories() {
 
 function money(n) {
 
-  return (
-    Number(n || 0).toLocaleString("fa-IR") +
-    " " +
-    (
-      STORE.settings.currency ||
-      "تومان"
-    )
-  );
+  return window.HILA_I18N
+    ? window.HILA_I18N.money(n)
+    : Number(n || 0).toLocaleString("fa-IR") + " " + (STORE.settings.currency || "تومان");
 }
 
 
@@ -247,9 +261,35 @@ function cartGrandTotal() {
 /* ==================================================
    دریافت اطلاعات فروشگاه
 ================================================== */
+async function loadFallbackStore() {
+  try {
+    const response = await fetch("/data.json", { cache: "no-cache" });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data && typeof data === "object" ? data : null;
+  } catch (error) {
+    console.warn("Fallback store data unavailable:", error);
+    return null;
+  }
+}
+
+function mergeCategoryLists(primary, fallback) {
+  const byId = new Map();
+  // Preserve the original site categories, then let database edits override them.
+  (Array.isArray(fallback) ? fallback : []).forEach(item => {
+    if (item && item.id) byId.set(String(item.id), item);
+  });
+  (Array.isArray(primary) ? primary : []).forEach(item => {
+    if (item && item.id) byId.set(String(item.id), { ...byId.get(String(item.id)), ...item });
+  });
+  return Array.from(byId.values());
+}
+
 async function load() {
 
   const cacheKey = "hilafood_store_cache";
+  const fallbackData = await loadFallbackStore();
+  const fallbackCategories = Array.isArray(fallbackData?.categories) ? fallbackData.categories : [];
 
   // اول اطلاعات ذخیره‌شده را فوراً نمایش بده
   try {
@@ -268,7 +308,7 @@ async function load() {
           data.settings || {},
 
         categories:
-          data.categories || [],
+          mergeCategoryLists(data.categories, fallbackCategories),
 
         products:
   data.products || [],
@@ -287,6 +327,7 @@ courses:
 
       }
 
+      syncSocialLinks();
       renderCategories();
 
       renderProducts(
@@ -349,7 +390,7 @@ renderVideo();
         data.settings || {},
 
       categories:
-        data.categories || [],
+        mergeCategoryLists(data.categories, fallbackCategories),
 
       products:
   data.products || [],
@@ -389,6 +430,7 @@ courses:
 
 
     // نمایش اطلاعات جدید
+    syncSocialLinks();
     renderCategories();
 
     renderProducts(
@@ -416,31 +458,25 @@ renderVideo();
       !localStorage.getItem(cacheKey)
     ) {
 
-      alert(
-        "اطلاعات فروشگاه دریافت نشد. لطفاً دوباره تلاش کنید."
-      );
-
+      // اگر API فروشگاه در محیط آزمایشی در دسترس نبود،
+      // از داده‌های ایستای همراه سایت برای نمایش دسته‌ها و محصولات استفاده کن.
       STORE = {
-
         settings: {
-          showPrices: false,
-          currency: "تومان",
-          paymentEnabled: false,
-          shippingMethods: []
+          ...(fallbackData?.settings || {}),
+          shippingMethods: Array.isArray(fallbackData?.settings?.shippingMethods)
+            ? fallbackData.settings.shippingMethods
+            : []
         },
-
-        products: [],
-
-        categories: []
-
+        products: Array.isArray(fallbackData?.products) ? fallbackData.products : [],
+        categories: fallbackCategories,
+        courses: Array.isArray(fallbackData?.courses) ? fallbackData.courses : []
       };
 
+      syncSocialLinks();
       renderCategories();
-
-      renderProducts([]);
-
+      renderProducts(STORE.products.filter(p => p.active !== false));
+      renderCourses();
       updateCart();
-
       renderVideo();
 
     }
@@ -513,7 +549,7 @@ function card(product) {
         <img
           src="${img(product.img)}"
           loading="lazy"
-          alt="${product.name}"
+          alt="${displayProductName(product)}"
         >
 
       `
@@ -587,7 +623,7 @@ function card(product) {
 
 
         <h3>
-          ${product.name}
+          ${displayProductName(product)}
         </h3>
 
 
@@ -734,11 +770,11 @@ function renderCourses() {
               <div class="product-body">
 
                 <h3>
-                  ${course.title || ""}
+                  ${window.HILA_I18N?.t(course.title || "") || course.title || ""}
                 </h3>
 
                 <p>
-                  ${course.description || ""}
+                  ${window.HILA_I18N?.t(course.description || "") || course.description || ""}
                 </p>
 
                 ${
@@ -790,23 +826,14 @@ function filterProducts(q) {
 
         return (
 
-          String(product.name || "")
-            .includes(q)
-
-          ||
-
-          String(product.cat || "")
-            .includes(q)
-
-          ||
-
-          String(product.desc || "")
-            .includes(q)
-
-          ||
-
-          String(product.stage || "")
-            .includes(q)
+          String(product.name || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(window.HILA_I18N?.productName(product) || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(product.cat || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(window.HILA_I18N?.t(product.cat || "") || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(product.desc || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(window.HILA_I18N?.t(product.desc || "") || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(product.stage || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(window.HILA_I18N?.t(product.stage || "") || "").toLowerCase().includes(q.toLowerCase())
 
         );
 
@@ -848,7 +875,7 @@ function renderVideo() {
     <div>
 
       <h3>
-        ${product.name}
+        ${displayProductName(product)}
       </h3>
 
       <p>
@@ -1016,7 +1043,7 @@ function updateCart() {
 
                 <b>
 
-                  ${product.name}
+                  ${displayProductName(product)}
 
                   <small>
                     ${money(
@@ -1779,6 +1806,24 @@ function showCustomerForm() {
     </div>
 
 
+    <div style="
+      margin-top:14px;
+      padding:14px;
+      border-radius:12px;
+      background:#fff8e8;
+      border:1px solid #ead7a8;
+      line-height:1.9;
+    ">
+      <strong>روش پرداخت: فقط کارت‌به‌کارت</strong>
+      <div>پس از ثبت سفارش، مبلغ نهایی را به کارت زیر واریز کن و رسید را با ذکر شماره سفارش برای پشتیبانی هیلافود بفرست.</div>
+      ${STORE.settings.paymentCardNumber
+        ? '<p><b>شماره کارت:</b> ' + escapeHtml(STORE.settings.paymentCardNumber) + '</p>' +
+          '<p><b>صاحب کارت:</b> ' + escapeHtml(STORE.settings.paymentCardHolder || "—") + '</p>' +
+          '<p><b>بانک:</b> ' + escapeHtml(STORE.settings.paymentBankName || "—") + '</p>'
+        : '<p style="color:#a33">اطلاعات کارت هنوز توسط مدیریت ثبت نشده است؛ ثبت سفارش تا تکمیل اطلاعات کارت امکان‌پذیر نیست.</p>'
+      }
+    </div>
+
     <button
       id="submitOrderBtn"
       type="button"
@@ -1953,6 +1998,12 @@ async function submitOrder() {
   }
 
 
+  if (!STORE.settings.paymentCardNumber || !/^\d{16}$/.test(String(STORE.settings.paymentCardNumber).replace(/\s+/g, ""))) {
+    alert("اطلاعات کارت‌به‌کارت هنوز در پنل مدیریت کامل نشده است. لطفاً بعداً دوباره تلاش کن.");
+    return;
+  }
+
+
   const button =
     $("submitOrderBtn");
 
@@ -2090,7 +2141,12 @@ async function submitOrder() {
       "\n\n" +
 
       "مبلغ نهایی: " +
-      money(data.total)
+      money(data.total) +
+      "\n\nروش پرداخت: کارت‌به‌کارت" +
+      "\nشماره کارت: " + STORE.settings.paymentCardNumber +
+      "\nصاحب کارت: " + (STORE.settings.paymentCardHolder || "—") +
+      "\nبانک: " + (STORE.settings.paymentBankName || "—") +
+      "\n\nپس از واریز، رسید را با شماره سفارش برای پشتیبانی هیلافود ارسال کن."
 
     );
 
@@ -2167,3 +2223,13 @@ document.addEventListener(
   "DOMContentLoaded",
   load
 );
+
+
+document.addEventListener("hila-language-change", () => {
+  if (typeof STORE === "undefined" || !Array.isArray(STORE.products)) return;
+  renderCategories();
+  filterProducts($("searchInput")?.value || "");
+  renderCourses();
+  renderVideo();
+  updateCart();
+});
