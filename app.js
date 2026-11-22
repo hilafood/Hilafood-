@@ -2212,3 +2212,13 @@ document.addEventListener(
   "DOMContentLoaded",
   load
 );
+
+
+document.addEventListener("hila-language-change", () => {
+  if (typeof STORE === "undefined" || !Array.isArray(STORE.products)) return;
+  renderCategories();
+  filterProducts($("searchInput")?.value || "");
+  renderCourses();
+  renderVideo();
+  updateCart();
+});
