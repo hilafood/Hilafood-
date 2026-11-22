@@ -1170,7 +1170,7 @@ const contentType = request.headers.get("content-type") || "";
       }
 
       const order = await db.prepare(`
-        SELECT id, customer_name, customer_phone, customer_address, items, total, receipt_token_hash, receipt_uploaded_at
+        SELECT id, customer_name, customer_phone, customer_address, items, total, created_at, receipt_token_hash, receipt_uploaded_at
         FROM orders WHERE id = ?
       `).bind(orderNumber).first();
 
@@ -1197,8 +1197,29 @@ const contentType = request.headers.get("content-type") || "";
       const itemSummary = orderItems.map(item =>
         `• ${String(item.name || "محصول")} × ${Number(item.qty || 1)}`
       ).join("\\n");
+      const orderCreatedAt = order.created_at
+        ? new Date(
+            String(order.created_at).includes("T")
+              ? (/[zZ]|[+-]\\d{2}:?\\d{2}$/.test(String(order.created_at))
+                  ? String(order.created_at)
+                  : String(order.created_at) + "Z")
+              : String(order.created_at).replace(" ", "T") + "Z"
+          )
+        : null;
+      const orderDateJalali = orderCreatedAt && !Number.isNaN(orderCreatedAt.getTime())
+        ? new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Asia/Tehran"
+          }).format(orderCreatedAt)
+        : "نامشخص";
+
       const caption = `🧾 فیش پرداخت هیلافود
 شماره سفارش: HF-${orderNumber}
+تاریخ سفارش: ${orderDateJalali}
 مشتری: ${order.customer_name}
 شماره تماس: ${order.customer_phone || "ثبت نشده"}
 آدرس گیرنده: ${order.customer_address || "ثبت نشده"}
