@@ -34,46 +34,53 @@ function price(p) {
 }
 
 async function init() {
-  const [r, fallbackResponse] = await Promise.all([
-    fetch('/api/store?v=' + Date.now(), { cache: 'no-store' }),
-    fetch('/data.json', { cache: 'no-cache' }).catch(() => null)
-  ]);
+  let apiData = null;
+  let fallbackData = null;
 
-  if (!r.ok) {
-    throw new Error('خطا در دریافت اطلاعات');
-  }
-
-  DATA = await r.json();
-
-  let fallbackCategories = [];
+  // API را مستقل امتحان کن؛ خطای آن نباید مانع بارگذاری داده‌های همراه سایت شود.
   try {
-    if (fallbackResponse?.ok) {
-      const fallbackData = await fallbackResponse.json();
-      fallbackCategories = Array.isArray(fallbackData.categories) ? fallbackData.categories : [];
+    const response = await fetch('/api/store?v=' + Date.now(), { cache: 'no-store' });
+    if (response.ok) {
+      const value = await response.json();
+      if (!value?.error) apiData = value;
     }
   } catch (error) {
-    console.warn('Fallback categories unavailable:', error);
+    console.warn('Store API unavailable; using bundled data:', error);
   }
 
-  const categoriesById = new Map();
-  fallbackCategories.forEach(item => {
-    if (item?.id) categoriesById.set(String(item.id), item);
-  });
-  (Array.isArray(DATA.categories) ? DATA.categories : []).forEach(item => {
-    if (item?.id) categoriesById.set(String(item.id), { ...categoriesById.get(String(item.id)), ...item });
-  });
-  DATA.categories = Array.from(categoriesById.values());
+  try {
+    const fallbackResponse = await fetch('/data.json', { cache: 'no-cache' });
+    if (fallbackResponse.ok) fallbackData = await fallbackResponse.json();
+  } catch (error) {
+    console.warn('Bundled store data unavailable:', error);
+  }
 
-  const c = DATA.categories?.find(x =>
-    x.name === cat || x.id === cat
-  );
+  if (apiData) {
+    DATA = apiData;
+    const fallbackCategories = Array.isArray(fallbackData?.categories) ? fallbackData.categories : [];
+    const categoriesById = new Map();
+    fallbackCategories.forEach(item => {
+      if (item?.id) categoriesById.set(String(item.id), item);
+    });
+    (Array.isArray(DATA.categories) ? DATA.categories : []).forEach(item => {
+      if (item?.id) categoriesById.set(String(item.id), { ...categoriesById.get(String(item.id)), ...item });
+    });
+    DATA.categories = Array.from(categoriesById.values());
+    if (!Array.isArray(DATA.products) || !DATA.products.length) {
+      DATA.products = Array.isArray(fallbackData?.products) ? fallbackData.products : [];
+    }
+  } else if (fallbackData) {
+    DATA = fallbackData;
+  } else {
+    throw new Error('Store API and bundled data are unavailable');
+  }
 
+  const c = DATA.categories?.find(x => x.name === cat || x.id === cat);
   $('catTitle').textContent =
     c ? (window.HILA_I18N?.categoryName(c) || c.name) : (window.HILA_I18N?.t('همه محصولات') || 'همه محصولات');
 
   apply();
 }
-
 function apply() {
   const category = (DATA.categories || []).find(
   c => c.id === cat || c.name === cat
@@ -238,10 +245,11 @@ let list = (DATA.products || []).filter(p =>
     `;
 }
 
-init().catch(() => {
+init().catch(error => {
+  console.error('Category page initialization failed:', error);
   $('grid').innerHTML = `
     <div class="empty">
-      خطا در دریافت محصولات.
+      اطلاعات فروشگاه در دسترس نیست. لطفاً صفحه را دوباره بارگذاری کن.
     </div>
   `;
 });
