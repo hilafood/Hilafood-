@@ -34,6 +34,12 @@ function escapeHtml(value) {
   })[ch]);
 }
 
+function displayProductName(product) {
+  return window.HILA_I18N?.productName(product) || product?.name || "";
+}
+function displayCategoryName(category) {
+  return window.HILA_I18N?.categoryName(category) || category?.name || "";
+}
 function syncSocialLinks() {
   const storedUrl = String(STORE.settings?.instagram || "");
   const url = (!storedUrl || storedUrl.includes("hila_mamaa") || storedUrl.includes("hila_mama")) ? "https://instagram.com/hilafood2026" : storedUrl;
@@ -83,7 +89,7 @@ function renderCategories() {
             String(category.id || "");
 
           const name =
-            String(category.name || "");
+            displayCategoryName(category);
 
           const image =
             img(category.image || "");
@@ -122,14 +128,9 @@ function renderCategories() {
 
 function money(n) {
 
-  return (
-    Number(n || 0).toLocaleString("fa-IR") +
-    " " +
-    (
-      STORE.settings.currency ||
-      "تومان"
-    )
-  );
+  return window.HILA_I18N
+    ? window.HILA_I18N.money(n)
+    : Number(n || 0).toLocaleString("fa-IR") + " " + (STORE.settings.currency || "تومان");
 }
 
 
@@ -528,7 +529,7 @@ function card(product) {
         <img
           src="${img(product.img)}"
           loading="lazy"
-          alt="${product.name}"
+          alt="${displayProductName(product)}"
         >
 
       `
@@ -602,7 +603,7 @@ function card(product) {
 
 
         <h3>
-          ${product.name}
+          ${displayProductName(product)}
         </h3>
 
 
@@ -749,11 +750,11 @@ function renderCourses() {
               <div class="product-body">
 
                 <h3>
-                  ${course.title || ""}
+                  ${window.HILA_I18N?.t(course.title || "") || course.title || ""}
                 </h3>
 
                 <p>
-                  ${course.description || ""}
+                  ${window.HILA_I18N?.t(course.description || "") || course.description || ""}
                 </p>
 
                 ${
@@ -863,7 +864,7 @@ function renderVideo() {
     <div>
 
       <h3>
-        ${product.name}
+        ${displayProductName(product)}
       </h3>
 
       <p>
@@ -1031,7 +1032,7 @@ function updateCart() {
 
                 <b>
 
-                  ${product.name}
+                  ${displayProductName(product)}
 
                   <small>
                     ${money(
