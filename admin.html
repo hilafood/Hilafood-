@@ -1408,7 +1408,8 @@ async function loadStore(){
     render();
 
     await loadOrders();
-await loadSmsStatus();
+    await loadCustomerRecords();
+    await loadSmsStatus();
     setStatus(
       "اطلاعات فروشگاه با موفقیت دریافت شد."
     );
@@ -2835,8 +2836,6 @@ async function checkExistingLogin(){
       .remove("hidden");
 
     await loadStore();
-    await loadOrders();
-    await loadCustomerRecords();
 
   }catch{
 
