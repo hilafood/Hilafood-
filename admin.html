@@ -1516,11 +1516,12 @@ function addPaymentCard(){
   const number=$("paymentCardNumber").value.replace(/\s+/g,"");
   const active=$("paymentCardActive").checked;
   const editIndex=$("paymentCardNumber").dataset.editIndex;
+  const isEditing=editIndex!==undefined && editIndex!=="";
   if(!/^\d{16}$/.test(number)){alert("شماره کارت باید ۱۶ رقم باشد.");return;}
   if(!holder){alert("نام صاحب کارت را وارد کن.");return;}
   const cards=getPaymentCards();
-  const item={id:editIndex!==""?(cards[Number(editIndex)]?.id||("card-"+Date.now())):("card-"+Date.now()),label:label||("کارت "+(cards.length+1)),bank,holder,number,active};
-  if(editIndex!=="") cards[Number(editIndex)]=item;
+  const item={id:isEditing?(cards[Number(editIndex)]?.id||("card-"+Date.now())):("card-"+Date.now()),label:label||("کارت "+(cards.length+1)),bank,holder,number,active};
+  if(isEditing) cards[Number(editIndex)]=item;
   else cards.push(item);
   clearPaymentCardForm();
   renderPaymentCards();
