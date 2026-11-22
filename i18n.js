@@ -1,0 +1,213 @@
+(() => {
+"use strict";
+const categoryWords={
+en:{pre:"Pre-pregnancy",preg:"Pregnancy","6m":"6-month-old baby","7m":"7-month-old baby","8m":"8-month-old baby","9m":"9-month-old baby","10m":"10-month-old baby","11m":"11-month-old baby","12m":"12-month-old baby",post:"Postpartum & breastfeeding",cycle:"Menstrual cycle",uterus:"Uterus & ovaries",elder:"Family bundle",weak:"Low energy",test:"Trial products"},
+ar:{pre:"ما قبل الحمل",preg:"الحمل","6m":"طفل بعمر 6 أشهر","7m":"طفل بعمر 7 أشهر","8m":"طفل بعمر 8 أشهر","9m":"طفل بعمر 9 أشهر","10m":"طفل بعمر 10 أشهر","11m":"طفل بعمر 11 شهرًا","12m":"طفل بعمر 12 شهرًا",post:"ما بعد الولادة والرضاعة",cycle:"الدورة الشهرية",uterus:"الرحم والمبايض",elder:"باقة العائلة",weak:"الإرهاق",test:"منتجات تجريبية"}};
+const productWords={
+en:{"1":"Plain Kachi Mix | 350 g","2":"Four-Nut, Three-Flour Kachi","3":"Children’s Kachi Mix","4":"Bazrak Kachi Mix","5":"Menstrual Kachi Mix","6":"Godaakhteh Postpartum Kachi | 250 g","7":"Omila Seasoning","8":"Melon Seed Ferni","9":"Almond Porridge","10":"Coconut Porridge","11":"Wheat Germ Ferni","12":"Plain Rice Ferni","13":"Pumpkin Ferni","14":"Quince & Apple Ferni","15":"Soylak Grain Mix","سویلاک کامل":"Complete Soylak","سویلاک ورزشکار":"Soylak for Athletes","چاشنی اُمیلا":"Omila Seasoning","کاچی سه آرد سه مغز":"Three-Flour, Three-Nut Kachi","کاچی بَزَرَک":"Bazrak Kachi","کاچی کودک":"Children’s Kachi","فرنی تخم خربزه":"Melon Seed Ferni","فرنی کدوحلوایی":"Pumpkin Ferni","فرنی به، سیب":"Quince & Apple Ferni","کاچی گز":"Gaz-Style Kachi"},
+ar:{"1":"خليط كاجي سادة | 350 غ","2":"كاجي بأربعة أنواع من المكسرات وثلاثة أنواع من الدقيق","3":"خليط كاجي للأطفال","4":"كاجي بزرک","5":"كاجي للدورة الشهرية","6":"كاجي غداخته لما بعد الولادة | 250 غ","7":"خلطة أوميلا","8":"فرني بذور الشمام","9":"مهلبية اللوز","10":"مهلبية جوز الهند","11":"فرني جنين القمح","12":"فرني الأرز السادة","13":"فرني اليقطين","14":"فرني السفرجل والتفاح","15":"خليط حبوب سويلاك","سویلاک کامل":"سويلاك الكامل","سویلاک ورزشکار":"سويلاك للرياضيين","چاشنی اُمیلا":"خلطة أوميلا","کاچی سه آرد سه مغز":"كاجي بثلاثة أنواع من الدقيق والمكسرات","کاچی بَزَرَک":"كاجي بزرک","کاچی کودک":"كاجي للأطفال","فرنی تخم خربزه":"فرني بذور الشمام","فرنی کدوحلوایی":"فرني اليقطين","فرنی به، سیب":"فرني السفرجل والتفاح","کاچی گز":"كاجي بنكهة گز"}};
+const words={
+en:{
+"ارسال سفارش به سراسر کشور":"Shipping across Iran","غذای فراسودمند، ساده و خوشمزه":"Functional food, made simple and delicious","غذاهای فراسودمند و محصولات نیمه‌آماده":"Functional foods & ready-to-prepare products","کانال ایتا":"Eitaa channel","اینستاگرام":"Instagram","سبد خرید":"Shopping cart","دسته‌بندی‌ها":"Categories","محصولات":"Products","تخفیف خورده":"On sale","طرز آماده‌سازی":"Preparation","دوره آموزشی":"Courses","درباره ما":"About us","بهم بگو":"Ask us","جستجوی محصول...":"Search products...","وقتی حرفه و حس مادری":"Where professional knowledge and a mother’s care","تلفیق می‌شوند...":"come together...","مشاهده محصولات":"Explore products","انتخاب بر اساس دوره و نیاز":"Choose by life stage and needs","پیشنهاد ویژه":"Special offers","فروشگاه":"Shop","محصولات هیلا فود":"Hila Food products","مشاهده همه ←":"View all →","آموزش محصول":"Product guide","طرز آماده‌سازی محصولات":"How to prepare our products","ویدئوی آماده‌سازی":"Preparation video","دوره‌های آموزشی":"Learning resources","سؤال یا نیازت رو بهم بگو":"Tell us your question or what you need","ارسال پرسش در ایتا":"Send a question on Eitaa","درباره ما":"About us","ارتباط با هیلا فود":"Contact Hila Food","پشتیبانی و سفارش":"Support & orders","ایتا ماماهیلا":"Mama Hila Eitaa","مدیریت سایت":"Site administration","جمع کل":"Total","ادامه و پرداخت":"Continue to checkout","ادامه":"Continue","افزودن":"Add","تصویر محصول":"Product image","هنوز اضافه نشده":"Not added yet","تخفیف":"Sale","فراسودمند":"Functional","قیمت فعلاً اعلام نشده":"Price currently unavailable","فعلاً محصولی با تخفیف ثبت نشده است.":"No discounted products at the moment.","هنوز دسته‌بندی‌ای ثبت نشده است.":"No categories have been added yet.","سبد خرید خالی است.":"Your cart is empty.","انتخاب روش ارسال":"Choose a delivery method","روش ارسال سفارش خود را انتخاب کنید.":"Choose how you would like your order delivered.","رایگان":"Free","جمع محصولات":"Products subtotal","هزینه ارسال":"Delivery fee","مبلغ نهایی":"Total amount","اطلاعات سفارش":"Order details","اطلاعات دریافت سفارش را وارد کنید.":"Enter your delivery details.","نام و نام خانوادگی":"Full name","شماره موبایل":"Mobile number","آدرس کامل":"Full address","لطفاً روش ارسال را انتخاب کنید.":"Please choose a delivery method.","لطفاً نام و نام خانوادگی را وارد کنید.":"Please enter your full name.","لطفاً شماره موبایل را وارد کنید.":"Please enter your mobile number.","لطفاً آدرس کامل را وارد کنید.":"Please enter your full address.","در حال ثبت سفارش...":"Submitting order...","ثبت سفارش":"Place order","سفارش با موفقیت ثبت شد.":"Your order was placed successfully.","شماره سفارش:":"Order number:","روش پرداخت: کارت‌به‌کارت":"Payment method: Bank transfer","شماره کارت:":"Card number:","صاحب کارت:":"Cardholder:","بانک:":"Bank:","پس از واریز، رسید را با شماره سفارش برای پشتیبانی هیلافود ارسال کن.":"After transferring the amount, send the receipt and order number to Hila Food support.","اطلاعات کارت‌به‌کارت هنوز در پنل مدیریت کامل نشده است. لطفاً بعداً دوباره تلاش کن.":"Bank transfer details are not yet complete. Please try again later.","همه محصولات":"All products","مرتب‌سازی":"Sort by","جدید به قدیم":"Newest first","قدیم به جدید":"Oldest first","ارزان به گران":"Price: low to high","گران به ارزان":"Price: high to low","محصولی در این دسته پیدا نشد.":"No products found in this category.","خطا در دریافت محصولات.":"Could not load products.","بازگشت به فروشگاه":"Back to shop","در حال بررسی پرداخت...":"Checking payment...","لطفاً چند لحظه صبر کنید.":"Please wait a moment.","© هیلا فود":"© Hila Food","من مرضیه عسگری، کارشناس مامایی و مؤسس برند هیلا فود هستم.":"I am Marzieh Asgari, a midwifery professional and the founder of Hila Food.","در هیلا فود تلاش کرده‌ایم دانش و تجربه حرفه‌ای را با حس مادری":"At Hila Food, we bring professional knowledge and experience together with a mother’s care","تلفیق کنیم و محصولات فراسودمند، کاربردی و باکیفیت ارائه دهیم.":"to offer practical, quality functional foods.","اگر برای انتخاب محصول، روش آماده‌سازی یا موضوعی درباره تغذیه سؤال داری،":"If you have a question about choosing a product, preparation, or nutrition,","در ایتا برایمان پیام بفرست.":"message us on Eitaa.","ما تلاش می‌کنیم کیفیت، سادگی و خوشمزگی را کنار هم قرار دهیم":"We bring quality, simplicity, and good taste together","و تجربه‌ای صمیمی و قابل‌اعتماد بسازیم.":"to create a friendly and trustworthy experience."},
+ar:{
+"ارسال سفارش به سراسر کشور":"الشحن إلى جميع أنحاء إيران","غذای فراسودمند، ساده و خوشمزه":"غذاء وظيفي، بسيط ولذيذ","غذاهای فراسودمند و محصولات نیمه‌آماده":"أطعمة وظيفية ومنتجات سهلة التحضير","کانال ایتا":"قناة إيتا","اینستاگرام":"إنستغرام","سبد خرید":"سلة التسوق","دسته‌بندی‌ها":"التصنيفات","محصولات":"المنتجات","تخفیف خورده":"العروض","طرز آماده‌سازی":"طريقة التحضير","دوره آموزشی":"الدورات التعليمية","درباره ما":"من نحن","بهم بگو":"أخبرينا","جستجوی محصول...":"ابحثي عن منتج...","وقتی حرفه و حس مادری":"عندما تلتقي الخبرة المهنية","تلفیق می‌شوند...":"بحنان الأم...","مشاهده محصولات":"تصفحي المنتجات","انتخاب بر اساس دوره و نیاز":"اختاري حسب المرحلة والاحتياج","پیشنهاد ویژه":"عروض مميزة","فروشگاه":"المتجر","محصولات هیلا فود":"منتجات هيلا فود","مشاهده همه ←":"عرض الكل ←","آموزش محصول":"دليل المنتج","طرز آماده‌سازی محصولات":"طريقة تحضير المنتجات","ویدئوی آماده‌سازی":"فيديو التحضير","دوره‌های آموزشی":"المواد التعليمية","سؤال یا نیازت رو بهم بگو":"أخبرينا بسؤالك أو احتياجك","ارسال پرسش در ایتا":"أرسلي سؤالك عبر إيتا","ارتباط با هیلا فود":"تواصلي مع هيلا فود","پشتیبانی و سفارش":"الدعم والطلبات","ایتا ماماهیلا":"إيتا ماماهيلا","مدیریت سایت":"إدارة الموقع","جمع کل":"الإجمالي","ادامه و پرداخت":"متابعة الطلب","ادامه":"متابعة","افزودن":"أضيفي","تصویر محصول":"صورة المنتج","هنوز اضافه نشده":"لم تتم إضافته بعد","تخفیف":"عرض","فراسودمند":"وظيفي","قیمت فعلاً اعلام نشده":"السعر غير متاح حاليًا","فعلاً محصولی با تخفیف ثبت نشده است.":"لا توجد منتجات مخفّضة حاليًا.","هنوز دسته‌بندی‌ای ثبت نشده است.":"لم تتم إضافة تصنيفات بعد.","سبد خرید خالی است.":"سلة التسوق فارغة.","انتخاب روش ارسال":"اختيار طريقة التوصيل","روش ارسال سفارش خود را انتخاب کنید.":"اختاري طريقة توصيل طلبك.","رایگان":"مجاني","جمع محصولات":"مجموع المنتجات","هزینه ارسال":"رسوم التوصيل","مبلغ نهایی":"المبلغ الإجمالي","اطلاعات سفارش":"بيانات الطلب","اطلاعات دریافت سفارش را وارد کنید.":"أدخلي بيانات استلام الطلب.","نام و نام خانوادگی":"الاسم الكامل","شماره موبایل":"رقم الهاتف","آدرس کامل":"العنوان الكامل","لطفاً روش ارسال را انتخاب کنید.":"يرجى اختيار طريقة التوصيل.","لطفاً نام و نام خانوادگی را وارد کنید.":"يرجى إدخال الاسم الكامل.","لطفاً شماره موبایل را وارد کنید.":"يرجى إدخال رقم الهاتف.","لطفاً آدرس کامل را وارد کنید.":"يرجى إدخال العنوان الكامل.","در حال ثبت سفارش...":"جارٍ تسجيل الطلب...","ثبت سفارش":"تأكيد الطلب","سفارش با موفقیت ثبت شد.":"تم تسجيل طلبك بنجاح.","شماره سفارش:":"رقم الطلب:","روش پرداخت: کارت‌به‌کارت":"طريقة الدفع: تحويل بنكي","شماره کارت:":"رقم البطاقة:","صاحب کارت:":"اسم صاحب البطاقة:","بانک:":"البنك:","پس از واریز، رسید را با شماره سفارش برای پشتیبانی هیلافود ارسال کن.":"بعد التحويل، أرسلي الإيصال ورقم الطلب إلى دعم هيلا فود.","اطلاعات کارت‌به‌کارت هنوز در پنل مدیریت کامل نشده است. لطفاً بعداً دوباره تلاش کن.":"لم تكتمل بيانات التحويل البنكي بعد. يرجى المحاولة لاحقًا.","همه محصولات":"كل المنتجات","مرتب‌سازی":"ترتيب حسب","جدید به قدیم":"الأحدث أولًا","قدیم به جدید":"الأقدم أولًا","ارزان به گران":"السعر: من الأقل إلى الأعلى","گران به ارزان":"السعر: من الأعلى إلى الأقل","محصولی در این دسته پیدا نشد.":"لا توجد منتجات في هذا التصنيف.","خطا در دریافت محصولات.":"تعذّر تحميل المنتجات.","بازگشت به فروشگاه":"العودة إلى المتجر","در حال بررسی پرداخت...":"جارٍ التحقق من الدفع...","لطفاً چند لحظه صبر کنید.":"يرجى الانتظار قليلًا.","© هیلا فود":"© هيلا فود","من مرضیه عسگری، کارشناس مامایی و مؤسس برند هیلا فود هستم.":"أنا مرضية عسكري، أخصائية قبالة ومؤسسة علامة هيلا فود.","در هیلا فود تلاش کرده‌ایم دانش و تجربه حرفه‌ای را با حس مادری":"في هيلا فود نسعى إلى الجمع بين المعرفة والخبرة المهنية وحنان الأم","تلفیق کنیم و محصولات فراسودمند، کاربردی و باکیفیت ارائه دهیم.":"لتقديم منتجات غذائية عملية وعالية الجودة.","اگر برای انتخاب محصول، روش آماده‌سازی یا موضوعی درباره تغذیه سؤال داری،":"إذا كان لديك سؤال عن اختيار منتج أو طريقة تحضيره أو التغذية،","در ایتا برایمان پیام بفرست.":"أرسلي لنا رسالة عبر إيتا.","ما تلاش می‌کنیم کیفیت، سادگی و خوشمزگی را کنار هم قرار دهیم":"نسعى إلى الجمع بين الجودة والبساطة والمذاق الطيب","و تجربه‌ای صمیمی و قابل‌اعتماد بسازیم.":"لبناء تجربة ودودة وجديرة بالثقة."}
+};
+
+Object.assign(words.en,{
+"دسته‌بندی محصولات | هیلا فود":"Product categories | Hila Food","محصولات این دسته به صورت عمودی نمایش داده می‌شوند.":"Products in this category are listed below.","جستجو":"Search","نام محصول...":"Product name...","مرتب‌سازی":"Sort by","همه محصولات":"All products","تصویر محصول":"Product image","هنوز اضافه نشده":"Not added yet","محصول":"Product","محصولی در این دسته پیدا نشد.":"No products found in this category.","خطا در دریافت اطلاعات":"Could not retrieve information","دوره آموزشی":"Course","تصویر دوره":"Course image","بستن":"Close","مشاور هیلافود":"Hila Food Advisor","مشاور هوشمند هیلافود":"Hila Food Smart Advisor","راهنمای انتخاب و شناخت محصولات":"Product selection and information guide","سلام! 🌿 نام محصول یا ترکیباتی را که می‌خواهی بشناسی بنویس.":"Hello! 🌿 Ask me about a product or its ingredients.","مثلاً سویلاک چه ترکیباتی دارد؟":"For example: What are the ingredients in Soylak?","ارسال":"Send","اطلاعات این راهنما برای معرفی محصولات است و جایگزین نظر پزشک یا متخصص تغذیه نیست.":"This guide introduces products and does not replace advice from a doctor or nutrition professional.","محصولات ورزشکار":"Products for athletes","ترکیبات اُمیلا":"Omila ingredients","انواع کاچی":"Kachi varieties","فرنی‌ها":"Ferni varieties",
+"پرداخت لغو شد":"Payment cancelled","پرداخت انجام نشد و مبلغی از این تراکنش تأیید نشده است.":"Payment was not completed and no transaction has been confirmed.","پرداخت تأیید نشد":"Payment not confirmed","نتوانستیم پرداخت را تأیید کنیم. اگر مبلغ از حساب شما کم شده، شماره پیگیری را نگه دارید و با پشتیبانی تماس بگیرید.":"We could not confirm the payment. If money was deducted, keep the reference number and contact support.","پرداخت با موفقیت انجام شد":"Payment completed successfully","سفارش شما با موفقیت ثبت شد. شماره پیگیری:":"Your order was placed successfully. Reference number:"
+});
+Object.assign(words.ar,{
+"دسته‌بندی محصولات | هیلا فود":"تصنيفات المنتجات | هيلا فود","محصولات این دسته به صورت عمودی نمایش داده می‌شوند.":"تُعرض منتجات هذا التصنيف أدناه.","جستجو":"بحث","نام محصول...":"اسم المنتج...","مرتب‌سازی":"ترتيب حسب","همه محصولات":"كل المنتجات","تصویر محصول":"صورة المنتج","هنوز اضافه نشده":"لم تتم إضافته بعد","محصول":"منتج","محصولی در این دسته پیدا نشد.":"لا توجد منتجات في هذا التصنيف.","خطا در دریافت اطلاعات":"تعذّر جلب المعلومات","دوره آموزشی":"دورة تعليمية","تصویر دوره":"صورة الدورة","بستن":"إغلاق","مشاور هیلافود":"مساعد هيلا فود","مشاور هوشمند هیلافود":"مساعد هيلا فود الذكي","راهنمای انتخاب و شناخت محصولات":"دليل اختيار المنتجات والتعرّف عليها","سلام! 🌿 نام محصول یا ترکیباتی را که می‌خواهی بشناسی بنویس.":"مرحبًا! 🌿 اسألي عن منتج أو مكوّناته.","مثلاً سویلاک چه ترکیباتی دارد؟":"مثال: ما مكونات سويلاك؟","ارسال":"إرسال","اطلاعات این راهنما برای معرفی محصولات است و جایگزین نظر پزشک یا متخصص تغذیه نیست.":"هذا الدليل للتعريف بالمنتجات ولا يغني عن استشارة الطبيب أو اختصاصي التغذية.","محصولات ورزشکار":"منتجات الرياضيين","ترکیبات اُمیلا":"مكونات أوميلا","انواع کاچی":"أنواع الكاجي","فرنی‌ها":"أنواع الفرني",
+"پرداخت لغو شد":"تم إلغاء الدفع","پرداخت انجام نشد و مبلغی از این تراکنش تأیید نشده است.":"لم تكتمل عملية الدفع ولم يتم تأكيد أي مبلغ لهذه العملية.","پرداخت تأیید نشد":"لم يتم تأكيد الدفع","نتوانستیم پرداخت را تأیید کنیم. اگر مبلغ از حساب شما کم شده، شماره پیگیری را نگه دارید و با پشتیبانی تماس بگیرید.":"تعذّر تأكيد الدفع. إذا تم خصم المبلغ، احتفظي برقم المرجع وتواصلي مع الدعم.","پرداخت با موفقیت انجام شد":"تم الدفع بنجاح","سفارش شما با موفقیت ثبت شد. شماره پیگیری:":"تم تسجيل طلبك بنجاح. رقم المتابعة:"
+});
+
+
+Object.assign(words.en,{
+"ترکیب سویق برنج، گندم و جو با سیب و به، همراه سویق سنجد، نخود، عدس، ماش و جوانه گندم. در فرمول فرنی به/سیب از سویق برنج استفاده می‌شود، نه آرد برنج.":"A blend of roasted rice, wheat and barley powders with apple and quince, plus jujube, chickpea, lentil and mung bean powders and wheat germ. The quince-and-apple porridge uses roasted rice powder, not rice flour.",
+"در طعم‌های ساده، وانیلی و کاکائویی عرضه می‌شود. ترکیبات اعلام‌شده: سویق نخود، عدس، ماش و سنجد، تخم کدو، بادام، گل محمدی، استویا و جوانه گندم.":"Available in plain, vanilla and cocoa flavors. Listed ingredients include roasted chickpea, lentil, mung bean and jujube powders, pumpkin seeds, almonds, rose, stevia and wheat germ.",
+"چاشنی ترکیبی از تخم کتان، کنجد، سماق، نمک، آویشن، سیر، زنجبیل و جوانه گندم؛ برای افزودن به سالاد، ماست یا سس معرفی شده است.":"A seasoning blend of flaxseed, sesame, sumac, salt, thyme, garlic, ginger and wheat germ. Suggested for salads, yogurt or sauces.",
+"ترکیب آرد گندم سبوس‌دار، جوانه گندم، آرد برنج، پودر نبات و ادویه، همراه بادام، گردو و پسته.":"A blend of whole-wheat flour, wheat germ, rice flour, rock-candy powder and spices, with almonds, walnuts and pistachios.",
+"ترکیب کتان، آرد سبوس‌دار، پودر نبات و ادویه. روش آماده‌سازی اعلام‌شده: با آب و کره روی حرارت آماده می‌شود؛ برای مقدار دقیق مواد، دستور روی بسته را ملاک قرار بده.":"Made with flaxseed, whole-grain flour, rock-candy powder and spices. The stated preparation method uses water and butter over heat. Follow the package for exact quantities.",
+"در ترکیب آن بادام، آرد گندم، پودر جوانه گندم، پودر نبات، شکر و ادویه به‌کار می‌رود؛ نارگیل نیز در دستور تهیه اعلام‌شده وجود دارد. وجود این محصول به‌تنهایی به معنی مناسب‌بودن برای هر سن یا هر کودک نیست؛ سن مصرف و حساسیت‌ها را پیش از استفاده با متخصص کودک بررسی کن.":"The listed ingredients include almonds, wheat flour, wheat germ powder, rock-candy powder, sugar and spices; coconut is also included in the preparation description. Its availability does not mean it is suitable for every age or child. Check age suitability and allergies with a child healthcare professional.",
+"بسته داخلی شبیه تی‌بگ حاوی تخم خربزه نیم‌کوب است. طبق روش معرفی‌شده، آن را در آب می‌خیسانند، کیسه را خارج می‌کنند و سپس پودر را به آب اضافه کرده و می‌پزند تا فرنی آماده شود. این محصول را درمان بیماری یا پاکسازی پزشکی معرفی نکن.":"The inner tea-bag-style sachet contains coarsely crushed melon seeds. The stated method is to soak it in water, remove the sachet, then add the powder and cook until it becomes porridge. Do not describe this product as a medical treatment or cleanse.",
+"پودر فرنی کدوحلوایی؛ علاوه بر تهیه فرنی، در دستورهای خانگی مانند حلوا، پنکیک و پودینگ هم قابل استفاده است.":"Pumpkin porridge powder. It can also be used in home recipes such as halva, pancakes and pudding.",
+"با سویق برنج، سویق گندم و میوه به و سیب تهیه می‌شود. شیرینی آن از خود میوه‌هاست و در این محصول از آرد برنج استفاده نمی‌شود.":"Made with roasted rice and wheat powders and quince and apple fruit. Its sweetness comes from the fruit; rice flour is not used in this product.",
+"طعم گز در کنار کاچی، همراه مغز پسته و بادام؛ طبق معرفی محصول، بدون نیاز به افزودن شکر یا شیرینی اضافه.":"A gaz-inspired flavor with kachi, pistachios and almonds. According to the product description, no extra sugar or sweetener is needed."
+});
+Object.assign(words.ar,{
+"ترکیب سویق برنج، گندم و جو با سیب و به، همراه سویق سنجد، نخود، عدس، ماش و جوانه گندم. در فرمول فرنی به/سیب از سویق برنج استفاده می‌شود، نه آرد برنج.":"مزيج من مسحوق الأرز والقمح والشعير المحمّص مع التفاح والسفرجل، إضافة إلى مسحوق النبق والحمص والعدس والماش وجنين القمح. يُستخدم مسحوق الأرز المحمّص في فرني السفرجل والتفاح وليس دقيق الأرز.",
+"در طعم‌های ساده، وانیلی و کاکائویی عرضه می‌شود. ترکیبات اعلام‌شده: سویق نخود، عدس، ماش و سنجد، تخم کدو، بادام، گل محمدی، استویا و جوانه گندم.":"متوفر بنكهات سادة وفانيليا وكاكاو. تشمل المكونات المذكورة مساحيق الحمص والعدس والماش والنبق المحمّصة، وبذور اليقطين واللوز والورد والستيفيا وجنين القمح.",
+"چاشنی ترکیبی از تخم کتان، کنجد، سماق، نمک، آویشن، سیر، زنجبیل و جوانه گندم؛ برای افزودن به سالاد، ماست یا سس معرفی شده است.":"خلطة توابل من بذور الكتان والسمسم والسماق والملح والزعتر والثوم والزنجبيل وجنين القمح. تُقترح إضافتها إلى السلطات أو اللبن أو الصلصات.",
+"ترکیب آرد گندم سبوس‌دار، جوانه گندم، آرد برنج، پودر نبات و ادویه، همراه بادام، گردو و پسته.":"مزيج من دقيق القمح الكامل وجنين القمح ودقيق الأرز ومسحوق نبات والتوابل، مع اللوز والجوز والفستق.",
+"ترکیب کتان، آرد سبوس‌دار، پودر نبات و ادویه. روش آماده‌سازی اعلام‌شده: با آب و کره روی حرارت آماده می‌شود؛ برای مقدار دقیق مواد، دستور روی بسته را ملاک قرار بده.":"يتكوّن من الكتان ودقيق الحبوب الكاملة ومسحوق نبات والتوابل. طريقة التحضير المذكورة تكون بالماء والزبدة على النار. اتبعي تعليمات العبوة للكميات الدقيقة.",
+"در ترکیب آن بادام، آرد گندم، پودر جوانه گندم، پودر نبات، شکر و ادویه به‌کار می‌رود؛ نارگیل نیز در دستور تهیه اعلام‌شده وجود دارد. وجود این محصول به‌تنهایی به معنی مناسب‌بودن برای هر سن یا هر کودک نیست؛ سن مصرف و حساسیت‌ها را پیش از استفاده با متخصص کودک بررسی کن.":"تشمل المكونات المذكورة اللوز ودقيق القمح ومسحوق جنين القمح ومسحوق نبات والسكر والتوابل، كما يرد جوز الهند في وصف التحضير. توفر المنتج لا يعني أنه مناسب لكل الأعمار أو الأطفال. تحققي من العمر المناسب والحساسية مع مختص رعاية الطفل.",
+"بسته داخلی شبیه تی‌بگ حاوی تخم خربزه نیم‌کوب است. طبق روش معرفی‌شده، آن را در آب می‌خیسانند، کیسه را خارج می‌کنند و سپس پودر را به آب اضافه کرده و می‌پزند تا فرنی آماده شود. این محصول را درمان بیماری یا پاکسازی پزشکی معرفی نکن.":"يحتوي الكيس الداخلي الشبيه بكيس الشاي على بذور شمام مجروشة. وفق طريقة التحضير المذكورة، يُنقع في الماء ثم يُزال الكيس ويُضاف المسحوق إلى الماء ويُطهى حتى يصبح فرني. لا تقدّمي هذا المنتج على أنه علاج طبي أو وسيلة تنظيف للجسم.",
+"پودر فرنی کدوحلوایی؛ علاوه بر تهیه فرنی، در دستورهای خانگی مانند حلوا، پنکیک و پودینگ هم قابل استفاده است.":"مسحوق فرني اليقطين. يمكن استخدامه أيضًا في وصفات منزلية مثل الحلوى والفطائر والبودينغ.",
+"با سویق برنج، سویق گندم و میوه به و سیب تهیه می‌شود. شیرینی آن از خود میوه‌هاست و در این محصول از آرد برنج استفاده نمی‌شود.":"يُحضّر من مسحوق الأرز والقمح المحمّص وفاكهتي السفرجل والتفاح. تأتي حلاوته من الفاكهة نفسها ولا يُستخدم دقيق الأرز في هذا المنتج.",
+"طعم گز در کنار کاچی، همراه مغز پسته و بادام؛ طبق معرفی محصول، بدون نیاز به افزودن شکر یا شیرینی اضافه.":"نكهة گز مع الكاجي والفستق واللوز. ووفق وصف المنتج، لا حاجة لإضافة السكر أو مُحلّيات إضافية."
+});
+
+
+Object.assign(words.en,{
+"من مرضیه عسگری، کارشناس مامایی و مؤسس برند هیلا فود هستم. در هیلا فود تلاش کرده‌ایم دانش و تجربه حرفه‌ای را با حس مادری تلفیق کنیم و محصولات فراسودمند، کاربردی و باکیفیت ارائه دهیم.":"I am Marzieh Asgari, a midwifery professional and the founder of Hila Food. We bring professional knowledge and experience together with a mother's care to offer practical, high-quality functional foods.",
+"اگر برای انتخاب محصول، روش آماده‌سازی یا موضوعی درباره تغذیه سؤال داری، در ایتا برایمان پیام بفرست.":"If you have questions about choosing a product, preparation, or nutrition, send us a message on Eitaa.",
+"هیلا فود با تمرکز بر غذای فراسودمند و محصولات نیمه‌آماده شکل گرفته است؛ محصولاتی که هدفشان ساده‌تر کردن بخشی از آماده‌سازی خوراک و نزدیک‌تر کردن انتخاب‌های غذایی کاربردی به زندگی روزمره خانواده‌هاست. ما تلاش می‌کنیم کیفیت، سادگی و خوشمزگی را کنار هم قرار دهیم و تجربه‌ای صمیمی و قابل‌اعتماد بسازیم. هیلا فود در کنار محصولات، آموزش و محتوای کاربردی را هم جدی می‌گیرد تا انتخاب و آماده‌سازی برای شما روشن‌تر و راحت‌تر باشد.":"Hila Food focuses on functional foods and convenient, ready-to-prepare products. Our aim is to simplify part of everyday food preparation and make practical food choices easier for families. We bring quality, simplicity, and good taste together to create a friendly and trustworthy experience. Alongside our products, we also value education and practical content to make choosing and preparing food clearer and easier.",
+"هیلا فود؛ انتخابی برای غذای فراسودمند و زندگی ساده‌تر":"Hila Food: functional food for simpler everyday living",
+"ویدئوهای طرز آماده‌سازی هر محصول از داخل مدیریت سایت قابل ثبت و نمایش هستند.":"Preparation videos for each product can be added and displayed through the site administration panel."
+});
+Object.assign(words.ar,{
+"من مرضیه عسگری، کارشناس مامایی و مؤسس برند هیلا فود هستم. در هیلا فود تلاش کرده‌ایم دانش و تجربه حرفه‌ای را با حس مادری تلفیق کنیم و محصولات فراسودمند، کاربردی و باکیفیت ارائه دهیم.":"أنا مرضية عسكري، أخصائية في القبالة ومؤسسة علامة هيلا فود. نجمع في هيلا فود بين المعرفة والخبرة المهنية وحنان الأم لتقديم أطعمة وظيفية عملية وعالية الجودة.",
+"اگر برای انتخاب محصول، روش آماده‌سازی یا موضوعی درباره تغذیه سؤال داری، در ایتا برایمان پیام بفرست.":"إذا كان لديك سؤال حول اختيار منتج أو طريقة تحضيره أو التغذية، أرسلي إلينا رسالة عبر إيتا.",
+"هیلا فود با تمرکز بر غذای فراسودمند و محصولات نیمه‌آماده شکل گرفته است؛ محصولاتی که هدفشان ساده‌تر کردن بخشی از آماده‌سازی خوراک و نزدیک‌تر کردن انتخاب‌های غذایی کاربردی به زندگی روزمره خانواده‌هاست. ما تلاش می‌کنیم کیفیت، سادگی و خوشمزگی را کنار هم قرار دهیم و تجربه‌ای صمیمی و قابل‌اعتماد بسازیم. هیلا فود در کنار محصولات، آموزش و محتوای کاربردی را هم جدی می‌گیرد تا انتخاب و آماده‌سازی برای شما روشن‌تر و راحت‌تر باشد.":"تركّز هيلا فود على الأطعمة الوظيفية والمنتجات سهلة التحضير. نهدف إلى تبسيط جزء من إعداد الطعام اليومي وتقريب الخيارات الغذائية العملية من حياة الأسرة. نسعى إلى الجمع بين الجودة والبساطة والمذاق الطيب لتقديم تجربة ودودة وجديرة بالثقة. ونهتم إلى جانب المنتجات بالتثقيف والمحتوى العملي لجعل الاختيار والتحضير أكثر وضوحًا وسهولة.",
+"هیلا فود؛ انتخابی برای غذای فراسودمند و زندگی ساده‌تر":"هيلا فود: غذاء وظيفي لحياة يومية أكثر سهولة",
+"ویدئوهای طرز آماده‌سازی هر محصول از داخل مدیریت سایت قابل ثبت و نمایش هستند.":"يمكن إضافة وعرض فيديوهات تحضير كل منتج من خلال لوحة إدارة الموقع."
+});
+Object.assign(words.en,{
+"سلام! 🌿 نام محصول یا ترکیباتی را که می‌خواهی بشناسی بنویس.":"Hello! 🌿 Ask me about a product or its ingredients.",
+"سلام و خوش اومدی 🌿 درباره ترکیبات، طعم‌ها و روش آماده‌سازی محصولات از من بپرس.":"Welcome! 🌿 Ask me about product ingredients, flavors, and preparation.",
+"قیمت و موجودی ممکن است تغییر کند؛ قیمت به‌روز را در صفحه همان محصول در فروشگاه هیلافود ببین.":"Prices and availability may change. Check the product page in the Hila Food shop for current details.",
+"برای خرید، محصول را به سبد اضافه کن و مراحل ثبت سفارش را ادامه بده. برای پیگیری سفارش از راه ارتباطی درج‌شده در سایت استفاده کن.":"To order, add the product to your cart and follow checkout. For order updates, use the contact details listed on the website.",
+"برای بارداری، شیردهی، بیماری، مصرف دارو یا حساسیت غذایی نمی‌توانم محصولی را تجویز یا مناسب اعلام کنم. ترکیبات را با پزشک یا متخصص تغذیه بررسی کن. محصولات هیلافود درمان بیماری نیستند.":"I cannot recommend a product as suitable for pregnancy, breastfeeding, a medical condition, medication use, or food allergies. Review ingredients with a qualified healthcare professional. Hila Food products are not medical treatments.",
+"درباره محصولات کودک می‌توانم ترکیبات اعلام‌شده را توضیح بدهم؛ اما از روی نام محصول نمی‌توانم سن مناسب یا ایمنی آن را برای یک کودک تأیید کنم. سن مصرف، حساسیت‌ها و آمادگی کودک برای غذای کمکی را با متخصص کودک بررسی کن.":"I can explain the listed ingredients of children's products, but cannot confirm age suitability or safety for an individual child. Check age, allergies, and readiness for complementary foods with a child healthcare professional.",
+"برای این سؤال هنوز اطلاعات مطمئنی در راهنمای من ثبت نشده. نام دقیق محصول را بنویس یا از پشتیبانی هیلافود بپرس.":"I don't yet have reliable information for this question. Please name the exact product or contact Hila Food support."
+});
+Object.assign(words.ar,{
+"سلام! 🌿 نام محصول یا ترکیباتی را که می‌خواهی بشناسی بنویس.":"مرحبًا! 🌿 اسألي عن منتج أو مكوناته.",
+"سلام و خوش اومدی 🌿 درباره ترکیبات، طعم‌ها و روش آماده‌سازی محصولات از من بپرس.":"أهلًا بك! 🌿 اسألي عن مكونات المنتجات ونكهاتها وطريقة تحضيرها.",
+"قیمت و موجودی ممکن است تغییر کند؛ قیمت به‌روز را در صفحه همان محصول در فروشگاه هیلافود ببین.":"قد تتغير الأسعار والتوافر. راجعي صفحة المنتج في متجر هيلا فود لمعرفة التفاصيل الحالية.",
+"برای خرید، محصول را به سبد اضافه کن و مراحل ثبت سفارش را ادامه بده. برای پیگیری سفارش از راه ارتباطی درج‌شده در سایت استفاده کن.":"للطلب، أضيفي المنتج إلى السلة واتبعي خطوات إتمام الطلب. لمتابعة الطلب، استخدمي بيانات التواصل الموجودة على الموقع.",
+"برای بارداری، شیردهی، بیماری، مصرف دارو یا حساسیت غذایی نمی‌توانم محصولی را تجویز یا مناسب اعلام کنم. ترکیبات را با پزشک یا متخصص تغذیه بررسی کن. محصولات هیلافود درمان بیماری نیستند.":"لا يمكنني وصف منتج أو تأكيد ملاءمته للحمل أو الرضاعة أو الحالات الطبية أو الأدوية أو الحساسية الغذائية. راجعي المكونات مع مختص صحي. منتجات هيلا فود ليست علاجات طبية.",
+"درباره محصولات کودک می‌توانم ترکیبات اعلام‌شده را توضیح بدهم؛ اما از روی نام محصول نمی‌توانم سن مناسب یا ایمنی آن را برای یک کودک تأیید کنم. سن مصرف، حساسیت‌ها و آمادگی کودک برای غذای کمکی را با متخصص کودک بررسی کن.":"يمكنني شرح المكونات المذكورة لمنتجات الأطفال، لكن لا أستطيع تأكيد العمر المناسب أو السلامة لطفل بعينه. تحققي من العمر والحساسية والاستعداد للأطعمة التكميلية مع مختص رعاية الطفل.",
+"برای این سؤال هنوز اطلاعات مطمئنی در راهنمای من ثبت نشده. نام دقیق محصول را بنویس یا از پشتیبانی هیلافود بپرس.":"لا تتوفر لدي معلومات موثوقة عن هذا السؤال بعد. اكتبي اسم المنتج بدقة أو تواصلي مع دعم هيلا فود."
+});
+
+
+Object.assign(words.en,{
+"زایمان":"Childbirth","اقدام به بارداری":"Trying to conceive","بارداری":"Pregnancy","پس از زایمان و شیردهی":"Postpartum & breastfeeding",
+"برای این سؤال هنوز اطلاعات مطمئنی در راهنمای من ثبت نشده. نام دقیق محصول را بنویس یا از پشتیبانی هیلافود بپرس.":"I don't yet have reliable information for this question. Please name the exact product or contact Hila Food support.",
+"نام محصول را هم در سؤالت بنویس؛ مثلاً «ترکیبات سویلاک ورزشکار چیست؟» تا اطلاعات دقیق‌تری نشان بدهم.":"Please include the product name, for example: “What are the ingredients in Soylak for Athletes?”",
+"نام محصول را بنویس تا روش آماده‌سازی ثبت‌شده آن را پیدا کنم. برای مقدار دقیق مواد، دستور روی بسته را ملاک قرار بده.":"Tell me the product name so I can find its listed preparation method. For exact quantities, follow the package instructions.",
+"اطلاعات ترکیباتی که برای این محصول ثبت شده:":"Here are the listed ingredients for this product:",
+"روش آماده‌سازی ثبت‌شده برای این محصول:":"The listed preparation method for this product:",
+"این اطلاعات درباره محصولی است که پرسیدی:":"Here is the information about the product you asked about:",
+"این محصول در فهرست فروشگاه ثبت شده است. جزئیات ترکیبات هنوز در راهنمای من کامل نیست؛ لطفاً توضیحات محصول یا برچسب بسته را بررسی کن.":"This product is listed in the shop, but its ingredient details are not yet complete in my guide. Please check the product description or package label.",
+"برای مشاهده طرز آماده‌سازی، ویدئوی محصول را ببینید.":"To see how to prepare it, watch the product video.",
+"نام محصول را دقیق بنویس. برای مقدار دقیق مواد، دستور روی بسته را ملاک قرار بده.":"Please enter the exact product name. Follow the package instructions for exact quantities.",
+"اطلاعات این راهنما برای معرفی محصولات است و جایگزین نظر پزشک یا متخصص تغذیه نیست.":"This guide introduces products and does not replace advice from a doctor or dietitian."
+});
+Object.assign(words.ar,{
+"زایمان":"الولادة","اقدام به بارداری":"التخطيط للحمل","بارداری":"الحمل","پس از زایمان و شیردهی":"ما بعد الولادة والرضاعة",
+"نام محصول را هم در سؤالت بنویس؛ مثلاً «ترکیبات سویلاک ورزشکار چیست؟» تا اطلاعات دقیق‌تری نشان بدهم.":"يرجى ذكر اسم المنتج في سؤالك، مثل: «ما مكونات سويلاك للرياضيين؟»",
+"نام محصول را بنویس تا روش آماده‌سازی ثبت‌شده آن را پیدا کنم. برای مقدار دقیق مواد، دستور روی بسته را ملاک قرار بده.":"اكتبي اسم المنتج لأجد طريقة التحضير المسجلة. للكميات الدقيقة، اتبعي تعليمات العبوة.",
+"اطلاعات ترکیباتی که برای این محصول ثبت شده:":"إليك المكونات المسجلة لهذا المنتج:",
+"روش آماده‌سازی ثبت‌شده برای این محصول:":"طريقة التحضير المسجلة لهذا المنتج:",
+"این اطلاعات درباره محصولی است که پرسیدی:":"إليك المعلومات الخاصة بالمنتج الذي سألتِ عنه:",
+"این محصول در فهرست فروشگاه ثبت شده است. جزئیات ترکیبات هنوز در راهنمای من کامل نیست؛ لطفاً توضیحات محصول یا برچسب بسته را بررسی کن.":"هذا المنتج مدرج في المتجر، لكن تفاصيل مكوناته غير مكتملة في الدليل. يرجى مراجعة وصف المنتج أو ملصق العبوة.",
+"برای مشاهده طرز آماده‌سازی، ویدئوی محصول را ببینید.":"شاهدي فيديو المنتج لمعرفة طريقة التحضير.",
+"اطلاعات این راهنما برای معرفی محصولات است و جایگزین نظر پزشک یا متخصص تغذیه نیست.":"هذا الدليل للتعريف بالمنتجات ولا يغني عن استشارة الطبيب أو اختصاصي التغذية."
+});
+
+const norm=s=>String(s||"").replace(/\\s+/g," ").trim();
+let lang=["fa","en","ar"].includes(localStorage.getItem("hilaLanguage"))?localStorage.getItem("hilaLanguage"):"fa";
+const t=v=>lang==="fa"?v:(words[lang][norm(v)]||v);
+const categoryName=c=>lang==="fa"?(c?.name||""):(categoryWords[lang][String(c?.id||"")]||c?.name||"");
+const productName=p=>lang==="fa"?(p?.name||""):(productWords[lang][String(p?.id||"")]||productWords[lang][norm(p?.name)]||p?.name||"");
+const money=n=>Number(n||0).toLocaleString(lang==="fa"?"fa-IR":lang==="ar"?"ar":"en-US")+" "+(lang==="fa"?(window.STORE?.settings?.currency||"تومان"):lang==="ar"?"تومان":"Toman");
+
+// Keep an untouched source for every translated block/text node.
+// Never use the already-translated text as the source for the next language.
+const blockOriginals=new WeakMap();
+const textOriginals=new WeakMap();
+const attrOriginals=new WeakMap();
+let observer=null;
+let translating=false;
+
+function translateTree(root){
+  if(!root)return;
+  const wasObserving=!!observer;
+  if(wasObserving)observer.disconnect();
+  translating=true;
+  try{
+    const blocks=[];
+    if(root.nodeType===1 && root.matches?.("p,h1,h2,h3,h4,h5,li,blockquote"))blocks.push(root);
+    if(root.querySelectorAll)blocks.push(...root.querySelectorAll("p,h1,h2,h3,h4,h5,li,blockquote"));
+    const handled=new Set();
+    blocks.forEach(el=>{
+      let original=blockOriginals.get(el);
+      if(!original){
+        original={html:el.innerHTML,text:norm(el.textContent)};
+        blockOriginals.set(el,original);
+      }
+      const translated=t(original.text);
+      if(translated!==original.text){
+        if(el.textContent!==translated)el.textContent=translated;
+        handled.add(el);
+      }else if(lang==="fa" && el.innerHTML!==original.html){
+        el.innerHTML=original.html;
+      }
+    });
+
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{
+      if([...handled].some(el=>el===node.parentElement || el.contains(node)))return;
+      if(!textOriginals.has(node))textOriginals.set(node,node.nodeValue);
+      const source=textOriginals.get(node);
+      const translated=t(source);
+      if(node.nodeValue!==translated)node.nodeValue=translated;
+    });
+
+    const elements=[];
+    if(root.nodeType===1)elements.push(root);
+    if(root.querySelectorAll)elements.push(...root.querySelectorAll("*"));
+    elements.forEach(el=>["placeholder","title","aria-label","alt"].forEach(attr=>{
+      if(!el.hasAttribute(attr))return;
+      let saved=attrOriginals.get(el);
+      if(!saved){saved={};attrOriginals.set(el,saved);}
+      if(!(attr in saved))saved[attr]=el.getAttribute(attr);
+      const translated=t(saved[attr]);
+      if(el.getAttribute(attr)!==translated)el.setAttribute(attr,translated);
+    }));
+  }finally{
+    translating=false;
+    if(wasObserving)observer.observe(document.body,{childList:true,subtree:true});
+  }
+}
+
+function apply(){
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==="en"?"ltr":"rtl";
+  document.body.classList.toggle("lang-en",lang==="en");
+  document.querySelectorAll("[data-language-picker]").forEach(x=>x.value=lang);
+  translateTree(document.body);
+  document.dispatchEvent(new CustomEvent("hila-language-change",{detail:{language:lang}}));
+}
+function setLanguage(value){
+  if(!["fa","en","ar"].includes(value))return;
+  lang=value;
+  localStorage.setItem("hilaLanguage",value);
+  apply();
+}
+document.addEventListener("change",event=>{
+  if(event.target.matches("[data-language-picker]"))setLanguage(event.target.value);
+});
+observer=new MutationObserver(records=>{
+  if(translating)return;
+  records.forEach(record=>record.addedNodes.forEach(node=>{
+    if(node.nodeType===1)translateTree(node);
+    else if(node.nodeType===3){
+      if(!textOriginals.has(node))textOriginals.set(node,node.nodeValue);
+      node.nodeValue=t(textOriginals.get(node));
+    }
+  }));
+});
+function init(){
+  apply();
+  observer.observe(document.body,{childList:true,subtree:true});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});
+else init();
+window.HILA_I18N={get language(){return lang;},t,categoryName,productName,money,setLanguage,apply};
+})();
