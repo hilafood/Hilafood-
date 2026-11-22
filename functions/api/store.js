@@ -2088,13 +2088,13 @@ while (
       }
 
 
-      const shippingPrice =
-        Math.max(
-          0,
-          Number(
-            shipping.price || 0
-          )
-        );
+      const shippingCollectSetting = await db.prepare(`
+        SELECT value FROM settings WHERE key = 'shippingCollect'
+      `).first();
+      const shippingCollect = shippingCollectSetting?.value === "true";
+      const shippingPrice = shippingCollect
+        ? 0
+        : Math.max(0, Number(shipping.price || 0));
 
 
       const total =
@@ -2185,35 +2185,8 @@ while (
       .run();
 
 
-      /* ----------------------------------------------
-         اعلان سفارش در کانال ایتا
-      ---------------------------------------------- */
-
-      await sendEitaaOrderNotification(
-
-        env,
-
-        orderNumber,
-
-        customerName,
-
-        customerPhone,
-
-        customerAddress,
-
-        cleanItems,
-
-        subtotal,
-
-        String(
-          shipping.name
-        ),
-
-        shippingPrice,
-
-        total
-
-      );
+      /* پیام متنی جداگانه سفارش به ایتا غیرفعال شد؛
+         مشخصات سفارش فقط همراه تصویر فیش ارسال می‌شود. */
 
 
       /* ----------------------------------------------
@@ -2656,14 +2629,19 @@ while (
           value = excluded.value
       `)
       .bind(
-
         "shippingMethods",
-
-        JSON.stringify(
-          shippingMethods
-        )
-
+        JSON.stringify(shippingMethods)
       )
+      .run();
+
+      await db.prepare(`
+        INSERT INTO settings
+        (key, value)
+        VALUES ('shippingCollect', ?)
+        ON CONFLICT(key)
+        DO UPDATE SET value = excluded.value
+      `)
+      .bind(JSON.stringify(body.shippingCollect === true))
       .run();
 
 
