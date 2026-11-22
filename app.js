@@ -806,23 +806,14 @@ function filterProducts(q) {
 
         return (
 
-          String(product.name || "")
-            .includes(q)
-
-          ||
-
-          String(product.cat || "")
-            .includes(q)
-
-          ||
-
-          String(product.desc || "")
-            .includes(q)
-
-          ||
-
-          String(product.stage || "")
-            .includes(q)
+          String(product.name || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(window.HILA_I18N?.productName(product) || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(product.cat || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(window.HILA_I18N?.t(product.cat || "") || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(product.desc || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(window.HILA_I18N?.t(product.desc || "") || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(product.stage || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(window.HILA_I18N?.t(product.stage || "") || "").toLowerCase().includes(q.toLowerCase())
 
         );
 
