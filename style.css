@@ -1144,3 +1144,31 @@ img {
     flex-wrap: wrap;
   }
 }
+
+
+/* مشاور راهنمای رایگان هیلافود */
+.hila-advisor{position:fixed;left:18px;bottom:18px;z-index:1000;font-family:Tahoma,Arial,sans-serif;direction:rtl}
+.hila-advisor-launch{border:0;border-radius:999px;background:linear-gradient(120deg,#73509f,#d94a83);color:#fff;padding:13px 18px;box-shadow:0 8px 28px #73509f44;font:inherit;font-weight:700;cursor:pointer}
+.hila-advisor-launch span{margin-right:5px}
+.hila-advisor-panel{position:absolute;left:0;bottom:62px;width:min(360px,calc(100vw - 28px));height:min(520px,calc(100dvh - 110px));background:#fff;border:1px solid #eee3ed;border-radius:20px;box-shadow:0 14px 45px #34203b30;display:flex;flex-direction:column;overflow:hidden}
+.hila-advisor-panel[hidden]{display:none}
+.hila-advisor-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#fbf5fa;border-bottom:1px solid #eee}
+.hila-advisor-head strong,.hila-advisor-head small{display:block}
+.hila-advisor-head small{font-size:11px;color:#777;margin-top:4px}
+.hila-advisor-close{border:0;background:transparent;font-size:26px;cursor:pointer;color:#72518f}
+.hila-advisor-messages{padding:13px;overflow:auto;flex:1;background:#fff}
+.hila-advisor-bubble{max-width:92%;padding:10px 12px;margin:8px 0;border-radius:14px;font-size:13px;line-height:1.9;white-space:pre-wrap}
+.hila-advisor-bubble.bot{background:#f5f0f8;color:#382d40;margin-left:auto}
+.hila-advisor-bubble.user{background:#eaf8f6;color:#245c58;margin-right:auto}
+.hila-advisor-products{display:grid;gap:7px;margin:8px 0}
+.hila-advisor-product{padding:9px 11px;border:1px solid #eee5ef;border-radius:11px;background:#fff}
+.hila-advisor-product strong,.hila-advisor-product small{display:block}
+.hila-advisor-product strong{font-size:12px;color:#73509f}
+.hila-advisor-product small{font-size:11px;color:#666;line-height:1.7;margin-top:4px}
+.hila-advisor-chips{display:flex;gap:6px;overflow-x:auto;padding:8px 10px}
+.hila-advisor-chips button{white-space:nowrap;border:1px solid #e8dced;border-radius:20px;background:#fff;padding:7px 10px;font:inherit;font-size:11px;color:#73509f;cursor:pointer}
+.hila-advisor-form{display:flex;gap:7px;padding:9px;border-top:1px solid #eee}
+.hila-advisor-form input{min-width:0;flex:1;border:1px solid #e5dce8;border-radius:12px;padding:10px;font:inherit;font-size:12px}
+.hila-advisor-form button{border:0;border-radius:12px;background:#73509f;color:#fff;padding:0 14px;font:inherit;cursor:pointer}
+.hila-advisor-note{font-size:10px;color:#888;text-align:center;margin:0;padding:0 8px 8px}
+@media(max-width:500px){.hila-advisor{left:12px;bottom:12px}.hila-advisor-panel{bottom:58px}}
