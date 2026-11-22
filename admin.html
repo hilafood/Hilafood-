@@ -393,6 +393,7 @@ button{cursor:pointer}
       <a href="#productsSection"><span>📦</span> محصولات</a>
       <a href="#coursesSection"><span>🎓</span> دوره‌ها</a>
       <a href="#smsSection"><span>💬</span> پیامک</a>
+      <a href="#paymentCardsSection"><span>💳</span> کارت‌های بانکی</a>
       <a href="#settingsSection"><span>⚙️</span> تنظیمات</a>
     </nav>
     <div id="adminPageHeader" class="admin-page-header hidden">
@@ -432,6 +433,27 @@ button{cursor:pointer}
         ذخیره تنظیمات
       </button>
 
+    </div>
+
+    <!-- مدیریت کارت‌های بانکی -->
+    <div id="paymentCardsSection" class="card admin-section">
+      <h2>💳 مدیریت کارت‌های بانکی</h2>
+      <p class="muted">شماره کارت‌هایی که اینجا ثبت می‌کنی در مرحله پرداخت به مشتری نمایش داده می‌شوند. می‌توانی چند کارت اضافه کنی، ویرایش یا حذف کنی و هر کارت را جداگانه فعال یا غیرفعال کنی.</p>
+      <div class="grid">
+        <input id="paymentCardLabel" placeholder="عنوان کارت (مثلاً کارت اصلی)">
+        <input id="paymentCardBank" placeholder="نام بانک">
+        <input id="paymentCardHolder" class="full" placeholder="نام صاحب کارت">
+        <input id="paymentCardNumber" class="full" inputmode="numeric" maxlength="19" placeholder="شماره کارت ۱۶ رقمی">
+        <label class="full"><input type="checkbox" id="paymentCardActive" checked> نمایش این کارت به مشتریان</label>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button class="gold" onclick="addPaymentCard()">افزودن کارت</button>
+        <button onclick="clearPaymentCardForm()">پاک‌کردن فرم</button>
+      </div>
+      <div id="paymentCardsStatus" class="status"></div>
+      <h3 style="margin-top:20px">کارت‌های ثبت‌شده</h3>
+      <div id="paymentCardsList"></div>
+      <button class="primary" style="margin-top:12px" onclick="savePaymentCards()">ذخیره تغییرات کارت‌ها</button>
     </div>
 
     <!-- =========================
@@ -1295,6 +1317,7 @@ const adminPageMap = {
   productsSection:{title:"محصولات",ids:["productFormSection","productsSection"]},
   coursesSection:{title:"دوره‌ها",ids:["coursesSection"]},
   smsSection:{title:"پیامک",ids:["smsSection"]},
+  paymentCardsSection:{title:"مدیریت کارت‌های بانکی",ids:["paymentCardsSection"]},
   settingsSection:{title:"تنظیمات",ids:["settingsSection","shippingSection"]}
 };
 function renderAdminRoute(){
@@ -1425,6 +1448,7 @@ async function loadStore(){
     fillSettings();
 
     renderShipping();
+    renderPaymentCards();
 
     render();
 
@@ -1447,6 +1471,94 @@ async function loadStore(){
 }
 
 
+
+/* =========================================
+   مدیریت کارت‌های بانکی
+========================================= */
+function getPaymentCards(){
+  if(!data?.settings) return [];
+  if(!Array.isArray(data.settings.paymentCards)) data.settings.paymentCards=[];
+  return data.settings.paymentCards;
+}
+function renderPaymentCards(){
+  const box=$("paymentCardsList");
+  if(!box) return;
+  const cards=getPaymentCards();
+  if(!cards.length){
+    box.innerHTML='<p class="muted">هنوز کارتی ثبت نشده است.</p>';
+    return;
+  }
+  box.innerHTML=cards.map((card,index)=>`
+    <div class="card" style="border:1px solid #eadfec">
+      <div class="topbar">
+        <strong>${escapeAttrValue(card.label||("کارت "+(index+1)))}</strong>
+        <span class="muted">${card.active===false?"غیرفعال":"فعال"}</span>
+      </div>
+      <p>شماره کارت: <b dir="ltr">${escapeAttrValue(card.number||"")}</b></p>
+      <p>صاحب کارت: ${escapeAttrValue(card.holder||"—")}</p>
+      <p>بانک: ${escapeAttrValue(card.bank||"—")}</p>
+      <div class="actions">
+        <button onclick="editPaymentCard(${index})">ویرایش</button>
+        <button onclick="togglePaymentCard(${index})">${card.active===false?"فعال‌کردن":"غیرفعال‌کردن"}</button>
+        <button class="danger" onclick="removePaymentCard(${index})">حذف</button>
+      </div>
+    </div>`).join("");
+}
+function clearPaymentCardForm(){
+  ["paymentCardLabel","paymentCardBank","paymentCardHolder","paymentCardNumber"].forEach(id=>$(id).value="");
+  $("paymentCardActive").checked=true;
+  $("paymentCardNumber").dataset.editIndex="";
+}
+function addPaymentCard(){
+  const label=$("paymentCardLabel").value.trim();
+  const bank=$("paymentCardBank").value.trim();
+  const holder=$("paymentCardHolder").value.trim();
+  const number=$("paymentCardNumber").value.replace(/\s+/g,"");
+  const active=$("paymentCardActive").checked;
+  const editIndex=$("paymentCardNumber").dataset.editIndex;
+  if(!/^\d{16}$/.test(number)){alert("شماره کارت باید ۱۶ رقم باشد.");return;}
+  if(!holder){alert("نام صاحب کارت را وارد کن.");return;}
+  const cards=getPaymentCards();
+  const item={id:editIndex!==""?(cards[Number(editIndex)]?.id||("card-"+Date.now())):("card-"+Date.now()),label:label||("کارت "+(cards.length+1)),bank,holder,number,active};
+  if(editIndex!=="") cards[Number(editIndex)]=item;
+  else cards.push(item);
+  clearPaymentCardForm();
+  renderPaymentCards();
+  $("paymentCardsStatus").textContent="تغییرات هنوز ذخیره نشده‌اند؛ دکمه ذخیره تغییرات کارت‌ها را بزن.";
+}
+function editPaymentCard(index){
+  const card=getPaymentCards()[index]; if(!card)return;
+  $("paymentCardLabel").value=card.label||"";
+  $("paymentCardBank").value=card.bank||"";
+  $("paymentCardHolder").value=card.holder||"";
+  $("paymentCardNumber").value=card.number||"";
+  $("paymentCardActive").checked=card.active!==false;
+  $("paymentCardNumber").dataset.editIndex=String(index);
+  $("paymentCardLabel").scrollIntoView({behavior:"smooth",block:"center"});
+}
+function togglePaymentCard(index){
+  const card=getPaymentCards()[index]; if(!card)return;
+  card.active=card.active===false;
+  renderPaymentCards();
+}
+function removePaymentCard(index){
+  const cards=getPaymentCards(); const card=cards[index]; if(!card)return;
+  if(!confirm("کارت «"+(card.label||card.number)+"» حذف شود؟"))return;
+  cards.splice(index,1); renderPaymentCards();
+}
+async function savePaymentCards(){
+  try{
+    const cards=getPaymentCards();
+    await api("POST",{action:"save-settings",settings:{paymentCards:cards}});
+    data.settings.paymentCards=cards;
+    $("paymentCardsStatus").textContent="کارت‌ها با موفقیت ذخیره شدند.";
+    alert("اطلاعات کارت‌های بانکی ذخیره شد.");
+  }catch(error){
+    $("paymentCardsStatus").textContent="خطا: "+error.message;
+    alert("ذخیره کارت‌ها ناموفق بود: "+error.message);
+  }
+}
+
 /* =========================================
    تنظیمات
 ========================================= */
@@ -1468,6 +1580,8 @@ function fillSettings(){
 
   $("paymentEnabled").checked =
     !!data.settings.paymentEnabled;
+
+  renderPaymentCards();
 
 }
 
