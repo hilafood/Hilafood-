@@ -1170,7 +1170,7 @@ const contentType = request.headers.get("content-type") || "";
       }
 
       const order = await db.prepare(`
-        SELECT id, customer_name, items, total, receipt_token_hash, receipt_uploaded_at
+        SELECT id, customer_name, customer_phone, customer_address, items, total, receipt_token_hash, receipt_uploaded_at
         FROM orders WHERE id = ?
       `).bind(orderNumber).first();
 
@@ -1200,6 +1200,8 @@ const contentType = request.headers.get("content-type") || "";
       const caption = `🧾 فیش پرداخت هیلافود
 شماره سفارش: HF-${orderNumber}
 مشتری: ${order.customer_name}
+شماره تماس: ${order.customer_phone || "ثبت نشده"}
+آدرس گیرنده: ${order.customer_address || "ثبت نشده"}
 محصولات:
 ${itemSummary}
 مبلغ نهایی: ${Number(order.total || 0).toLocaleString("fa-IR")} تومان`;
