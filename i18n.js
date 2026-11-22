@@ -108,19 +108,106 @@ Object.assign(words.ar,{
 "اطلاعات این راهنما برای معرفی محصولات است و جایگزین نظر پزشک یا متخصص تغذیه نیست.":"هذا الدليل للتعريف بالمنتجات ولا يغني عن استشارة الطبيب أو اختصاصي التغذية."
 });
 
-const norm=s=>String(s||"").replace(/\s+/g," ").trim();
+const norm=s=>String(s||"").replace(/\\s+/g," ").trim();
 let lang=["fa","en","ar"].includes(localStorage.getItem("hilaLanguage"))?localStorage.getItem("hilaLanguage"):"fa";
 const t=v=>lang==="fa"?v:(words[lang][norm(v)]||v);
 const categoryName=c=>lang==="fa"?(c?.name||""):(categoryWords[lang][String(c?.id||"")]||c?.name||"");
 const productName=p=>lang==="fa"?(p?.name||""):(productWords[lang][String(p?.id||"")]||productWords[lang][norm(p?.name)]||p?.name||"");
 const money=n=>Number(n||0).toLocaleString(lang==="fa"?"fa-IR":lang==="ar"?"ar":"en-US")+" "+(lang==="fa"?(window.STORE?.settings?.currency||"تومان"):lang==="ar"?"تومان":"Toman");
-const originals=new WeakMap();const blockOriginals=new WeakMap();let applying=false;
-function translateTree(root){if(!root)return;applying=true;const elements=[];if(root.nodeType===1)elements.push(root);if(root.querySelectorAll)elements.push(...root.querySelectorAll("p,h2,h3"));elements.forEach(el=>{if(!blockOriginals.has(el))blockOriginals.set(el,norm(el.textContent));const source=blockOriginals.get(el),translated=t(source);if(translated!==source&&el.textContent!==translated)el.textContent=translated;});const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];while(w.nextNode())nodes.push(w.currentNode);nodes.forEach(n=>{if(!originals.has(n))originals.set(n,n.nodeValue);const src=originals.get(n),v=t(src);if(n.nodeValue!==v)n.nodeValue=v;});if(root.nodeType===1)[root,...root.querySelectorAll("*")].forEach(el=>["placeholder","title","aria-label","alt"].forEach(a=>{if(el.hasAttribute(a)){const k="data-hila-original-"+a;if(!el.hasAttribute(k))el.setAttribute(k,el.getAttribute(a));el.setAttribute(a,t(el.getAttribute(k)));}}));applying=false;}
-function apply(){document.documentElement.lang=lang;document.documentElement.dir=lang==="en"?"ltr":"rtl";document.body.classList.toggle("lang-en",lang==="en");document.querySelectorAll("[data-language-picker]").forEach(x=>x.value=lang);translateTree(document.body);document.dispatchEvent(new CustomEvent("hila-language-change",{detail:{language:lang}}));}
-function setLanguage(v){if(!["fa","en","ar"].includes(v))return;lang=v;localStorage.setItem("hilaLanguage",v);apply();}
-document.addEventListener("change",e=>{if(e.target.matches("[data-language-picker]"))setLanguage(e.target.value);});
-const observer=new MutationObserver(rs=>{if(applying)return;rs.forEach(r=>r.addedNodes.forEach(n=>{if(n.nodeType===1)translateTree(n);else if(n.nodeType===3&&!originals.has(n)){originals.set(n,n.nodeValue);n.nodeValue=t(n.nodeValue);}}));});
-function init(){apply();observer.observe(document.body,{childList:true,subtree:true});}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
+
+// Keep an untouched source for every translated block/text node.
+// Never use the already-translated text as the source for the next language.
+const blockOriginals=new WeakMap();
+const textOriginals=new WeakMap();
+const attrOriginals=new WeakMap();
+let observer=null;
+let translating=false;
+
+function translateTree(root){
+  if(!root)return;
+  const wasObserving=!!observer;
+  if(wasObserving)observer.disconnect();
+  translating=true;
+  try{
+    const blocks=[];
+    if(root.nodeType===1 && root.matches?.("p,h1,h2,h3,h4,h5,li,blockquote"))blocks.push(root);
+    if(root.querySelectorAll)blocks.push(...root.querySelectorAll("p,h1,h2,h3,h4,h5,li,blockquote"));
+    const handled=new Set();
+    blocks.forEach(el=>{
+      let original=blockOriginals.get(el);
+      if(!original){
+        original={html:el.innerHTML,text:norm(el.textContent)};
+        blockOriginals.set(el,original);
+      }
+      const translated=t(original.text);
+      if(translated!==original.text){
+        if(el.textContent!==translated)el.textContent=translated;
+        handled.add(el);
+      }else if(lang==="fa" && el.innerHTML!==original.html){
+        el.innerHTML=original.html;
+      }
+    });
+
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{
+      if(blocks.some(el=>el===node.parentElement || el.contains(node)))return;
+      if(!textOriginals.has(node))textOriginals.set(node,node.nodeValue);
+      const source=textOriginals.get(node);
+      const translated=t(source);
+      if(node.nodeValue!==translated)node.nodeValue=translated;
+    });
+
+    const elements=[];
+    if(root.nodeType===1)elements.push(root);
+    if(root.querySelectorAll)elements.push(...root.querySelectorAll("*"));
+    elements.forEach(el=>["placeholder","title","aria-label","alt"].forEach(attr=>{
+      if(!el.hasAttribute(attr))return;
+      let saved=attrOriginals.get(el);
+      if(!saved){saved={};attrOriginals.set(el,saved);}
+      if(!(attr in saved))saved[attr]=el.getAttribute(attr);
+      const translated=t(saved[attr]);
+      if(el.getAttribute(attr)!==translated)el.setAttribute(attr,translated);
+    }));
+  }finally{
+    translating=false;
+    if(wasObserving)observer.observe(document.body,{childList:true,subtree:true});
+  }
+}
+
+function apply(){
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==="en"?"ltr":"rtl";
+  document.body.classList.toggle("lang-en",lang==="en");
+  document.querySelectorAll("[data-language-picker]").forEach(x=>x.value=lang);
+  translateTree(document.body);
+  document.dispatchEvent(new CustomEvent("hila-language-change",{detail:{language:lang}}));
+}
+function setLanguage(value){
+  if(!["fa","en","ar"].includes(value))return;
+  lang=value;
+  localStorage.setItem("hilaLanguage",value);
+  apply();
+}
+document.addEventListener("change",event=>{
+  if(event.target.matches("[data-language-picker]"))setLanguage(event.target.value);
+});
+observer=new MutationObserver(records=>{
+  if(translating)return;
+  records.forEach(record=>record.addedNodes.forEach(node=>{
+    if(node.nodeType===1)translateTree(node);
+    else if(node.nodeType===3){
+      if(!textOriginals.has(node))textOriginals.set(node,node.nodeValue);
+      node.nodeValue=t(textOriginals.get(node));
+    }
+  }));
+});
+function init(){
+  apply();
+  observer.observe(document.body,{childList:true,subtree:true});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});
+else init();
 window.HILA_I18N={get language(){return lang;},t,categoryName,productName,money,setLanguage,apply};
 })();
