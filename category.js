@@ -162,12 +162,12 @@ let list = (DATA.products || []).filter(p =>
               <small>
                 ${window.HILA_I18N?.t(p.cat || '') || p.cat || ''}
                 ${p.cat && p.stage ? ' | ' : ''}
-                ${p.stage || ''}
+                ${window.HILA_I18N?.t(p.stage || '') || p.stage || ''}
               </small>
 
               <h2>${window.HILA_I18N?.productName(p) || p.name || ''}</h2>
 
-              <p>${p.desc || ''}</p>
+              <p>${window.HILA_I18N?.t(p.desc || '') || p.desc || ''}</p>
 
               ${
                 DATA.settings.showPrices
