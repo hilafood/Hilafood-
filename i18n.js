@@ -48,14 +48,48 @@ Object.assign(words.ar,{
 "طعم گز در کنار کاچی، همراه مغز پسته و بادام؛ طبق معرفی محصول، بدون نیاز به افزودن شکر یا شیرینی اضافه.":"نكهة گز مع الكاجي والفستق واللوز. ووفق وصف المنتج، لا حاجة لإضافة السكر أو مُحلّيات إضافية."
 });
 
+
+Object.assign(words.en,{
+"من مرضیه عسگری، کارشناس مامایی و مؤسس برند هیلا فود هستم. در هیلا فود تلاش کرده‌ایم دانش و تجربه حرفه‌ای را با حس مادری تلفیق کنیم و محصولات فراسودمند، کاربردی و باکیفیت ارائه دهیم.":"I am Marzieh Asgari, a midwifery professional and the founder of Hila Food. We bring professional knowledge and experience together with a mother's care to offer practical, high-quality functional foods.",
+"اگر برای انتخاب محصول، روش آماده‌سازی یا موضوعی درباره تغذیه سؤال داری، در ایتا برایمان پیام بفرست.":"If you have questions about choosing a product, preparation, or nutrition, send us a message on Eitaa.",
+"هیلا فود با تمرکز بر غذای فراسودمند و محصولات نیمه‌آماده شکل گرفته است؛ محصولاتی که هدفشان ساده‌تر کردن بخشی از آماده‌سازی خوراک و نزدیک‌تر کردن انتخاب‌های غذایی کاربردی به زندگی روزمره خانواده‌هاست. ما تلاش می‌کنیم کیفیت، سادگی و خوشمزگی را کنار هم قرار دهیم و تجربه‌ای صمیمی و قابل‌اعتماد بسازیم. هیلا فود در کنار محصولات، آموزش و محتوای کاربردی را هم جدی می‌گیرد تا انتخاب و آماده‌سازی برای شما روشن‌تر و راحت‌تر باشد.":"Hila Food focuses on functional foods and convenient, ready-to-prepare products. Our aim is to simplify part of everyday food preparation and make practical food choices easier for families. We bring quality, simplicity, and good taste together to create a friendly and trustworthy experience. Alongside our products, we also value education and practical content to make choosing and preparing food clearer and easier.",
+"هیلا فود؛ انتخابی برای غذای فراسودمند و زندگی ساده‌تر":"Hila Food: functional food for simpler everyday living",
+"ویدئوهای طرز آماده‌سازی هر محصول از داخل مدیریت سایت قابل ثبت و نمایش هستند.":"Preparation videos for each product can be added and displayed through the site administration panel."
+});
+Object.assign(words.ar,{
+"من مرضیه عسگری، کارشناس مامایی و مؤسس برند هیلا فود هستم. در هیلا فود تلاش کرده‌ایم دانش و تجربه حرفه‌ای را با حس مادری تلفیق کنیم و محصولات فراسودمند، کاربردی و باکیفیت ارائه دهیم.":"أنا مرضية عسكري، أخصائية في القبالة ومؤسسة علامة هيلا فود. نجمع في هيلا فود بين المعرفة والخبرة المهنية وحنان الأم لتقديم أطعمة وظيفية عملية وعالية الجودة.",
+"اگر برای انتخاب محصول، روش آماده‌سازی یا موضوعی درباره تغذیه سؤال داری، در ایتا برایمان پیام بفرست.":"إذا كان لديك سؤال حول اختيار منتج أو طريقة تحضيره أو التغذية، أرسلي إلينا رسالة عبر إيتا.",
+"هیلا فود با تمرکز بر غذای فراسودمند و محصولات نیمه‌آماده شکل گرفته است؛ محصولاتی که هدفشان ساده‌تر کردن بخشی از آماده‌سازی خوراک و نزدیک‌تر کردن انتخاب‌های غذایی کاربردی به زندگی روزمره خانواده‌هاست. ما تلاش می‌کنیم کیفیت، سادگی و خوشمزگی را کنار هم قرار دهیم و تجربه‌ای صمیمی و قابل‌اعتماد بسازیم. هیلا فود در کنار محصولات، آموزش و محتوای کاربردی را هم جدی می‌گیرد تا انتخاب و آماده‌سازی برای شما روشن‌تر و راحت‌تر باشد.":"تركّز هيلا فود على الأطعمة الوظيفية والمنتجات سهلة التحضير. نهدف إلى تبسيط جزء من إعداد الطعام اليومي وتقريب الخيارات الغذائية العملية من حياة الأسرة. نسعى إلى الجمع بين الجودة والبساطة والمذاق الطيب لتقديم تجربة ودودة وجديرة بالثقة. ونهتم إلى جانب المنتجات بالتثقيف والمحتوى العملي لجعل الاختيار والتحضير أكثر وضوحًا وسهولة.",
+"هیلا فود؛ انتخابی برای غذای فراسودمند و زندگی ساده‌تر":"هيلا فود: غذاء وظيفي لحياة يومية أكثر سهولة",
+"ویدئوهای طرز آماده‌سازی هر محصول از داخل مدیریت سایت قابل ثبت و نمایش هستند.":"يمكن إضافة وعرض فيديوهات تحضير كل منتج من خلال لوحة إدارة الموقع."
+});
+Object.assign(words.en,{
+"سلام! 🌿 نام محصول یا ترکیباتی را که می‌خواهی بشناسی بنویس.":"Hello! 🌿 Ask me about a product or its ingredients.",
+"سلام و خوش اومدی 🌿 درباره ترکیبات، طعم‌ها و روش آماده‌سازی محصولات از من بپرس.":"Welcome! 🌿 Ask me about product ingredients, flavors, and preparation.",
+"قیمت و موجودی ممکن است تغییر کند؛ قیمت به‌روز را در صفحه همان محصول در فروشگاه هیلافود ببین.":"Prices and availability may change. Check the product page in the Hila Food shop for current details.",
+"برای خرید، محصول را به سبد اضافه کن و مراحل ثبت سفارش را ادامه بده. برای پیگیری سفارش از راه ارتباطی درج‌شده در سایت استفاده کن.":"To order, add the product to your cart and follow checkout. For order updates, use the contact details listed on the website.",
+"برای بارداری، شیردهی، بیماری، مصرف دارو یا حساسیت غذایی نمی‌توانم محصولی را تجویز یا مناسب اعلام کنم. ترکیبات را با پزشک یا متخصص تغذیه بررسی کن. محصولات هیلافود درمان بیماری نیستند.":"I cannot recommend a product as suitable for pregnancy, breastfeeding, a medical condition, medication use, or food allergies. Review ingredients with a qualified healthcare professional. Hila Food products are not medical treatments.",
+"درباره محصولات کودک می‌توانم ترکیبات اعلام‌شده را توضیح بدهم؛ اما از روی نام محصول نمی‌توانم سن مناسب یا ایمنی آن را برای یک کودک تأیید کنم. سن مصرف، حساسیت‌ها و آمادگی کودک برای غذای کمکی را با متخصص کودک بررسی کن.":"I can explain the listed ingredients of children's products, but cannot confirm age suitability or safety for an individual child. Check age, allergies, and readiness for complementary foods with a child healthcare professional.",
+"برای این سؤال هنوز اطلاعات مطمئنی در راهنمای من ثبت نشده. نام دقیق محصول را بنویس یا از پشتیبانی هیلافود بپرس.":"I don't yet have reliable information for this question. Please name the exact product or contact Hila Food support."
+});
+Object.assign(words.ar,{
+"سلام! 🌿 نام محصول یا ترکیباتی را که می‌خواهی بشناسی بنویس.":"مرحبًا! 🌿 اسألي عن منتج أو مكوناته.",
+"سلام و خوش اومدی 🌿 درباره ترکیبات، طعم‌ها و روش آماده‌سازی محصولات از من بپرس.":"أهلًا بك! 🌿 اسألي عن مكونات المنتجات ونكهاتها وطريقة تحضيرها.",
+"قیمت و موجودی ممکن است تغییر کند؛ قیمت به‌روز را در صفحه همان محصول در فروشگاه هیلافود ببین.":"قد تتغير الأسعار والتوافر. راجعي صفحة المنتج في متجر هيلا فود لمعرفة التفاصيل الحالية.",
+"برای خرید، محصول را به سبد اضافه کن و مراحل ثبت سفارش را ادامه بده. برای پیگیری سفارش از راه ارتباطی درج‌شده در سایت استفاده کن.":"للطلب، أضيفي المنتج إلى السلة واتبعي خطوات إتمام الطلب. لمتابعة الطلب، استخدمي بيانات التواصل الموجودة على الموقع.",
+"برای بارداری، شیردهی، بیماری، مصرف دارو یا حساسیت غذایی نمی‌توانم محصولی را تجویز یا مناسب اعلام کنم. ترکیبات را با پزشک یا متخصص تغذیه بررسی کن. محصولات هیلافود درمان بیماری نیستند.":"لا يمكنني وصف منتج أو تأكيد ملاءمته للحمل أو الرضاعة أو الحالات الطبية أو الأدوية أو الحساسية الغذائية. راجعي المكونات مع مختص صحي. منتجات هيلا فود ليست علاجات طبية.",
+"درباره محصولات کودک می‌توانم ترکیبات اعلام‌شده را توضیح بدهم؛ اما از روی نام محصول نمی‌توانم سن مناسب یا ایمنی آن را برای یک کودک تأیید کنم. سن مصرف، حساسیت‌ها و آمادگی کودک برای غذای کمکی را با متخصص کودک بررسی کن.":"يمكنني شرح المكونات المذكورة لمنتجات الأطفال، لكن لا أستطيع تأكيد العمر المناسب أو السلامة لطفل بعينه. تحققي من العمر والحساسية والاستعداد للأطعمة التكميلية مع مختص رعاية الطفل.",
+"برای این سؤال هنوز اطلاعات مطمئنی در راهنمای من ثبت نشده. نام دقیق محصول را بنویس یا از پشتیبانی هیلافود بپرس.":"لا تتوفر لدي معلومات موثوقة عن هذا السؤال بعد. اكتبي اسم المنتج بدقة أو تواصلي مع دعم هيلا فود."
+});
+
 const norm=s=>String(s||"").replace(/\s+/g," ").trim();
 let lang=["fa","en","ar"].includes(localStorage.getItem("hilaLanguage"))?localStorage.getItem("hilaLanguage"):"fa";
 const t=v=>lang==="fa"?v:(words[lang][norm(v)]||v);
 const categoryName=c=>lang==="fa"?(c?.name||""):(categoryWords[lang][String(c?.id||"")]||c?.name||"");
 const productName=p=>lang==="fa"?(p?.name||""):(productWords[lang][String(p?.id||"")]||productWords[lang][norm(p?.name)]||p?.name||"");
 const money=n=>Number(n||0).toLocaleString(lang==="fa"?"fa-IR":lang==="ar"?"ar":"en-US")+" "+(lang==="fa"?(window.STORE?.settings?.currency||"تومان"):lang==="ar"?"تومان":"Toman");
-const originals=new WeakMap();let applying=false;
-function translateTree(root){if(!root)return;const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];while(w.nextNode())nodes.push(w.currentNode);applying=true;nodes.forEach(n=>{if(!originals.has(n))originals.set(n,n.nodeValue);const src=originals.get(n),v=t(src);if(n.nodeValue!==v)n.nodeValue=v;});if(root.nodeType===1)[root,...root.querySelectorAll("*")].forEach(el=>["placeholder","title","aria-label","alt"].forEach(a=>{if(el.hasAttribute(a)){const k="data-hila-original-"+a;if(!el.hasAttribute(k))el.setAttribute(k,el.getAttribute(a));el.setAttribute(a,t(el.getAttribute(k)));}}));applying=false;}
+const originals=new WeakMap();const blockOriginals=new WeakMap();let applying=false;
+function translateTree(root){if(!root)return;applying=true;const elements=[];if(root.nodeType===1)elements.push(root);if(root.querySelectorAll)elements.push(...root.querySelectorAll("p,h2,h3"));elements.forEach(el=>{if(!blockOriginals.has(el))blockOriginals.set(el,norm(el.textContent));const source=blockOriginals.get(el),translated=t(source);if(translated!==source&&el.textContent!==translated)el.textContent=translated;});const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];while(w.nextNode())nodes.push(w.currentNode);nodes.forEach(n=>{if(!originals.has(n))originals.set(n,n.nodeValue);const src=originals.get(n),v=t(src);if(n.nodeValue!==v)n.nodeValue=v;});if(root.nodeType===1)[root,...root.querySelectorAll("*")].forEach(el=>["placeholder","title","aria-label","alt"].forEach(a=>{if(el.hasAttribute(a)){const k="data-hila-original-"+a;if(!el.hasAttribute(k))el.setAttribute(k,el.getAttribute(a));el.setAttribute(a,t(el.getAttribute(k)));}}));applying=false;}
 function apply(){document.documentElement.lang=lang;document.documentElement.dir=lang==="en"?"ltr":"rtl";document.body.classList.toggle("lang-en",lang==="en");document.querySelectorAll("[data-language-picker]").forEach(x=>x.value=lang);translateTree(document.body);document.dispatchEvent(new CustomEvent("hila-language-change",{detail:{language:lang}}));}
 function setLanguage(v){if(!["fa","en","ar"].includes(v))return;lang=v;localStorage.setItem("hilaLanguage",v);apply();}
 document.addEventListener("change",e=>{if(e.target.matches("[data-language-picker]"))setLanguage(e.target.value);});
