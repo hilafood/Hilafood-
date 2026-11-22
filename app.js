@@ -238,12 +238,17 @@ function getSelectedShipping() {
 }
 
 
+function isShippingCollect() {
+  return STORE.settings.shippingCollect === true ||
+    STORE.settings.shippingCollect === "true";
+}
+
 function shippingPrice() {
 
   const shipping =
     getSelectedShipping();
 
-  return shipping
+  return shipping && !isShippingCollect()
     ? Number(shipping.price || 0)
     : 0;
 }
@@ -1351,9 +1356,11 @@ function showShippingCheckout() {
 
             <strong>
               ${
-                Number(method.price || 0) > 0
-                  ? money(method.price)
-                  : "رایگان"
+                isShippingCollect()
+                  ? "پس‌کرایه"
+                  : Number(method.price || 0) > 0
+                    ? money(method.price)
+                    : "رایگان"
               }
             </strong>
 
@@ -1401,9 +1408,11 @@ function showShippingCheckout() {
 
         <b id="shippingFee">
           ${
-            Number(selected.price || 0) > 0
-              ? money(selected.price)
-              : "رایگان"
+            isShippingCollect()
+              ? "پس‌کرایه؛ پرداخت هنگام تحویل"
+              : Number(selected.price || 0) > 0
+                ? money(selected.price)
+                : "رایگان"
           }
         </b>
 
@@ -1426,7 +1435,7 @@ function showShippingCheckout() {
         <strong id="shippingGrandTotal">
           ${money(
             cartSubtotal() +
-            Number(selected.price || 0)
+            (isShippingCollect() ? 0 : Number(selected.price || 0))
           )}
         </strong>
 
@@ -1523,9 +1532,11 @@ function showShippingCheckout() {
           if (feeElement) {
 
             feeElement.textContent =
-              fee > 0
-                ? money(fee)
-                : "رایگان";
+              isShippingCollect()
+                ? "پس‌کرایه؛ پرداخت هنگام تحویل"
+                : fee > 0
+                  ? money(fee)
+                  : "رایگان";
 
           }
 
@@ -1535,7 +1546,7 @@ function showShippingCheckout() {
             totalElement.textContent =
               money(
                 cartSubtotal() +
-                fee
+                (isShippingCollect() ? 0 : fee)
               );
 
           }
@@ -1775,9 +1786,11 @@ function showCustomerForm() {
 
         <b>
           ${
-            Number(shipping.price || 0) > 0
-              ? money(shipping.price)
-              : "رایگان"
+            isShippingCollect()
+              ? "پس‌کرایه؛ پرداخت هنگام تحویل"
+              : Number(shipping.price || 0) > 0
+                ? money(shipping.price)
+                : "رایگان"
           }
         </b>
 
@@ -1979,7 +1992,7 @@ function showOrderReceiptUpload(order) {
       if (!response.ok || !result.success) {
         throw new Error(result.error || "ارسال فیش انجام نشد.");
       }
-      status.textContent = "فیش با موفقیت همراه مشخصات سفارش به کانال ارسال شد.";
+      status.textContent = "فیش با موفقیت ارسال شد. بسته شما ظرف سه روز تا یک هفته برای شما ارسال خواهد شد.";
       $("orderReceiptFile").disabled = true;
       sendButton.textContent = "فیش ارسال شد";
     } catch (error) {
