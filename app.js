@@ -261,15 +261,15 @@ function cartGrandTotal() {
 /* ==================================================
    دریافت اطلاعات فروشگاه
 ================================================== */
-async function loadFallbackCategories() {
+async function loadFallbackStore() {
   try {
     const response = await fetch("/data.json", { cache: "no-cache" });
-    if (!response.ok) return [];
+    if (!response.ok) return null;
     const data = await response.json();
-    return Array.isArray(data.categories) ? data.categories : [];
+    return data && typeof data === "object" ? data : null;
   } catch (error) {
-    console.warn("Fallback category data unavailable:", error);
-    return [];
+    console.warn("Fallback store data unavailable:", error);
+    return null;
   }
 }
 
@@ -288,7 +288,8 @@ function mergeCategoryLists(primary, fallback) {
 async function load() {
 
   const cacheKey = "hilafood_store_cache";
-  const fallbackCategories = await loadFallbackCategories();
+  const fallbackData = await loadFallbackStore();
+  const fallbackCategories = Array.isArray(fallbackData?.categories) ? fallbackData.categories : [];
 
   // اول اطلاعات ذخیره‌شده را فوراً نمایش بده
   try {
@@ -457,31 +458,25 @@ renderVideo();
       !localStorage.getItem(cacheKey)
     ) {
 
-      alert(
-        "اطلاعات فروشگاه دریافت نشد. لطفاً دوباره تلاش کنید."
-      );
-
+      // اگر API فروشگاه در محیط آزمایشی در دسترس نبود،
+      // از داده‌های ایستای همراه سایت برای نمایش دسته‌ها و محصولات استفاده کن.
       STORE = {
-
         settings: {
-          showPrices: false,
-          currency: "تومان",
-          paymentEnabled: false,
-          shippingMethods: []
+          ...(fallbackData?.settings || {}),
+          shippingMethods: Array.isArray(fallbackData?.settings?.shippingMethods)
+            ? fallbackData.settings.shippingMethods
+            : []
         },
-
-        products: [],
-
-        categories: []
-
+        products: Array.isArray(fallbackData?.products) ? fallbackData.products : [],
+        categories: fallbackCategories,
+        courses: Array.isArray(fallbackData?.courses) ? fallbackData.courses : []
       };
 
+      syncSocialLinks();
       renderCategories();
-
-      renderProducts([]);
-
+      renderProducts(STORE.products.filter(p => p.active !== false));
+      renderCourses();
       updateCart();
-
       renderVideo();
 
     }
