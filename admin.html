@@ -1438,7 +1438,7 @@ function fillSettings(){
     "تومان";
 
   $("paymentEnabled").checked =
-    data.settings.paymentEnabled !== false;
+    true;
   const instagram = String(data.settings.instagram || "");
   $("instagramUrl").value =
     instagram.includes("hila_mamaa") || instagram.includes("hila_mama")
@@ -2740,7 +2740,7 @@ async function saveSettings(){
             $("currency").value,
 
           paymentEnabled:
-            $("paymentEnabled").checked,
+            true,
           paymentProvider: "card_to_card",
           instagram: $("instagramUrl").value.trim(),
           paymentCardNumber: $("paymentCardNumber").value.replace(/\s+/g, ""),
