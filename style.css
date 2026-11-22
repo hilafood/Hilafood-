@@ -951,8 +951,17 @@ img {
 
   .search {
     margin: 0;
-    width: 240px;
-    max-width: calc(100% - 55px);
+    width: min(42vw, 240px);
+    max-width: 42vw;
+  }
+  .nav .language-switch {
+    flex: 0 0 auto;
+    margin-inline-start: auto;
+    font-size: 12px;
+    padding: 5px 6px;
+  }
+  .nav .language-switch select {
+    max-width: 74px;
   }
 
   .hero {
