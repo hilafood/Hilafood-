@@ -152,7 +152,7 @@ function translateTree(root){
     const nodes=[];
     while(walker.nextNode())nodes.push(walker.currentNode);
     nodes.forEach(node=>{
-      if(blocks.some(el=>el===node.parentElement || el.contains(node)))return;
+      if([...handled].some(el=>el===node.parentElement || el.contains(node)))return;
       if(!textOriginals.has(node))textOriginals.set(node,node.nodeValue);
       const source=textOriginals.get(node);
       const translated=t(source);
