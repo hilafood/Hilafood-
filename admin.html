@@ -2142,7 +2142,7 @@ async function loadCustomers(){
         '<div class="order-info">اولین خرید: ' + escapeHtml(formatDate(customer.first_order_at || "")) +
         '<br>آخرین خرید: ' + escapeHtml(formatDate(customer.last_order_at || "")) +
         '<br>مجموع خرید: ' + Number(customer.total_spent || 0).toLocaleString("fa-IR") + ' تومان</div>' +
-        '<button class="primary" onclick="viewCustomerHistory(\'' + escapeAttrValue(customer.customer_phone || "") + '\')">مشاهده سوابق خرید</button>' +
+        '<button class="primary" data-phone="' + escapeAttrValue(customer.customer_phone || "") + '" onclick="viewCustomerHistory(this.dataset.phone)">مشاهده سوابق خرید</button>' +
         '</div>';
     }).join("");
   }catch(error){
